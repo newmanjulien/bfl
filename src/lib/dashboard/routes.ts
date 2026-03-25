@@ -1,7 +1,6 @@
 export const DASHBOARD_STATIC_ROUTES = {
 	'my-deals': '/my-deals',
 	'since-last-meeting': '/since-last-meeting',
-	forecast: '/forecast',
 	opportunities: '/opportunities',
 	'all-activity': '/all-activity'
 } as const;

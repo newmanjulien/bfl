@@ -1,6 +1,11 @@
+import {
+	isAllActivityDetailPath,
+	isAllActivityListPath,
+	type AllActivityListHref
+} from '$lib/dashboard/all-activity-routes';
 import { DASHBOARD_STATIC_ROUTES, type DashboardStaticHref } from '$lib/dashboard/routes';
 
-type DashboardHeaderHref = DashboardStaticHref | `${DashboardStaticHref}?${string}`;
+type DashboardHeaderHref = DashboardStaticHref | AllActivityListHref;
 
 export type DashboardHeaderControl =
 	| {
@@ -13,7 +18,15 @@ export type DashboardHeaderControl =
 	  };
 
 export type DashboardHeaderAction = 'share' | 'broker-switch';
-export type DashboardHeaderExtra = 'add-deal' | 'all-activity-filters';
+export type DashboardHeaderFilter = 'broker' | 'activity-level';
+export type DashboardHeaderExtra =
+	| {
+			kind: 'add-deal';
+	  }
+	| {
+			kind: 'filters';
+			filters: readonly DashboardHeaderFilter[];
+	  };
 
 export type DashboardHeaderTitleMenuOption = {
 	id: string;
@@ -60,7 +73,9 @@ function normalizePathname(pathname: string) {
 }
 
 function matchesDetailPath(pathname: string, href: DashboardStaticHref) {
-	return normalizePathname(pathname).startsWith(`${href}/detail/`);
+	const normalizedPathname = normalizePathname(pathname);
+
+	return normalizedPathname.startsWith(`${href}/detail/`);
 }
 
 function getHeroTitle(data: unknown) {
@@ -159,17 +174,6 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 		};
 	}
 
-	if (normalizedPathname === DASHBOARD_STATIC_ROUTES.forecast) {
-		return {
-			leading: {
-				kind: 'control-title',
-				title: 'Forecast',
-				control: { kind: 'meeting-date' }
-			},
-			actions: ['share', 'broker-switch']
-		};
-	}
-
 	if (normalizedPathname === DASHBOARD_STATIC_ROUTES.opportunities) {
 		return {
 			leading: {
@@ -185,11 +189,11 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 		return {
 			leading: { kind: 'title', title: 'My deals' },
 			actions: ['share'],
-			extra: 'add-deal'
+			extra: { kind: 'add-deal' }
 		};
 	}
 
-	if (normalizedPathname === DASHBOARD_STATIC_ROUTES['all-activity']) {
+	if (isAllActivityListPath(normalizedPathname)) {
 		const titleMenu = getHeaderTitleMenu(data);
 
 		return {
@@ -197,13 +201,16 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 				? { kind: 'title-menu', title: 'All activity', menu: titleMenu }
 				: { kind: 'title', title: 'All activity' },
 			actions: ['share'],
-			extra: 'all-activity-filters'
+			extra: {
+				kind: 'filters',
+				filters: ['broker', 'activity-level']
+			}
 		};
 	}
 
 	const heroTitle = getHeroTitle(data);
 
-	if (matchesDetailPath(normalizedPathname, DASHBOARD_STATIC_ROUTES['all-activity'])) {
+	if (isAllActivityDetailPath(normalizedPathname)) {
 		const headerBackHref = getHeaderBackHref(data) ?? DASHBOARD_STATIC_ROUTES['all-activity'];
 
 		return {

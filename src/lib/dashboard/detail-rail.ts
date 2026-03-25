@@ -1,77 +1,123 @@
-import { getDealActivityLevel } from '$lib/dashboard/deal-derivations';
-import type { ActivityLevel } from '$lib/domain/activity-level';
+import type {
+	DealContextRecord,
+	DealHelpfulContactRecord,
+	DealRecord
+} from '$lib/domain/deals';
+import {
+	formatIsoDateTimeRelative,
+	formatIsoDateTimeRelativeMonths
+} from '$lib/format/date-time';
 import { mockDb } from '$lib/mock-db';
 import type {
-	DealDetailRightRailData,
-	DetailRightRailLimitation,
-	DetailRightRailMetadata,
-	MetadataDetailRightRailData
+	DetailRightRailData,
+	DetailRightRailHelpfulContact,
+	DetailRightRailSection
 } from './detail-rail-model';
 import { resolveOptionalBrokerPerson } from './deal-view';
 
-type MetadataDetailRightRailOptions = {
-	activityLevel?: ActivityLevel;
-	limitation?: DetailRightRailLimitation;
-};
+function isDetailRightRailSection(
+	section: DetailRightRailSection | null | undefined | false
+): section is DetailRightRailSection {
+	return Boolean(section);
+}
 
-export function toDetailRightRailMetadata(
-	dealId: string,
-	activityLevelOverride?: ActivityLevel
-): DetailRightRailMetadata | null {
-	const deal = mockDb.deals.getById(dealId);
+function toDetailRightRailHelpfulContacts(
+	helpfulContacts: readonly DealHelpfulContactRecord[]
+): readonly DetailRightRailHelpfulContact[] {
+	return helpfulContacts.map<DetailRightRailHelpfulContact>((contact) => ({
+		id: contact.id,
+		name: contact.name,
+		title: contact.title,
+		company: contact.company,
+		linkedInUrl: contact.linkedInUrl
+	}));
+}
 
-	if (!deal) {
-		return null;
-	}
-
-	const activityLevel = activityLevelOverride ?? getDealActivityLevel(deal);
-
-	if (!activityLevel) {
-		return null;
-	}
-
+export function toDetailRightRailData(
+	sections: readonly (DetailRightRailSection | null | undefined | false)[]
+): DetailRightRailData {
 	return {
-		deal: deal.dealName,
-		dealNumber: deal.dealNumber,
-		activityLevel,
-		owner: resolveOptionalBrokerPerson(mockDb.deals.getCurrentOwnerBrokerId(dealId)),
-		stage: deal.stage
+		sections: sections.filter(isDetailRightRailSection)
 	};
 }
 
-export function toDealDetailRightRailData(dealId: string): DealDetailRightRailData | null {
-	const deal = mockDb.deals.getById(dealId);
-	const detailContext = mockDb.contexts.getByDealId(dealId);
-	const metadata = toDetailRightRailMetadata(dealId);
-
-	if (!deal || !detailContext || !deal.activityTrend || !metadata) {
-		return null;
-	}
-
+export function toDetailRightRailOverviewSection(deal: DealRecord): DetailRightRailSection {
 	return {
-		kind: 'deal',
-		metadata,
-		timing: {
-			claimedAtIso: detailContext.claimedAtIso,
-			lastActivityAtIso: deal.lastActivityAtIso ?? null
-		},
-		activityTrend: deal.activityTrend
+		id: 'deal-overview',
+		kind: 'rows',
+		rows: [
+			{
+				id: 'deal',
+				label: 'Deal',
+				kind: 'text',
+				value: deal.dealName
+			},
+			{
+				id: 'deal-number',
+				label: 'ID',
+				kind: 'deal-number',
+				dealNumber: deal.dealNumber
+			},
+			{
+				id: 'activity-level',
+				label: 'Activity',
+				kind: 'activity-level',
+				activityLevel: deal.activityLevel
+			},
+			{
+				id: 'owner',
+				label: 'Owner',
+				kind: 'person',
+				person: resolveOptionalBrokerPerson(mockDb.deals.getCurrentOwnerBrokerId(deal.dealId)),
+				emptyValue: 'Unassigned'
+			},
+			{
+				id: 'stage',
+				label: 'Stage',
+				kind: 'text',
+				value: deal.stage
+			}
+		]
 	};
 }
 
-export function toMetadataDetailRightRailData(
-	dealId: string,
-	options: MetadataDetailRightRailOptions = {}
-): MetadataDetailRightRailData | null {
-	const metadata = toDetailRightRailMetadata(dealId, options.activityLevel);
+export function toDetailRightRailTimingSection(
+	deal: DealRecord,
+	detailContext: DealContextRecord
+): DetailRightRailSection {
+	return {
+		id: 'deal-timing',
+		kind: 'rows',
+		rows: [
+			{
+				id: 'claimed',
+				label: 'Claimed',
+				kind: 'text',
+				value: formatIsoDateTimeRelativeMonths(detailContext.claimedAtIso)
+			},
+			{
+				id: 'last-activity',
+				label: 'Last activity',
+				kind: 'text',
+				value: deal.lastActivityAtIso
+					? formatIsoDateTimeRelative(deal.lastActivityAtIso)
+					: formatIsoDateTimeRelativeMonths(detailContext.claimedAtIso)
+			}
+		]
+	};
+}
 
-	if (!metadata) {
+export function toDetailRightRailHelpfulContactsSection(
+	detailContext: DealContextRecord
+): DetailRightRailSection | null {
+	if (!detailContext.helpfulContacts?.length) {
 		return null;
 	}
 
 	return {
-		kind: 'metadata',
-		metadata,
-		...(options.limitation ? { limitation: options.limitation } : {})
+		id: 'helpful-contacts',
+		kind: 'helpful-contacts',
+		title: 'Contacts who can help',
+		contacts: toDetailRightRailHelpfulContacts(detailContext.helpfulContacts)
 	};
 }

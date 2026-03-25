@@ -1,5 +1,4 @@
 import {
-	getDealActivityLevel,
 	getLatestDealActivity,
 	getLatestDealNews,
 	sortDealActivitiesAscending,
@@ -7,8 +6,12 @@ import {
 } from '$lib/dashboard/deal-derivations';
 import { getActivityLevelLabel } from '$lib/presentation/activity-level';
 import { resolveOptionalBrokerPerson, toTimelineItem } from '$lib/dashboard/deal-view';
-import { toMetadataDetailRightRailData } from '$lib/dashboard/detail-rail';
+import {
+	toDetailRightRailData,
+	toDetailRightRailOverviewSection
+} from '$lib/dashboard/detail-rail';
 import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
+import type { DealRecord } from '$lib/domain/deals';
 import type { NewsSource, TimelineItem } from '$lib/presentation/models';
 import type { PersonSummary } from '$lib/domain/people';
 import { mockDb } from '$lib/mock-db';
@@ -54,14 +57,8 @@ function toMyDealsDetailHref(dealId: string): MyDealsDetailHref {
 	return `/my-deals/detail/${dealId}`;
 }
 
-function toRightRailData(dealId: string): DetailRightRailData {
-	const rightRail = toMetadataDetailRightRailData(dealId);
-
-	if (!rightRail) {
-		throw new Error(`Deal ${dealId} is missing the data required for my-deals detail.`);
-	}
-
-	return rightRail;
+function toRightRailData(deal: DealRecord): DetailRightRailData {
+	return toDetailRightRailData([toDetailRightRailOverviewSection(deal)]);
 }
 
 function toTableRow(dealId: string): MyDealsTableRow {
@@ -109,12 +106,11 @@ export function getMyDealsDetailViewById(dealId: string): MyDealsDetailView | nu
 	const deal = mockDb.deals.getById(dealId);
 	const context = mockDb.contexts.getByDealId(dealId);
 
-	if (!deal || !context || !deal.activityTrend) {
+	if (!deal || !context) {
 		return null;
 	}
 
-	const activityLevel = getDealActivityLevel(deal);
-	const activityLabel = activityLevel ? getActivityLevelLabel(activityLevel).toLowerCase() : 'low activity';
+	const activityLabel = getActivityLevelLabel(deal.activityLevel).toLowerCase();
 	const newsItems = sortDealNewsDescending(mockDb.news.listByDealId(dealId));
 	const activityItems = sortDealActivitiesAscending(
 		mockDb.activities.listByDealId(dealId, { stream: 'deal-detail' })
@@ -137,7 +133,7 @@ export function getMyDealsDetailViewById(dealId: string): MyDealsDetailView | nu
 			uploadLabel: 'Upload files',
 			uploadDescription: `Upload call notes, security review feedback, or procurement documents that add context to ${deal.dealName}.`
 		},
-		rightRail: toRightRailData(dealId)
+		rightRail: toRightRailData(deal)
 	};
 }
 

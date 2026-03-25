@@ -1,32 +1,54 @@
 import type { ActivityLevel } from '$lib/domain/activity-level';
-import type { ActivityTrendChartData } from '$lib/domain/activity-trend';
-import type { IsoDateTimeString } from '$lib/domain/date-time';
 import type { PersonSummary } from '$lib/domain/people';
 
-export type DetailRightRailMetadata = {
-	deal: string;
-	dealNumber?: number;
-	activityLevel: ActivityLevel;
-	owner: PersonSummary | null;
-	stage: string;
+export type DetailRightRailRow =
+	| {
+			id: string;
+			label: string;
+			kind: 'text';
+			value: string;
+	  }
+	| {
+			id: string;
+			label: string;
+			kind: 'deal-number';
+			dealNumber: number;
+	  }
+	| {
+			id: string;
+			label: string;
+			kind: 'activity-level';
+			activityLevel: ActivityLevel;
+	  }
+	| {
+			id: string;
+			label: string;
+			kind: 'person';
+			person: PersonSummary | null;
+			emptyValue?: string;
+	  };
+
+export type DetailRightRailHelpfulContact = {
+	id: string;
+	name: string;
+	title: string;
+	company: string;
+	linkedInUrl: string;
 };
 
-export type DetailRightRailLimitation = 'missing-detail-context';
+export type DetailRightRailSection =
+	| {
+			id: string;
+			kind: 'rows';
+			rows: readonly DetailRightRailRow[];
+	  }
+	| {
+			id: string;
+			kind: 'helpful-contacts';
+			title: string;
+			contacts: readonly DetailRightRailHelpfulContact[];
+	  };
 
-export type DealDetailRightRailData = {
-	kind: 'deal';
-	metadata: DetailRightRailMetadata;
-	timing: {
-		claimedAtIso: IsoDateTimeString;
-		lastActivityAtIso: IsoDateTimeString | null;
-	};
-	activityTrend: ActivityTrendChartData;
+export type DetailRightRailData = {
+	sections: readonly DetailRightRailSection[];
 };
-
-export type MetadataDetailRightRailData = {
-	kind: 'metadata';
-	metadata: DetailRightRailMetadata;
-	limitation?: DetailRightRailLimitation;
-};
-
-export type DetailRightRailData = DealDetailRightRailData | MetadataDetailRightRailData;

@@ -1,9 +1,6 @@
 import type {
 	DealActivityStream,
 	DealContextRecord,
-	DealForecastRecord,
-	DealInsightKind,
-	DealInsightRecord,
 	DealRecord
 } from '$lib/domain/deals';
 import type { BrokerId } from '../reference/records';
@@ -12,21 +9,13 @@ import {
 	dealActivities,
 	dealBrokerLinks,
 	dealContexts,
-	dealForecasts,
-	dealInsights,
 	dealNews,
 	deals
 } from './records';
 
 const dealsById = new Map<string, DealRecord>(deals.map((record) => [record.dealId, record]));
-const forecastsByDealId = new Map<string, DealForecastRecord>(
-	dealForecasts.map((record) => [record.dealId, record])
-);
 const contextsByDealId = new Map<string, DealContextRecord<BrokerId>>(
 	dealContexts.map((record) => [record.dealId, record])
-);
-const insightsById = new Map<string, DealInsightRecord<BrokerId>>(
-	dealInsights.map((record) => [record.id, record])
 );
 
 function listDeals() {
@@ -97,52 +86,6 @@ function listNewsByDealId(dealId: string) {
 	return createSnapshot(dealNews.filter((record) => record.dealId === dealId));
 }
 
-function listInsights(options?: { kind?: DealInsightKind; dealId?: string }) {
-	return createSnapshot(
-		dealInsights.filter((record) => {
-			if (options?.kind && record.kind !== options.kind) {
-				return false;
-			}
-
-			if (options?.dealId && record.dealId !== options.dealId) {
-				return false;
-			}
-
-			return true;
-		})
-	);
-}
-
-function listInsightIds(options?: { kind?: DealInsightKind; dealId?: string }) {
-	return createSnapshot(listInsights(options).map((insight) => insight.id));
-}
-
-function getInsightById(insightId: string) {
-	const insight = insightsById.get(insightId);
-
-	return insight ? createSnapshot(insight) : null;
-}
-
-function requireInsightById(insightId: string) {
-	const insight = getInsightById(insightId);
-
-	if (!insight) {
-		throw new Error(`Unknown deal insight id "${insightId}".`);
-	}
-
-	return insight;
-}
-
-function listForecasts() {
-	return createSnapshot(dealForecasts);
-}
-
-function getForecastByDealId(dealId: string) {
-	const forecast = forecastsByDealId.get(dealId);
-
-	return forecast ? createSnapshot(forecast) : null;
-}
-
 function listContexts() {
 	return createSnapshot(dealContexts);
 }
@@ -169,16 +112,6 @@ export const dealReaders = Object.freeze({
 	news: Object.freeze({
 		list: listNews,
 		listByDealId: listNewsByDealId
-	}),
-	insights: Object.freeze({
-		list: listInsights,
-		listIds: listInsightIds,
-		getById: getInsightById,
-		requireById: requireInsightById
-	}),
-	forecasts: Object.freeze({
-		list: listForecasts,
-		getByDealId: getForecastByDealId
 	}),
 	contexts: Object.freeze({
 		list: listContexts,

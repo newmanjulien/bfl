@@ -19,6 +19,11 @@ const detailRouteBudgets = [
 		maxInitialJsGzipBytes: 140_000
 	},
 	{
+		label: 'all-activity filtered detail route',
+		routeId: '/(dashboard)/all-activity/[view=allActivityView]/detail/[detailId]',
+		maxInitialJsGzipBytes: 140_000
+	},
+	{
 		label: 'my-deals detail route',
 		routeId: '/(dashboard)/my-deals/detail/[detailId]',
 		maxInitialJsGzipBytes: 140_000

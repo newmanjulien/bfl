@@ -1,16 +1,18 @@
 import { activeMeetingDateIso } from '$lib/dashboard/meeting-date';
+import {
+	buildAllActivityDetailHref,
+	buildAllActivityListHref,
+	isNonDefaultAllActivityView
+} from '$lib/dashboard/all-activity-routes';
+import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
 import { getDashboardHeader } from '$lib/dashboard/shell/dashboard-header';
 import { mockDb } from '$lib/mock-db';
 import { describe, expect, it } from 'vitest';
 import {
 	allActivityTableRows,
-	buildAllActivityDetailHref,
-	buildAllActivityListHref,
 	getAllActivityDetailViewById,
-	getAllActivityRowsForView,
-	parseAllActivityView
+	getAllActivityRowsForView
 } from './all-activity/projection';
-import { forecastQuadrantChart } from './forecast/projection';
 import { getMyDealsDetailViewById, myDealsTableRows } from './my-deals/projection';
 import {
 	getOpportunityDetailViewById,
@@ -23,6 +25,24 @@ import {
 	sinceLastMeetingTimelineItems
 } from './since-last-meeting/projection';
 
+function getRightRailRow(rightRail: DetailRightRailData, rowId: string) {
+	return rightRail.sections
+		.flatMap((section) => (section.kind === 'rows' ? section.rows : []))
+		.find((row) => row.id === rowId) ?? null;
+}
+
+function getRowsSection(rightRail: DetailRightRailData, sectionId: string) {
+	const section = rightRail.sections.find((candidate) => candidate.id === sectionId);
+
+	return section?.kind === 'rows' ? section : null;
+}
+
+function getHelpfulContactsSection(rightRail: DetailRightRailData) {
+	const section = rightRail.sections.find((candidate) => candidate.id === 'helpful-contacts');
+
+	return section?.kind === 'helpful-contacts' ? section : null;
+}
+
 describe('dashboard data adapters', () => {
 	it('renders unassigned owners cleanly in deal list projections', () => {
 		expect(allActivityTableRows.find((row) => row.id === 'deal-fedex')?.owner).toBeNull();
@@ -30,65 +50,119 @@ describe('dashboard data adapters', () => {
 	});
 
 	it('uses the route view as the source of truth for all-activity tables', () => {
-		expect(parseAllActivityView(undefined)).toBe('deals');
-		expect(parseAllActivityView('unexpected-view')).toBe('deals');
 		expect(getAllActivityRowsForView('deals')).toEqual(allActivityTableRows);
 		expect(getAllActivityRowsForView('need-support').map((row) => row.id)).toEqual([
-			'deal-fedex',
-			'deal-hilton'
+			'deal-tyson',
+			'deal-hilton',
+			'deal-fedex'
 		]);
 		expect(getAllActivityRowsForView('duplicated-work').map((row) => row.id)).toEqual(['deal-3m']);
+		expect(isNonDefaultAllActivityView('need-support')).toBe(true);
+		expect(isNonDefaultAllActivityView('duplicated-work')).toBe(true);
+		expect(isNonDefaultAllActivityView('deals')).toBe(false);
+		expect(isNonDefaultAllActivityView('unexpected-view')).toBe(false);
 		expect(buildAllActivityListHref('deals')).toBe('/all-activity');
-		expect(buildAllActivityListHref('need-support')).toBe('/all-activity?view=need-support');
+		expect(buildAllActivityListHref('need-support')).toBe('/all-activity/need-support');
 		expect(buildAllActivityDetailHref('deal-3m', 'deals')).toBe('/all-activity/detail/deal-3m');
 		expect(buildAllActivityDetailHref('deal-3m', 'duplicated-work')).toBe(
-			'/all-activity/detail/deal-3m?view=duplicated-work'
+			'/all-activity/duplicated-work/detail/deal-3m'
 		);
 		expect(getAllActivityRowsForView('duplicated-work')[0]?.navigation).toEqual({
 			kind: 'detail',
-			href: '/all-activity/detail/deal-3m?view=duplicated-work'
+			href: '/all-activity/duplicated-work/detail/deal-3m'
 		});
 	});
 
 	it('uses the canonical deal number for deal detail views', () => {
 		const allActivityDetail = getAllActivityDetailViewById('deal-3m');
 		const myDealsDetail = getMyDealsDetailViewById('deal-3m');
+		const allActivityDealNumberRow = allActivityDetail
+			? getRightRailRow(allActivityDetail.rightRail, 'deal-number')
+			: null;
+		const myDealsDealNumberRow = myDealsDetail
+			? getRightRailRow(myDealsDetail.rightRail, 'deal-number')
+			: null;
 
 		expect(allActivityDetail?.hero.dealNumber).toBe(74);
-		expect(allActivityDetail?.rightRail.metadata.dealNumber).toBe(74);
 		expect(myDealsDetail?.hero.dealNumber).toBe(74);
-		expect(myDealsDetail?.rightRail.metadata.dealNumber).toBe(74);
 		expect('metaId' in (allActivityDetail?.hero ?? {})).toBe(false);
+		expect(allActivityDealNumberRow?.kind).toBe('deal-number');
+		expect(myDealsDealNumberRow?.kind).toBe('deal-number');
+
+		if (allActivityDealNumberRow?.kind !== 'deal-number' || myDealsDealNumberRow?.kind !== 'deal-number') {
+			throw new Error('Expected detail rails to include a deal-number row.');
+		}
+
+		expect(allActivityDealNumberRow.dealNumber).toBe(74);
+		expect(myDealsDealNumberRow.dealNumber).toBe(74);
+	});
+
+	it('only opts helpful contacts into all-activity detail rails', () => {
+		const allActivityDetail = getAllActivityDetailViewById('deal-3m');
+		const myDealsDetail = getMyDealsDetailViewById('deal-3m');
+		const helpfulContacts = allActivityDetail
+			? getHelpfulContactsSection(allActivityDetail.rightRail)?.contacts
+			: undefined;
+
+		expect(helpfulContacts).toBeDefined();
+		expect(helpfulContacts).toHaveLength(3);
+
+		for (const contact of helpfulContacts ?? []) {
+			expect(contact.title).toBeTruthy();
+			expect(contact.company).toBeTruthy();
+			expect(contact.linkedInUrl).toMatch(/^https:\/\/www\.linkedin\.com\/in\//);
+		}
+
+		expect(myDealsDetail ? getHelpfulContactsSection(myDealsDetail.rightRail) : null).toBeNull();
 	});
 
 	it('uses the parent deal number for opportunity and risk views', () => {
 		const opportunityTile = opportunitiesTiles.find((tile) => tile.id === 'insight-118');
 		const riskTile = opportunityRiskTiles.find((tile) => tile.id === 'insight-119');
 		const riskDetail = getOpportunityDetailViewById('insight-119');
+		const riskDealNumberRow = riskDetail ? getRightRailRow(riskDetail.rightRail, 'deal-number') : null;
 
 		expect(opportunityTile?.dealNumber).toBe(118);
 		expect(riskTile?.dealNumber).toBe(74);
 		expect(riskDetail?.hero.dealNumber).toBe(74);
-		expect(riskDetail?.rightRail.metadata.dealNumber).toBe(74);
-	});
+		expect(riskDealNumberRow?.kind).toBe('deal-number');
 
-	it('uses a limited summary rail instead of fabricating canonical deal detail data', () => {
-		const opportunityDetail = getOpportunityDetailViewById('insight-118');
-
-		expect(opportunityDetail?.hero.dealNumber).toBe(118);
-		expect(opportunityDetail?.rightRail.kind).toBe('metadata');
-
-		if (!opportunityDetail || opportunityDetail.rightRail.kind !== 'metadata') {
-			throw new Error('Expected a metadata right rail for the Honeywell opportunity detail.');
+		if (riskDealNumberRow?.kind !== 'deal-number') {
+			throw new Error('Expected risk detail rail to include a deal-number row.');
 		}
 
-		expect(opportunityDetail.rightRail.metadata.dealNumber).toBe(118);
-		expect(opportunityDetail.rightRail.limitation).toBe('missing-detail-context');
-		expect('timing' in opportunityDetail.rightRail).toBe(false);
-		expect('activityTrend' in opportunityDetail.rightRail).toBe(false);
+		expect(riskDealNumberRow.dealNumber).toBe(74);
 	});
 
-	it('derives since-last-meeting and forecast screens from canonical deal data', () => {
+	it('builds opportunity detail rails from explicit sections only', () => {
+		const opportunityDetail = getOpportunityDetailViewById('insight-118');
+		const opportunityDealNumberRow = opportunityDetail
+			? getRightRailRow(opportunityDetail.rightRail, 'deal-number')
+			: null;
+
+		expect(opportunityDetail?.hero.dealNumber).toBe(118);
+		expect(opportunityDetail).not.toBeNull();
+
+		if (!opportunityDetail) {
+			throw new Error('Expected a detail view for the Honeywell opportunity.');
+		}
+
+		expect(opportunityDetail.rightRail.sections).toHaveLength(1);
+		expect(getRowsSection(opportunityDetail.rightRail, 'deal-overview')).not.toBeNull();
+		expect(getRowsSection(opportunityDetail.rightRail, 'deal-timing')).toBeNull();
+		expect(getHelpfulContactsSection(opportunityDetail.rightRail)).toBeNull();
+		expect(getRightRailRow(opportunityDetail.rightRail, 'claimed')).toBeNull();
+		expect(getRightRailRow(opportunityDetail.rightRail, 'last-activity')).toBeNull();
+		expect(opportunityDealNumberRow?.kind).toBe('deal-number');
+
+		if (opportunityDealNumberRow?.kind !== 'deal-number') {
+			throw new Error('Expected opportunity detail rail to include a deal-number row.');
+		}
+
+		expect(opportunityDealNumberRow.dealNumber).toBe(118);
+	});
+
+	it('derives since-last-meeting screens from canonical deal data', () => {
 		expect(sinceLastMeetingReferenceIso).toBe(activeMeetingDateIso);
 		expect(mockDb.meetings.listDateIsos()).toContain(activeMeetingDateIso);
 		expect(sinceLastMeetingTimelineItems.map((item) => item.id)).toEqual([
@@ -101,12 +175,11 @@ describe('dashboard data adapters', () => {
 			'deal-whirlpool',
 			'deal-3m'
 		]);
-
-		const point = forecastQuadrantChart.points.find((candidate) => candidate.id === 'deal-3m');
-
-		expect(point?.label).toBe('3M');
-		expect(point?.x).toBe(25);
-		expect(point?.y).toBe(74);
+		expect(sinceLastMeetingDeals.map((deal) => deal.activityLevel)).toEqual([
+			'high',
+			'low',
+			'high'
+		]);
 	});
 });
 
@@ -120,7 +193,7 @@ describe('dashboard header model', () => {
 				title: 'My deals'
 			},
 			actions: ['share'],
-			extra: 'add-deal'
+			extra: { kind: 'add-deal' }
 		});
 	});
 
@@ -141,12 +214,14 @@ describe('dashboard header model', () => {
 				{
 					id: 'need-support',
 					label: 'Need support',
-					href: '/all-activity?view=need-support',
+					href: '/all-activity/need-support',
 					current: true
 				}
 			]
 		};
-		const header = getDashboardHeader('/all-activity', { headerTitleMenu: titleMenu });
+		const header = getDashboardHeader('/all-activity/need-support', {
+			headerTitleMenu: titleMenu
+		});
 
 		expect(header).toEqual({
 			leading: {
@@ -155,15 +230,18 @@ describe('dashboard header model', () => {
 				menu: titleMenu
 			},
 			actions: ['share'],
-			extra: 'all-activity-filters'
+			extra: {
+				kind: 'filters',
+				filters: ['broker', 'activity-level']
+			}
 		});
 	});
 
 	it('renders dashboard overview routes as control-title headers', () => {
-		expect(getDashboardHeader('/forecast')).toEqual({
+		expect(getDashboardHeader('/since-last-meeting')).toEqual({
 			leading: {
 				kind: 'control-title',
-				title: 'Forecast',
+				title: 'Since last meeting',
 				control: { kind: 'meeting-date' }
 			},
 			actions: ['share', 'broker-switch']
@@ -180,9 +258,9 @@ describe('dashboard header model', () => {
 	});
 
 	it('preserves the current all-activity view in the detail back link', () => {
-		const header = getDashboardHeader('/all-activity/detail/deal-3m', {
+		const header = getDashboardHeader('/all-activity/duplicated-work/detail/deal-3m', {
 			hero: { title: '3M deal' },
-			headerBackHref: '/all-activity?view=need-support'
+			headerBackHref: '/all-activity/need-support'
 		});
 
 		expect(header).toEqual({
@@ -191,7 +269,7 @@ describe('dashboard header model', () => {
 				title: '3M deal',
 				control: {
 					kind: 'back-link',
-					href: '/all-activity?view=need-support',
+					href: '/all-activity/need-support',
 					label: 'All activity'
 				}
 			},

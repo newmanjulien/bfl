@@ -2,10 +2,13 @@ import {
 	toOrgChartNode,
 	toTimelineItem
 } from '$lib/dashboard/deal-view';
-import { toDealDetailRightRailData, toMetadataDetailRightRailData } from '$lib/dashboard/detail-rail';
+import {
+	toDetailRightRailData,
+	toDetailRightRailOverviewSection
+} from '$lib/dashboard/detail-rail';
 import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
 import type { ActivityLevel } from '$lib/domain/activity-level';
-import type { DealInsightKind } from '$lib/domain/deals';
+import type { DealInsightKind, DealInsightRecord, DealRecord } from '$lib/domain/deals';
 import { mockDb, type BrokerId } from '$lib/mock-db';
 import type { OrgChartNode, TimelineItem } from '$lib/presentation/models';
 import type { CanvasHeroData } from '$lib/ui/custom/canvas-hero';
@@ -13,6 +16,10 @@ import type { FileUploadFieldData } from '$lib/ui/skeleton/file-upload';
 
 export type OpportunityKind = DealInsightKind;
 type OpportunityTileAvatars = readonly [string, ...string[]];
+type DealInsightEntry = {
+	deal: DealRecord<BrokerId>;
+	insight: DealInsightRecord<BrokerId>;
+};
 
 export type OpportunityDetailHref = `/opportunities/detail/${string}`;
 
@@ -23,7 +30,7 @@ export type OpportunityTile = {
 	dealNumber: number;
 	dealLabel?: string;
 	avatars?: OpportunityTileAvatars;
-	activityLevel?: ActivityLevel;
+	activityLevel: ActivityLevel;
 };
 
 export type OpportunityDetailView = {
@@ -49,9 +56,20 @@ function getOwnerAvatars(ownerIds: readonly [BrokerId, ...BrokerId[]]): Opportun
 	];
 }
 
-function toTile(insightId: string): OpportunityTile {
-	const insight = mockDb.insights.requireById(insightId);
-	const deal = mockDb.deals.requireById(insight.dealId);
+function listDealInsightEntries(kind?: DealInsightKind) {
+	return mockDb.deals.list().flatMap<DealInsightEntry>((deal) =>
+		(deal.insights ?? [])
+			.filter((insight) => !kind || insight.kind === kind)
+			.map((insight) => ({ deal, insight }))
+	);
+}
+
+function getDealInsightEntryById(insightId: string) {
+	return allDealInsightEntries.find((entry) => entry.insight.id === insightId) ?? null;
+}
+
+function toTile(entry: DealInsightEntry): OpportunityTile {
+	const { deal, insight } = entry;
 
 	return {
 		id: insight.id,
@@ -60,34 +78,23 @@ function toTile(insightId: string): OpportunityTile {
 		dealNumber: deal.dealNumber,
 		dealLabel: deal.accountName,
 		avatars: getOwnerAvatars(insight.ownerBrokerIds),
-		activityLevel: insight.activityLevel
+		activityLevel: deal.activityLevel
 	};
 }
 
-function toSummaryRightRailData(insightId: string): DetailRightRailData {
-	const insight = mockDb.insights.requireById(insightId);
-	const deal = mockDb.deals.requireById(insight.dealId);
-	const rightRail = toMetadataDetailRightRailData(deal.dealId, {
-		activityLevel: insight.activityLevel,
-		limitation: 'missing-detail-context'
-	});
-
-	if (!rightRail) {
-		throw new Error(`Opportunity detail ${insightId} is missing the data required for metadata rail.`);
-	}
-
-	return rightRail;
+function toRightRailData(deal: DealRecord): DetailRightRailData {
+	return toDetailRightRailData([toDetailRightRailOverviewSection(deal)]);
 }
 
 function toDetailView(insightId: string): OpportunityDetailView | null {
-	const insight = mockDb.insights.getById(insightId);
+	const entry = getDealInsightEntryById(insightId);
 
-	if (!insight) {
+	if (!entry) {
 		return null;
 	}
 
-	const deal = mockDb.deals.requireById(insight.dealId);
-	const rightRail = toDealDetailRightRailData(deal.dealId) ?? toSummaryRightRailData(insight.id);
+	const { deal, insight } = entry;
+	const rightRail = toRightRailData(deal);
 
 	return {
 		hero: {
@@ -107,16 +114,17 @@ function toDetailView(insightId: string): OpportunityDetailView | null {
 	};
 }
 
-const opportunityInsights = mockDb.insights.list({ kind: 'opportunity' });
-const riskInsights = mockDb.insights.list({ kind: 'risk' });
+const allDealInsightEntries = listDealInsightEntries();
+const opportunityInsights = listDealInsightEntries('opportunity');
+const riskInsights = listDealInsightEntries('risk');
 
-export const opportunitiesTiles = opportunityInsights.map((insight) => toTile(insight.id));
-export const opportunityRiskTiles = riskInsights.map((insight) => toTile(insight.id));
+export const opportunitiesTiles = opportunityInsights.map((entry) => toTile(entry));
+export const opportunityRiskTiles = riskInsights.map((entry) => toTile(entry));
 
 export function getOpportunityDetailViewById(insightId: string): OpportunityDetailView | null {
 	return toDetailView(insightId);
 }
 
 export function getOpportunityDetailEntries() {
-	return mockDb.insights.listIds().map((detailId) => ({ detailId }));
+	return allDealInsightEntries.map(({ insight }) => ({ detailId: insight.id }));
 }

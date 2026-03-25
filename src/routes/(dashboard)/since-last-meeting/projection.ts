@@ -1,7 +1,4 @@
-import {
-	getDealActivityLevel,
-	sortDealActivitiesAscending
-} from '$lib/dashboard/deal-derivations';
+import { sortDealActivitiesAscending } from '$lib/dashboard/deal-derivations';
 import { activeMeetingDateIso } from '$lib/dashboard/meeting-date';
 import { toTimelineItem } from '$lib/dashboard/deal-view';
 import { mockDb } from '$lib/mock-db';
@@ -30,17 +27,11 @@ const dealsSinceLastMeeting = meetingUpdateActivities.flatMap((activity) => {
 
 export const sinceLastMeetingDeals = dealsSinceLastMeeting
 	.map((deal) => {
-		const activityLevel = getDealActivityLevel(deal);
-
-		if (!activityLevel) {
-			throw new Error(`Deal ${deal.dealId} is missing an activity trend for since-last-meeting.`);
-		}
-
 		return {
 			id: deal.dealId,
 			deal: deal.dealName,
 			probability: deal.probability,
-			activityLevel,
+			activityLevel: deal.activityLevel,
 			stage: deal.stage
 		};
 	}) satisfies readonly DealSummaryRow[];

@@ -1,4 +1,4 @@
-import { Activity, CircleQuestionMark, LayoutGrid, Lightbulb, List, Rss } from 'lucide-svelte';
+import { Activity, CircleQuestionMark, Lightbulb, List, Rss } from 'lucide-svelte';
 import { DASHBOARD_STATIC_ROUTES, type DashboardStaticHref } from '$lib/dashboard/routes';
 
 type DashboardNavIcon = typeof Rss;
@@ -85,11 +85,6 @@ export const DASHBOARD_NAV_SECTIONS: readonly DashboardNavSection[] = [
 				href: DASHBOARD_STATIC_ROUTES['since-last-meeting'],
 				label: 'Since last meeting',
 				icon: Activity
-			}),
-			createRouteItem({
-				href: DASHBOARD_STATIC_ROUTES.forecast,
-				label: 'Forecast',
-				icon: LayoutGrid
 			}),
 			createRouteItem({
 				href: DASHBOARD_STATIC_ROUTES.opportunities,

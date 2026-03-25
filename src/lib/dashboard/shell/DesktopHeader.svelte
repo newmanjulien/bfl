@@ -50,17 +50,22 @@
 				{/each}
 			{/if}
 
-			{#if header.extra === 'add-deal'}
+			{#if header.extra?.kind === 'add-deal'}
 				<button
 					type="button"
 					class="mr-2 flex h-7 items-center justify-center rounded-sm border border-zinc-100 px-2 text-xs font-medium tracking-wide text-zinc-500 transition-colors hover:bg-zinc-100"
 				>
 					Add deal
 				</button>
-			{:else if header.extra === 'all-activity-filters'}
+			{:else if header.extra?.kind === 'filters'}
 				<div class="flex items-center gap-2">
-					<BrokerFilterMenu menuId="desktop-broker-filter" {people} />
-					<ActivityLevelFilterMenu menuId="desktop-activity-filter" />
+					{#each header.extra.filters as filter (filter)}
+						{#if filter === 'broker'}
+							<BrokerFilterMenu menuId="desktop-broker-filter" {people} />
+						{:else if filter === 'activity-level'}
+							<ActivityLevelFilterMenu menuId="desktop-activity-filter" />
+						{/if}
+					{/each}
 				</div>
 			{/if}
 

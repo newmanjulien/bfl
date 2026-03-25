@@ -2,7 +2,7 @@ import type {
 	DealActivityRecord,
 	DealBrokerLinkRecord,
 	DealContextRecord,
-	DealForecastRecord,
+	DealHelpfulContactRecord,
 	DealInsightRecord,
 	DealNewsRecord
 } from '$lib/domain/deals';
@@ -12,8 +12,6 @@ import {
 	dealActivities,
 	dealBrokerLinks,
 	dealContexts,
-	dealForecasts,
-	dealInsights,
 	dealNews,
 	deals
 } from './records';
@@ -76,6 +74,49 @@ function assertContextBrokerReferences(context: DealContextRecord<BrokerId>) {
 	assertOrgChartBrokerReferences(context.orgChartRoot, `deal context ${context.dealId}`);
 }
 
+function assertHelpfulContactReferences(
+	helpfulContact: DealHelpfulContactRecord,
+	dealId: string
+) {
+	if (helpfulContact.linkedInUrl.trim().length === 0) {
+		throw new Error(
+			`Deal context ${dealId} helpful contact ${helpfulContact.id} is missing linkedInUrl.`
+		);
+	}
+}
+
+function assertContextHelpfulContacts(context: DealContextRecord<BrokerId>) {
+	const helpfulContactIds = new Set<string | number>();
+
+	for (const helpfulContact of context.helpfulContacts ?? []) {
+		assertUniqueValue(
+			helpfulContact.id,
+			helpfulContactIds,
+			`deal context helpful contact id for ${context.dealId}`
+		);
+		assertHelpfulContactReferences(helpfulContact, context.dealId);
+	}
+}
+
+function assertDealInsights(
+	insights: readonly DealInsightRecord<BrokerId>[] | undefined,
+	dealId: string,
+	dealIds: ReadonlySet<string>,
+	dealInsightIdValues: Set<string | number>
+) {
+	for (const insight of insights ?? []) {
+		assertUniqueValue(insight.id, dealInsightIdValues, 'deal insight id');
+
+		if (insight.dealId !== dealId) {
+			throw new Error(
+				`Deal ${dealId} contains insight ${insight.id} with mismatched dealId ${insight.dealId}.`
+			);
+		}
+
+		assertInsightReferences(insight, dealIds);
+	}
+}
+
 function assertDealReferencesExist() {
 	const dealIds = new Set(deals.map((deal) => deal.dealId));
 	const dealNumberValues = new Set<string | number>();
@@ -84,13 +125,12 @@ function assertDealReferencesExist() {
 	const dealActivityIdValues = new Set<string | number>();
 	const dealNewsIdValues = new Set<string | number>();
 	const dealInsightIdValues = new Set<string | number>();
-	const dealForecastIdValues = new Set<string | number>();
-	const dealForecastDealIdValues = new Set<string | number>();
 	const dealContextDealIdValues = new Set<string | number>();
 
 	for (const deal of deals) {
 		assertUniqueValue(deal.dealId, dealIdValues, 'dealId');
 		assertUniqueValue(deal.dealNumber, dealNumberValues, 'dealNumber');
+		assertDealInsights(deal.insights, deal.dealId, dealIds, dealInsightIdValues);
 	}
 
 	for (const link of dealBrokerLinks) {
@@ -106,17 +146,6 @@ function assertDealReferencesExist() {
 	for (const newsItem of dealNews) {
 		assertUniqueValue(newsItem.id, dealNewsIdValues, 'deal news id');
 		assertNewsReferences(newsItem, dealIds);
-	}
-
-	for (const insight of dealInsights) {
-		assertUniqueValue(insight.id, dealInsightIdValues, 'deal insight id');
-		assertInsightReferences(insight, dealIds);
-	}
-
-	for (const forecast of dealForecasts) {
-		assertUniqueValue(forecast.id, dealForecastIdValues, 'deal forecast id');
-		assertUniqueValue(forecast.dealId, dealForecastDealIdValues, 'deal forecast dealId');
-		assertForecastReferences(forecast, dealIds);
 	}
 
 	for (const context of dealContexts) {
@@ -174,15 +203,6 @@ function assertInsightReferences(
 	assertInsightBrokerReferences(insight);
 }
 
-function assertForecastReferences(
-	forecast: DealForecastRecord,
-	dealIds: ReadonlySet<string>
-) {
-	if (!dealIds.has(forecast.dealId)) {
-		throw new Error(`Deal forecast ${forecast.id} references an unknown deal: ${forecast.dealId}.`);
-	}
-}
-
 function assertContextReferences(
 	context: DealContextRecord<BrokerId>,
 	dealIds: ReadonlySet<string>
@@ -192,6 +212,7 @@ function assertContextReferences(
 	}
 
 	assertContextBrokerReferences(context);
+	assertContextHelpfulContacts(context);
 }
 
 export function validateDealRecords() {

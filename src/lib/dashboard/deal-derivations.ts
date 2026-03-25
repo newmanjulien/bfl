@@ -1,8 +1,4 @@
-import {
-	getActivityLevelFromTrend,
-	type ActivityLevel
-} from '$lib/domain/activity-level';
-import type { DealNewsRecord, DealRecord } from '$lib/domain/deals';
+import type { DealNewsRecord } from '$lib/domain/deals';
 import type { IsoDateString } from '$lib/domain/date-time';
 
 type ActivityRecordLike = {
@@ -11,10 +7,6 @@ type ActivityRecordLike = {
 };
 
 type NewsRecordLike = Pick<DealNewsRecord, 'id' | 'publishedOnIso'>;
-
-export function getDealActivityLevel(deal: DealRecord): ActivityLevel | null {
-	return deal.activityTrend ? getActivityLevelFromTrend(deal.activityTrend) : null;
-}
 
 export function sortDealActivitiesAscending<T extends ActivityRecordLike>(records: readonly T[]) {
 	return [...records].sort((left, right) => {

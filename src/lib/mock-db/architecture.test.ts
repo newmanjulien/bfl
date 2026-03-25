@@ -12,8 +12,6 @@ describe('mock db architecture', () => {
 			'brokers',
 			'contexts',
 			'deals',
-			'forecasts',
-			'insights',
 			'meetings',
 			'news'
 		]);

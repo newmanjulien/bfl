@@ -1,5 +1,4 @@
 import type { ActivityLevel } from '$lib/domain/activity-level';
-import type { ActivityTrendChartData } from '$lib/domain/activity-trend';
 import type { IsoDateString, IsoDateTimeString } from '$lib/domain/date-time';
 import type { OrgChartContactNode } from '$lib/domain/org-chart';
 
@@ -13,15 +12,16 @@ export const DEAL_STAGES = [
 
 export type DealStage = (typeof DEAL_STAGES)[number];
 
-export type DealRecord = {
+export type DealRecord<BrokerId extends string = string> = {
 	dealId: string;
 	dealNumber: number;
 	accountName: string;
 	dealName: string;
 	probability: number;
 	stage: DealStage;
-	activityTrend?: ActivityTrendChartData;
+	activityLevel: ActivityLevel;
 	lastActivityAtIso?: IsoDateTimeString;
+	insights?: readonly DealInsightRecord<BrokerId>[];
 };
 
 export type DealSnapshot = Pick<
@@ -79,6 +79,14 @@ export type DealNewsRecord = {
 	publishedOnIso: IsoDateString;
 };
 
+export type DealHelpfulContactRecord = {
+	id: string;
+	name: string;
+	title: string;
+	company: string;
+	linkedInUrl: string;
+};
+
 export type DealInsightKind = 'opportunity' | 'risk';
 
 export type DealInsightRecord<BrokerId extends string = string> = {
@@ -86,17 +94,9 @@ export type DealInsightRecord<BrokerId extends string = string> = {
 	dealId: string;
 	kind: DealInsightKind;
 	title: string;
-	activityLevel: ActivityLevel;
 	ownerBrokerIds: readonly [BrokerId, ...BrokerId[]];
 	timeline: readonly DealActivityRecord<BrokerId>[];
 	orgChartRoot: OrgChartContactNode<BrokerId>;
-};
-
-export type DealForecastRecord = {
-	id: string;
-	dealId: string;
-	overbaseProbability: number;
-	description: string;
 };
 
 export type DealContextRecord<ContactById extends string = string> = {
@@ -104,4 +104,5 @@ export type DealContextRecord<ContactById extends string = string> = {
 	summary: string;
 	claimedAtIso: IsoDateTimeString;
 	orgChartRoot: OrgChartContactNode<ContactById>;
+	helpfulContacts?: readonly DealHelpfulContactRecord[];
 };

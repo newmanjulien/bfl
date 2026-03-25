@@ -53,7 +53,7 @@
 			</div>
 		</div>
 
-	<aside class="dashboard-detail-rail-shell w-full lg:border-l lg:border-zinc-100">
+	<aside class="dashboard-detail-rail-shell hidden w-full lg:block lg:border-l lg:border-zinc-100">
 		<div class="dashboard-detail-rail-frame mx-auto w-full px-4 sm:px-6 lg:max-w-none lg:px-0">
 			<div
 				class="dashboard-detail-rail-surface overflow-hidden rounded-sm border border-zinc-100 bg-white lg:rounded-none lg:border-0"
@@ -70,11 +70,6 @@
 		--dashboard-detail-rail-width: 22rem;
 	}
 
-	.dashboard-detail-rail-frame {
-		margin-top: 1.5rem;
-		max-width: var(--dashboard-feed-max-width);
-	}
-
 	@media (min-width: 1024px) {
 		.dashboard-detail-layout {
 			min-height: 100cqh;
@@ -82,7 +77,6 @@
 		}
 
 		.dashboard-detail-rail-frame {
-			margin-top: 0;
 			height: 100%;
 		}
 
