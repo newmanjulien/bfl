@@ -1,14 +1,14 @@
-	<script lang="ts">
-		import { ChevronRight, Ellipsis, PanelLeft } from 'lucide-svelte';
-		import type { DashboardHeader } from '$lib/dashboard/shell/dashboard-header';
+<script lang="ts">
+	import { Ellipsis, PanelLeft } from 'lucide-svelte';
 	import type { PersonSummary } from '$lib/domain/people';
+	import type { DashboardHeader } from '$lib/dashboard/shell/dashboard-header';
 	import { useDashboardShellState } from '$lib/dashboard/state.svelte';
 	import { mockDb } from '$lib/mock-db';
 	import ActivityLevelFilterMenu from '$lib/dashboard/shell/menus/ActivityLevelFilterMenu.svelte';
 	import BrokerFilterMenu from '$lib/dashboard/shell/menus/BrokerFilterMenu.svelte';
 	import BrokerSwitchMenu from '$lib/dashboard/shell/menus/BrokerSwitchMenu.svelte';
 	import ShareMenu from '$lib/dashboard/shell/menus/ShareMenu.svelte';
-	import HeaderContextControl from './HeaderContextControl.svelte';
+	import DesktopHeaderLeading from './DesktopHeaderLeading.svelte';
 
 	type Props = {
 		header: DashboardHeader | null | undefined;
@@ -20,7 +20,6 @@
 	const people: PersonSummary[] = mockDb.brokers
 		.list()
 		.map(({ id, name, avatar }) => ({ id, name, avatar }));
-	const contextControlClass = 'mr-2 ml-1 hover:text-zinc-400';
 </script>
 
 {#if header}
@@ -37,25 +36,7 @@
 				<PanelLeft class="h-3.5 w-3.5" />
 			</button>
 
-			{#if header.mode === 'context'}
-				{#if header.control}
-					<HeaderContextControl
-						control={header.control}
-						menuId="desktop-header-context-control"
-						placement="bottom-start"
-						class={contextControlClass}
-					/>
-				{/if}
-
-				<ChevronRight class="mr-2 h-3 w-3 text-zinc-200" />
-				<p class="mr-2 min-w-0 truncate text-xs font-medium tracking-wide text-zinc-900">
-					{header.title}
-				</p>
-			{:else}
-				<p class="mr-2 ml-1 min-w-0 truncate text-xs font-medium tracking-wide text-zinc-500">
-					{header.title}
-				</p>
-			{/if}
+			<DesktopHeaderLeading leading={header.leading} />
 		</div>
 
 		<div class="flex items-center gap-2">
@@ -83,13 +64,13 @@
 				</div>
 			{/if}
 
-				<button
-					type="button"
-					aria-label="More actions"
-					class="flex h-7 w-7 items-center justify-center rounded-sm border border-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-100"
-				>
-					<Ellipsis class="h-3 w-3" />
-				</button>
-			</div>
-		</header>
-	{/if}
+			<button
+				type="button"
+				aria-label="More actions"
+				class="flex h-7 w-7 items-center justify-center rounded-sm border border-zinc-100 text-zinc-500 transition-colors hover:bg-zinc-100"
+			>
+				<Ellipsis class="h-3 w-3" />
+			</button>
+		</div>
+	</header>
+{/if}

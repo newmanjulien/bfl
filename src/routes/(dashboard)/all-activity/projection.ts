@@ -15,6 +15,17 @@ import type { OrgChartNode, TimelineItem } from '$lib/presentation/models';
 import type { CanvasHeroData } from '$lib/ui/custom/canvas-hero';
 import type { FileUploadFieldData } from '$lib/ui/skeleton/file-upload';
 
+export const ALL_ACTIVITY_VIEW_OPTIONS = [
+	{ id: 'deals', label: 'Deals' },
+	{ id: 'need-support', label: 'Need support' },
+	{ id: 'duplicated-work', label: 'Duplicated work' }
+] as const;
+
+export type AllActivityView = (typeof ALL_ACTIVITY_VIEW_OPTIONS)[number]['id'];
+
+type NonDefaultAllActivityView = Exclude<AllActivityView, 'deals'>;
+type AllActivityDetailPathHref = `/all-activity/detail/${string}`;
+
 export type AllActivityDetailView = {
 	hero: CanvasHeroData;
 	activityItems: readonly TimelineItem[];
@@ -23,7 +34,13 @@ export type AllActivityDetailView = {
 	rightRail: DetailRightRailData;
 };
 
-export type AllActivityDetailHref = `/all-activity/detail/${string}`;
+export type AllActivityListHref =
+	| '/all-activity'
+	| `/all-activity?view=${NonDefaultAllActivityView}`;
+
+export type AllActivityDetailHref =
+	| AllActivityDetailPathHref
+	| `${AllActivityDetailPathHref}?view=${NonDefaultAllActivityView}`;
 
 export type AllActivityRowNavigation =
 	| {
@@ -45,8 +62,70 @@ export type AllActivityTableRow = {
 	owner: PersonSummary | null;
 };
 
-function toAllActivityDetailHref(dealId: string): AllActivityDetailHref {
+const DEFAULT_ALL_ACTIVITY_VIEW: AllActivityView = 'deals';
+
+const NEED_SUPPORT_ROW_IDS = new Set([
+	'deal-tyson',
+	'deal-kroger',
+	'deal-hilton',
+	'deal-home-depot',
+	'deal-costco',
+	'deal-fedex',
+	'deal-ups',
+	'deal-lowes',
+	'deal-ikea',
+	'deal-united-rentals',
+	'deal-sysco'
+]);
+
+const DUPLICATED_WORK_ROW_IDS = new Set([
+	'deal-3m',
+	'deal-costco',
+	'deal-united-rentals'
+]);
+
+function toAllActivityDetailPathHref(dealId: string): AllActivityDetailPathHref {
 	return `/all-activity/detail/${dealId}`;
+}
+
+export function parseAllActivityView(rawValue: string | null | undefined): AllActivityView {
+	if (rawValue === 'need-support' || rawValue === 'duplicated-work') {
+		return rawValue;
+	}
+
+	return DEFAULT_ALL_ACTIVITY_VIEW;
+}
+
+export function getAllActivityViewLabel(view: AllActivityView) {
+	return (
+		ALL_ACTIVITY_VIEW_OPTIONS.find((option) => option.id === view)?.label ??
+		ALL_ACTIVITY_VIEW_OPTIONS[0].label
+	);
+}
+
+export function buildAllActivityListHref(view: AllActivityView): AllActivityListHref {
+	if (view === DEFAULT_ALL_ACTIVITY_VIEW) {
+		return '/all-activity';
+	}
+
+	if (view === 'need-support') {
+		return '/all-activity?view=need-support';
+	}
+
+	return '/all-activity?view=duplicated-work';
+}
+
+export function buildAllActivityDetailHref(
+	dealId: string,
+	view: AllActivityView
+): AllActivityDetailHref {
+	const detailPathHref = toAllActivityDetailPathHref(dealId);
+
+	if (view === DEFAULT_ALL_ACTIVITY_VIEW) {
+		return detailPathHref;
+	}
+
+	return `${detailPathHref}?view=${view}` as AllActivityDetailHref;
 }
 
 function requireActivityLevel(deal: DealRecord) {
@@ -92,7 +171,7 @@ function toAllActivityTableRow(deal: DealRecord): AllActivityTableRow {
 		navigation: mockDb.contexts.getByDealId(deal.dealId)
 			? {
 					kind: 'detail',
-					href: toAllActivityDetailHref(deal.dealId)
+					href: buildAllActivityDetailHref(deal.dealId, DEFAULT_ALL_ACTIVITY_VIEW)
 				}
 			: {
 					kind: 'none'
@@ -112,6 +191,55 @@ const allActivityDeals = mockDb
 	.filter(hasDetailActivityData);
 
 export const allActivityTableRows = allActivityDeals.map(toAllActivityTableRow);
+
+function applyAllActivityViewToRow(
+	row: AllActivityTableRow,
+	view: AllActivityView
+): AllActivityTableRow {
+	if (row.navigation.kind !== 'detail') {
+		return row;
+	}
+
+	const href = buildAllActivityDetailHref(row.id, view);
+
+	if (row.navigation.href === href) {
+		return row;
+	}
+
+	return {
+		...row,
+		navigation: {
+			kind: 'detail',
+			href
+		}
+	};
+}
+
+function getVisibleAllActivityRowIds(view: AllActivityView) {
+	if (view === 'need-support') {
+		return NEED_SUPPORT_ROW_IDS;
+	}
+
+	if (view === 'duplicated-work') {
+		return DUPLICATED_WORK_ROW_IDS;
+	}
+
+	return null;
+}
+
+export function getAllActivityRowsForView(view: AllActivityView) {
+	const visibleRowIds = getVisibleAllActivityRowIds(view);
+	const rows =
+		visibleRowIds === null
+			? allActivityTableRows
+			: allActivityTableRows.filter((row) => visibleRowIds.has(row.id));
+
+	if (view === DEFAULT_ALL_ACTIVITY_VIEW) {
+		return rows;
+	}
+
+	return rows.map((row) => applyAllActivityViewToRow(row, view));
+}
 
 export function getAllActivityDetailViewById(dealId: string): AllActivityDetailView | null {
 	const deal = mockDb.deals.getById(dealId);

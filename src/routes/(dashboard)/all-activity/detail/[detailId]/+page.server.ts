@@ -1,10 +1,16 @@
 import { error } from '@sveltejs/kit';
-import { getAllActivityDetailEntries, getAllActivityDetailViewById } from '../../projection';
+import {
+	buildAllActivityListHref,
+	getAllActivityDetailEntries,
+	getAllActivityDetailViewById,
+	parseAllActivityView
+} from '../../projection';
 
 export const entries = () => getAllActivityDetailEntries();
 
-export const load = ({ params }) => {
+export const load = ({ params, url }) => {
 	const detail = getAllActivityDetailViewById(params.detailId);
+	const selectedView = parseAllActivityView(url.searchParams.get('view'));
 
 	if (!detail) error(404, 'Not found');
 
@@ -13,6 +19,7 @@ export const load = ({ params }) => {
 		activityItems: detail.activityItems,
 		orgChartRoot: detail.orgChartRoot,
 		update: detail.update,
-		rightRail: detail.rightRail
+		rightRail: detail.rightRail,
+		headerBackHref: buildAllActivityListHref(selectedView)
 	};
 };

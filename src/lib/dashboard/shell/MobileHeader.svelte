@@ -2,7 +2,7 @@
 	import { Menu } from 'lucide-svelte';
 	import type { DashboardHeader } from '$lib/dashboard/shell/dashboard-header';
 	import { useDashboardShellState } from '$lib/dashboard/state.svelte';
-	import HeaderContextControl from './HeaderContextControl.svelte';
+	import HeaderLeadingControl from './HeaderLeadingControl.svelte';
 	import HomeLink from './HomeLink.svelte';
 
 	type Props = {
@@ -11,7 +11,7 @@
 
 	let { header }: Props = $props();
 	const shellState = useDashboardShellState();
-	const contextControlClass =
+	const leadingControlClass =
 		'!mr-0 !ml-0 h-8 min-w-0 max-w-full justify-center rounded-sm px-2 text-center hover:bg-zinc-100 hover:text-zinc-900';
 </script>
 
@@ -21,20 +21,18 @@
 	</div>
 	<div class="min-w-0 flex-1 px-2 text-center">
 		{#if header}
-			{#if header.mode === 'context'}
-				{#if header.control}
-					<div class="flex justify-center">
-						<HeaderContextControl
-							control={header.control}
-							menuId="mobile-header-context-control"
-							placement="bottom"
-							class={contextControlClass}
-						/>
-					</div>
-				{/if}
+			{#if header.leading.kind === 'control-title'}
+				<div class="flex justify-center">
+					<HeaderLeadingControl
+						control={header.leading.control}
+						menuId="mobile-header-leading-control"
+						placement="bottom"
+						class={leadingControlClass}
+					/>
+				</div>
 			{:else}
 				<span class="block truncate text-xs font-medium tracking-wide text-zinc-600">
-					{header.title}
+					{header.leading.title}
 				</span>
 			{/if}
 		{/if}

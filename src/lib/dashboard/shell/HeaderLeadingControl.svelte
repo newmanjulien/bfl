@@ -3,8 +3,8 @@
 	import type { DashboardHeaderControl } from '$lib/dashboard/shell/dashboard-header';
 	import MeetingDateMenu from '$lib/dashboard/shell/menus/MeetingDateMenu.svelte';
 
-	const BASE_CONTROL_CLASS =
-		'dashboard-header-context-control inline-flex items-center text-xs font-medium tracking-wide transition-colors';
+	const BASE_LEADING_CONTROL_CLASS =
+		'dashboard-header-leading-control inline-flex items-center text-xs font-medium tracking-wide transition-colors';
 
 	type Props = {
 		control: DashboardHeaderControl;
@@ -16,7 +16,7 @@
 	let { control, menuId, placement = 'bottom-start', class: classProp = '' }: Props = $props();
 
 	const controlClass = $derived(
-		classProp ? `${BASE_CONTROL_CLASS} ${classProp}` : BASE_CONTROL_CLASS
+		classProp ? `${BASE_LEADING_CONTROL_CLASS} ${classProp}` : BASE_LEADING_CONTROL_CLASS
 	);
 </script>
 
