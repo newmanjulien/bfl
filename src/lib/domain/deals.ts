@@ -75,7 +75,6 @@ export type DealNewsRecord = {
 	id: string;
 	dealId: string;
 	title: string;
-	description: string;
 	source: DealNewsSource;
 	publishedOnIso: IsoDateString;
 };
@@ -87,7 +86,6 @@ export type DealInsightRecord<BrokerId extends string = string> = {
 	dealId: string;
 	kind: DealInsightKind;
 	title: string;
-	summary: string;
 	activityLevel: ActivityLevel;
 	ownerBrokerIds: readonly [BrokerId, ...BrokerId[]];
 	timeline: readonly DealActivityRecord<BrokerId>[];

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { DealSummaryRow } from '$lib/presentation/deal-summary';
 	import ActivityLevelLabel from './ActivityLevelLabel.svelte';
-	import ResponsiveTableShell from './ResponsiveTableShell.svelte';
 
 	type Props = {
 		rows: readonly DealSummaryRow[];
@@ -10,7 +9,7 @@
 	let { rows }: Props = $props();
 
 	const headers = ['Deal', 'Probability', 'Activity level', 'Stage'] as const;
-	const columnsClass =
+	const columnClass =
 		'grid-cols-[minmax(9rem,1.15fr)_minmax(9rem,1fr)_minmax(8.5rem,0.95fr)_minmax(8rem,0.9fr)] md:grid-cols-4';
 	const minWidthClass = 'min-w-[40rem] md:min-w-full';
 </script>
@@ -30,19 +29,35 @@
 	</span>
 {/snippet}
 
-<ResponsiveTableShell
-	headers={headers}
-	{columnsClass}
-	{minWidthClass}
-	isEmpty={rows.length === 0}
-	ariaLabel="Deal summary table"
-	class="pt-1"
->
-	{#snippet body()}
-		{#each rows as row (row.id)}
-			<div data-table-row class={columnsClass}>
-				{@render rowCells(row)}
+<div class="pt-1">
+	<div class="dashboard-table-shell rounded-sm border border-zinc-100 bg-white">
+		<div
+			data-table-scroll
+			class="overflow-x-auto overflow-y-hidden overscroll-x-contain"
+			role="region"
+			aria-label="Deal summary table"
+		>
+			<div class={`w-max min-w-full md:w-full ${minWidthClass}`}>
+				<div class={`grid border-b border-zinc-100 bg-zinc-50/80 ${columnClass}`}>
+					{#each headers as header (header)}
+						<span data-table-header-cell class="text-left font-normal text-zinc-500">
+							{header}
+						</span>
+					{/each}
+				</div>
+
+				{#if rows.length === 0}
+					<div data-table-empty class="text-zinc-500">No rows available.</div>
+				{:else}
+					<div class="divide-y divide-zinc-100">
+						{#each rows as row (row.id)}
+							<div data-table-row class={columnClass}>
+								{@render rowCells(row)}
+							</div>
+						{/each}
+					</div>
+				{/if}
 			</div>
-		{/each}
-	{/snippet}
-</ResponsiveTableShell>
+		</div>
+	</div>
+</div>

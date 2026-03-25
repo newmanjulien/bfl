@@ -14,13 +14,6 @@ export const load = () => {
 	};
 
 	return {
-		header: {
-			mode: 'context',
-			title: 'Since last meeting',
-			control: 'meeting-date',
-			actions: ['share', 'broker-switch'],
-			extra: 'none'
-		},
 		hero: {
 			title: 'Since your last meeting with Julien',
 			description:

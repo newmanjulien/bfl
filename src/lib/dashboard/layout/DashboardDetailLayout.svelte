@@ -1,7 +1,9 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { cn } from '$lib/support/cn';
-	import DashboardFeedLayout from './DashboardFeedLayout.svelte';
+	import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
+	import type { CanvasHeroData, CanvasHeroIcon } from '$lib/ui/custom/canvas-hero';
+	import CanvasHero from '$lib/ui/custom/CanvasHero.svelte';
+	import DetailRightRail from '$lib/ui/custom/DetailRightRail.svelte';
 	import {
 		getDashboardDetailRailWidth,
 		getDashboardLayoutMaxWidth,
@@ -10,47 +12,53 @@
 	} from './tokens';
 
 	type Props = {
-		header: Snippet;
+		hero: CanvasHeroData;
+		icon?: CanvasHeroIcon;
 		width?: DashboardLayoutWidth;
 		railWidth?: DashboardDetailRailWidth;
 		class?: string;
-		contentClass?: string;
-		rightRail: Snippet;
-		children?: Snippet;
+		rightRailData: DetailRightRailData;
+		body?: Snippet;
 	};
 
 	let {
-		header,
+		hero,
+		icon,
 		width = 'normal',
 		railWidth = 'standard',
-		class: className = '',
-		contentClass = '',
-		rightRail,
-		children
+		class: classProp = '',
+		rightRailData,
+		body
 	}: Props = $props();
 
 	const maxWidth = $derived(getDashboardLayoutMaxWidth(width));
 	const detailRailWidth = $derived(getDashboardDetailRailWidth(railWidth));
+	const layoutClass = $derived(
+		classProp ? `dashboard-detail-layout grid min-h-full grid-cols-1 ${classProp}` : 'dashboard-detail-layout grid min-h-full grid-cols-1'
+	);
 </script>
 
 <div
-	class={cn('dashboard-detail-layout grid min-h-full grid-cols-1', className)}
+	class={layoutClass}
 	style={`--dashboard-feed-max-width: ${maxWidth}; --dashboard-detail-rail-width: ${detailRailWidth};`}
 >
-	<div class="min-w-0">
-		<DashboardFeedLayout {header} {width} contentClass={contentClass}>
-			{#if children}
-				{@render children()}
-			{/if}
-		</DashboardFeedLayout>
-	</div>
+		<div class="min-w-0">
+			<div class="relative mx-auto w-full" style={`max-width: ${maxWidth};`}>
+					<div class="px-4 pt-8 pb-6 sm:px-6 lg:px-8">
+						<CanvasHero {hero} {icon} />
+						{#if body}
+							{@render body()}
+						{/if}
+				</div>
+			</div>
+		</div>
 
 	<aside class="dashboard-detail-rail-shell w-full lg:border-l lg:border-zinc-100">
 		<div class="dashboard-detail-rail-frame mx-auto w-full px-4 sm:px-6 lg:max-w-none lg:px-0">
 			<div
 				class="dashboard-detail-rail-surface overflow-hidden rounded-sm border border-zinc-100 bg-white lg:rounded-none lg:border-0"
 			>
-				{@render rightRail()}
+				<DetailRightRail data={rightRailData} />
 			</div>
 		</div>
 	</aside>

@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { Menu } from '@skeletonlabs/skeleton-svelte';
 	import type { PersonSummary } from '$lib/domain/people';
-	import { shellState } from '$lib/dashboard/state.svelte';
-	import PortaledMenuPositioner from '$lib/ui/overlay/PortaledMenuPositioner.svelte';
+	import { cn } from '$lib/support/cn';
+	import {
+		DASHBOARD_MENU_PANEL_CLASS,
+		DASHBOARD_MENU_PLACEMENT_CLASS,
+		dismissibleMenu
+	} from './menu-interactions';
 
 	type Props = {
 		menuId: string;
@@ -11,19 +14,40 @@
 	};
 
 	let { menuId, people, triggerLabel = 'Switch' }: Props = $props();
+	let isOpen = $state(false);
+	let triggerElement = $state<HTMLButtonElement | null>(null);
+	const panelId = $derived(`dashboard-menu-${menuId}`);
+	const menuPanelClass = $derived(
+		cn(DASHBOARD_MENU_PANEL_CLASS, DASHBOARD_MENU_PLACEMENT_CLASS['bottom-end'])
+	);
+
+	function closeMenu() {
+		isOpen = false;
+	}
+
+	function toggleMenu() {
+		isOpen = !isOpen;
+	}
 </script>
 
-<Menu
-	open={shellState.isMenuOpen(menuId)}
-	onOpenChange={(details: { open: boolean }) => shellState.setMenuOpen(menuId, details.open)}
-	positioning={{ placement: 'bottom-end', gutter: 4 }}
+<div
+	use:dismissibleMenu={{ open: isOpen, close: closeMenu, trigger: triggerElement }}
+	class="relative inline-flex shrink-0"
 >
-	<Menu.Trigger class="mr-2 flex h-7 items-center justify-center rounded-sm border border-zinc-100 px-2 text-xs font-medium tracking-wide text-zinc-500 transition-colors hover:bg-zinc-100">
+	<button
+		bind:this={triggerElement}
+		type="button"
+		aria-haspopup="menu"
+		aria-expanded={isOpen}
+		aria-controls={isOpen ? panelId : undefined}
+		class="mr-2 flex h-7 items-center justify-center rounded-sm border border-zinc-100 px-2 text-xs font-medium tracking-wide text-zinc-500 transition-colors hover:bg-zinc-100"
+		onclick={toggleMenu}
+	>
 		{triggerLabel}
-	</Menu.Trigger>
+	</button>
 
-	<PortaledMenuPositioner>
-		<Menu.Content class="min-w-56 rounded-md border border-zinc-100 bg-white p-1 shadow-sm">
+	{#if isOpen}
+		<div id={panelId} role="menu" aria-orientation="vertical" class={menuPanelClass}>
 			<p class="px-3 pt-3 pb-1 text-xs font-medium tracking-wide text-zinc-500">
 				Switch broker
 			</p>
@@ -31,26 +55,26 @@
 			<ul class="mt-1 space-y-1">
 				{#each people as person (person.id)}
 					<li>
-						<Menu.Item
-							value={person.id}
+						<button
+							type="button"
+							role="menuitem"
 							class="w-full rounded-md px-3 py-2 text-left text-xs text-zinc-700 transition-colors hover:bg-zinc-100"
+							onclick={closeMenu}
 						>
 							<div class="flex items-center gap-2">
-								<span
-									class="inline-flex h-7 w-7 shrink-0 overflow-hidden rounded-full border border-zinc-200"
-								>
+								<span class="inline-flex h-7 w-7 shrink-0 overflow-hidden rounded-full border border-zinc-200">
 									<img
 										src={person.avatar}
 										alt={`${person.name} avatar`}
 										class="h-full w-full object-cover"
 									/>
 								</span>
-								<Menu.ItemText class="font-medium">{person.name}</Menu.ItemText>
+								<span class="font-medium">{person.name}</span>
 							</div>
-						</Menu.Item>
+						</button>
 					</li>
 				{/each}
 			</ul>
-		</Menu.Content>
-	</PortaledMenuPositioner>
-</Menu>
+		</div>
+	{/if}
+</div>

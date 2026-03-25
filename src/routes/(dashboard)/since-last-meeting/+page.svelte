@@ -1,7 +1,8 @@
 <script lang="ts">
-	import DashboardFeedLayout from '$lib/dashboard/layout/DashboardFeedLayout.svelte';
+	import { getDashboardLayoutMaxWidth } from '$lib/dashboard/layout/tokens';
 	import CanvasHero from '$lib/ui/custom/CanvasHero.svelte';
 	import DealSummaryTableSection from '$lib/ui/custom/DealSummaryTableSection.svelte';
+	import SectionTabPanel from '$lib/ui/custom/SectionTabPanel.svelte';
 	import SectionTabs from '$lib/ui/custom/SectionTabs.svelte';
 	import FileUploadField from '$lib/ui/skeleton/FileUploadField.svelte';
 	import TimelineSection from '$lib/ui/custom/TimelineSection.svelte';
@@ -14,25 +15,22 @@
 		{ id: 'update', label: 'Update' }
 	] as const;
 
-	let activeTabId = $state<(typeof tabs)[number]['id']>(tabs[0].id);
+	const maxWidth = getDashboardLayoutMaxWidth('normal');
 </script>
 
-{#snippet header()}
-	<CanvasHero hero={data.hero} />
-{/snippet}
-
-<DashboardFeedLayout {header}>
-	<section class="flex flex-col gap-4">
-		<div class="flex items-center gap-6 border-b border-zinc-100">
-			<SectionTabs {tabs} bind:value={activeTabId} />
+<div class="relative mx-auto w-full" style={`max-width: ${maxWidth};`}>
+		<div class="px-4 pt-8 pb-6 sm:px-6 lg:px-8">
+			<CanvasHero hero={data.hero} />
+			<SectionTabs {tabs}>
+				<SectionTabPanel tabId="timeline">
+					<TimelineSection items={data.timelineItems} />
+				</SectionTabPanel>
+				<SectionTabPanel tabId="deals">
+					<DealSummaryTableSection rows={data.deals} />
+				</SectionTabPanel>
+				<SectionTabPanel tabId="update">
+					<FileUploadField data={data.update} />
+				</SectionTabPanel>
+			</SectionTabs>
 		</div>
-
-		{#if activeTabId === 'timeline'}
-			<TimelineSection items={data.timelineItems} />
-		{:else if activeTabId === 'deals'}
-			<DealSummaryTableSection rows={data.deals} />
-		{:else}
-			<FileUploadField data={data.update} />
-		{/if}
-	</section>
-</DashboardFeedLayout>
+	</div>

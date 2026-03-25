@@ -1,7 +1,7 @@
-<script lang="ts">
+	<script lang="ts">
 	import { Menu } from 'lucide-svelte';
-	import type { DashboardHeader } from '$lib/dashboard/types';
-	import { shellState } from '$lib/dashboard/state.svelte';
+	import type { DashboardHeader } from '$lib/dashboard/shell/dashboard-header';
+	import { useDashboardShellState } from '$lib/dashboard/state.svelte';
 	import HeaderContextControl from './HeaderContextControl.svelte';
 	import HomeLink from './HomeLink.svelte';
 
@@ -10,7 +10,8 @@
 	};
 
 	let { header }: Props = $props();
-	const contextControlClassName =
+	const shellState = useDashboardShellState();
+	const contextControlClass =
 		'!mr-0 !ml-0 h-8 min-w-0 max-w-full justify-center rounded-sm px-2 text-center hover:bg-zinc-100 hover:text-zinc-900';
 </script>
 
@@ -27,7 +28,7 @@
 							control={header.control}
 							menuId="mobile-header-context-control"
 							placement="bottom"
-							className={contextControlClassName}
+							class={contextControlClass}
 						/>
 					</div>
 				{/if}
@@ -43,7 +44,9 @@
 			type="button"
 			aria-label="Toggle navigation menu"
 			class="inline-flex size-8 items-center justify-center rounded-sm text-zinc-700 transition-colors hover:bg-zinc-100"
-			onclick={() => shellState.toggleMobileDrawer()}
+			onclick={() => {
+				shellState.isMobileDrawerOpen = !shellState.isMobileDrawerOpen;
+			}}
 		>
 			<Menu class="size-4" />
 		</button>

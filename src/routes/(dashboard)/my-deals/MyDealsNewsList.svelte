@@ -29,8 +29,6 @@
 						<h2 class="text-xs leading-snug tracking-wide text-zinc-800">{item.title}</h2>
 					</div>
 
-					<p class="sr-only">{item.description}</p>
-
 					<div aria-hidden="true" class="mt-3.5 space-y-1.5">
 						<div class="h-2 rounded-[3px] bg-zinc-200/90"></div>
 						<div class="h-2 rounded-[3px] bg-zinc-200/90"></div>

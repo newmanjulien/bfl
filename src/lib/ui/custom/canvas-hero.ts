@@ -1,8 +1,7 @@
-export type CanvasHeroIconKind = 'opportunity' | 'risk' | 'rss' | 'list';
+export type CanvasHeroIcon = typeof import('lucide-svelte').List;
 
 export type CanvasHeroData = {
 	title: string;
 	description?: string;
 	dealNumber?: number;
-	iconKind?: CanvasHeroIconKind;
 };

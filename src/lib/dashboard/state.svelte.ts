@@ -1,40 +1,16 @@
-class DashboardShellState {
-	isSidebarExpanded = $state(true);
-	isMobileDrawerOpen = $state(false);
-	openMenuId = $state<string | null>(null);
+import { getContext, setContext } from 'svelte';
 
-	toggleSidebar() {
-		this.isSidebarExpanded = !this.isSidebarExpanded;
-	}
+const DASHBOARD_SHELL_STATE_KEY = Symbol('dashboard-shell-state');
 
-	setSidebarExpanded(expanded: boolean) {
-		this.isSidebarExpanded = expanded;
-	}
+export type DashboardShellState = {
+	isSidebarExpanded: boolean;
+	isMobileDrawerOpen: boolean;
+};
 
-	toggleMobileDrawer() {
-		this.setMobileDrawerOpen(!this.isMobileDrawerOpen);
-	}
-
-	setMobileDrawerOpen(open: boolean) {
-		this.isMobileDrawerOpen = open;
-		if (open) {
-			this.openMenuId = null;
-		}
-	}
-
-	setMenuOpen(menuId: string, open: boolean) {
-		if (open) {
-			this.isMobileDrawerOpen = false;
-			this.openMenuId = menuId;
-			return;
-		}
-
-		this.openMenuId = this.openMenuId === menuId ? null : this.openMenuId;
-	}
-
-	isMenuOpen(menuId: string) {
-		return this.openMenuId === menuId;
-	}
+export function provideDashboardShellState(shellState: DashboardShellState) {
+	return setContext(DASHBOARD_SHELL_STATE_KEY, shellState);
 }
 
-export const shellState = new DashboardShellState();
+export function useDashboardShellState() {
+	return getContext<DashboardShellState>(DASHBOARD_SHELL_STATE_KEY);
+}

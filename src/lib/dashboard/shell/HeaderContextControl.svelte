@@ -1,29 +1,29 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import type { DashboardHeaderControl } from '$lib/dashboard/types';
-	import { cn } from '$lib/support/cn';
+	import type { DashboardHeaderControl } from '$lib/dashboard/shell/dashboard-header';
 	import MeetingDateMenu from '$lib/dashboard/shell/menus/MeetingDateMenu.svelte';
+
+	const BASE_CONTROL_CLASS =
+		'dashboard-header-context-control inline-flex items-center text-xs font-medium tracking-wide transition-colors';
 
 	type Props = {
 		control: DashboardHeaderControl;
 		menuId: string;
 		placement?: 'bottom-start' | 'bottom-end' | 'bottom';
-		className?: string;
+		class?: string;
 	};
 
-	let { control, menuId, placement = 'bottom-start', className = '' }: Props = $props();
-	const controlClassName = $derived(
-		cn(
-			'dashboard-header-context-control inline-flex items-center text-xs font-medium tracking-wide transition-colors',
-			className
-		)
+	let { control, menuId, placement = 'bottom-start', class: classProp = '' }: Props = $props();
+
+	const controlClass = $derived(
+		classProp ? `${BASE_CONTROL_CLASS} ${classProp}` : BASE_CONTROL_CLASS
 	);
 </script>
 
-{#if control === 'meeting-date'}
-	<MeetingDateMenu {menuId} {placement} triggerClass={controlClassName} />
+{#if control.kind === 'meeting-date'}
+	<MeetingDateMenu {menuId} {placement} class={controlClass} />
 {:else}
-	<a href={resolve(control.href)} class={controlClassName}>
+	<a href={resolve(control.href)} class={controlClass}>
 		{control.label}
 	</a>
 {/if}

@@ -20,8 +20,6 @@ export type OpportunityTile = {
 	id: string;
 	href: OpportunityDetailHref;
 	title: string;
-	description?: string;
-	iconKind: OpportunityKind;
 	dealNumber: number;
 	dealLabel?: string;
 	avatars?: OpportunityTileAvatars;
@@ -30,6 +28,7 @@ export type OpportunityTile = {
 
 export type OpportunityDetailView = {
 	hero: CanvasHeroData;
+	kind: OpportunityKind;
 	activityItems: readonly TimelineItem[];
 	orgChartRoot: OrgChartNode;
 	update: FileUploadFieldData;
@@ -58,8 +57,6 @@ function toTile(insightId: string): OpportunityTile {
 		id: insight.id,
 		href: toOpportunityDetailHref(insight.id),
 		title: insight.title,
-		description: insight.summary,
-		iconKind: insight.kind,
 		dealNumber: deal.dealNumber,
 		dealLabel: deal.accountName,
 		avatars: getOwnerAvatars(insight.ownerBrokerIds),
@@ -95,10 +92,9 @@ function toDetailView(insightId: string): OpportunityDetailView | null {
 	return {
 		hero: {
 			dealNumber: deal.dealNumber,
-			title: insight.title,
-			description: insight.summary,
-			iconKind: insight.kind
+			title: insight.title
 		},
+		kind: insight.kind,
 		activityItems: insight.timeline.map((activity) => toTimelineItem(activity)),
 		orgChartRoot: toOrgChartNode(insight.orgChartRoot),
 		update: {

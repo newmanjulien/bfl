@@ -2,13 +2,6 @@ import { forecastQuadrantChart } from './projection';
 
 export const load = () => {
 	return {
-		header: {
-			mode: 'context',
-			title: 'Forecast',
-			control: 'meeting-date',
-			actions: ['share', 'broker-switch'],
-			extra: 'none'
-		},
 		hero: {
 			title: 'Forecast',
 			description:

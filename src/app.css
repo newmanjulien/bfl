@@ -1,8 +1,5 @@
 @import 'tailwindcss';
 @import '@skeletonlabs/skeleton';
-@import '@skeletonlabs/skeleton-svelte';
-
-@source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
 
 @theme inline {
 	--color-background: var(--background);
@@ -69,7 +66,6 @@
 	--layer-drawer: 50;
 	--layer-dialog: 60;
 	--layer-toast: 70;
-	--layer-overlay-root: 80;
 
 	--text-scaling: 1;
 	--base-font-color: var(--foreground);
@@ -291,14 +287,6 @@ body {
 	min-height: 100%;
 }
 
-#app-overlays {
-	position: fixed;
-	inset: 0;
-	z-index: var(--layer-overlay-root);
-	pointer-events: none;
-	isolation: isolate;
-}
-
 a {
 	color: inherit;
 }
@@ -309,29 +297,6 @@ a {
 
 button {
 	cursor: pointer;
-}
-
-button.upload-browse-trigger[data-scope='file-upload'][data-part='trigger'] {
-	display: flex;
-	height: 1.75rem;
-	flex-shrink: 0;
-	align-items: center;
-	justify-content: center;
-	border: 1px solid var(--color-primary-100);
-	border-radius: calc(var(--radius) - 4px);
-	background-color: transparent;
-	padding: 0 0.5rem;
-	font-size: 0.75rem;
-	font-weight: 500;
-	line-height: 1rem;
-	letter-spacing: 0.025em;
-	color: var(--color-primary-500);
-	filter: none;
-}
-
-button.upload-browse-trigger[data-scope='file-upload'][data-part='trigger']:hover {
-	background-color: var(--color-primary-100);
-	filter: none;
 }
 
 .dashboard-canvas {
@@ -387,4 +352,50 @@ button.upload-browse-trigger[data-scope='file-upload'][data-part='trigger']:hove
 
 .app-layer-toast {
 	z-index: var(--layer-toast);
+}
+
+.dashboard-table-shell {
+	--dashboard-table-cell-px: 1rem;
+	--dashboard-table-cell-py: 0.75rem;
+	--dashboard-table-font-size: 0.75rem;
+	--dashboard-table-line-height: 1rem;
+	--dashboard-table-hover-bg: rgb(250 250 250 / 0.8);
+}
+
+@media (max-width: 767px) {
+	.dashboard-table-shell {
+		--dashboard-table-cell-px: 0.75rem;
+		--dashboard-table-cell-py: 0.625rem;
+		--dashboard-table-font-size: 0.6875rem;
+	}
+}
+
+.dashboard-table-shell [data-table-row] {
+	display: grid;
+	align-items: center;
+	transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+.dashboard-table-shell[data-interactive-rows='true'] [data-table-row]:hover {
+	background-color: var(--dashboard-table-hover-bg);
+}
+
+.dashboard-table-shell [data-table-cell],
+.dashboard-table-shell [data-table-header-cell] {
+	min-width: 0;
+	padding: var(--dashboard-table-cell-py) var(--dashboard-table-cell-px);
+	font-size: var(--dashboard-table-font-size);
+	line-height: var(--dashboard-table-line-height);
+	letter-spacing: 0.025em;
+}
+
+.dashboard-table-shell [data-table-empty] {
+	padding: calc(var(--dashboard-table-cell-py) * 2) var(--dashboard-table-cell-px);
+	font-size: var(--dashboard-table-font-size);
+	line-height: var(--dashboard-table-line-height);
+	letter-spacing: 0.025em;
+}
+
+.dashboard-table-shell [data-table-scroll] {
+	-webkit-overflow-scrolling: touch;
 }

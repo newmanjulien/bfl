@@ -425,8 +425,6 @@ export const dealNews = [
 		id: 'news-3m-1',
 		dealId: 'deal-3m',
 		title: 'Procurement review reopened familiar rollout concerns',
-		description:
-			'Procurement reused objections from earlier evaluations, and the internal champion is pushing for a tighter rebuttal package before the next review.',
 		source: 'news',
 		publishedOnIso: '2026-03-08'
 	},
@@ -434,8 +432,6 @@ export const dealNews = [
 		id: 'news-3m-2',
 		dealId: 'deal-3m',
 		title: 'Security committee asked for tighter implementation proof',
-		description:
-			"3M's security reviewers want clearer evidence that rollout can land without reopening operational risk during deployment.",
 		source: 'news',
 		publishedOnIso: '2026-03-06'
 	},
@@ -443,8 +439,6 @@ export const dealNews = [
 		id: 'news-3m-3',
 		dealId: 'deal-3m',
 		title: 'Champion is pressing for a cleaner rebuttal packet',
-		description:
-			'Internal stakeholders want a shorter deck that directly answers procurement and implementation objections before the next review.',
 		source: 'news',
 		publishedOnIso: '2026-03-03'
 	},
@@ -452,8 +446,6 @@ export const dealNews = [
 		id: 'news-3m-4',
 		dealId: 'deal-3m',
 		title: 'Finance leadership responsibilities expanded during the review',
-		description:
-			'A broader finance audience is now weighing the purchase, which is increasing scrutiny on value articulation and rollout confidence.',
 		source: 'news',
 		publishedOnIso: '2026-02-27'
 	},
@@ -461,8 +453,6 @@ export const dealNews = [
 		id: 'news-3m-5',
 		dealId: 'deal-3m',
 		title: 'Internal review shifted toward rebuttal-package quality',
-		description:
-			'Recent discussions focused less on product interest and more on whether the team can package responses cleanly for the buying committee.',
 		source: 'news',
 		publishedOnIso: '2026-02-24'
 	},
@@ -470,8 +460,6 @@ export const dealNews = [
 		id: 'news-3m-6',
 		dealId: 'deal-3m',
 		title: '3M has a new CFO who is also doing the COO job',
-		description:
-			'Leadership turnover is adding one more layer of decision scrutiny as Julien prepares the tighter rebuttal package.',
 		source: 'news',
 		publishedOnIso: '2026-02-16'
 	},
@@ -479,8 +467,6 @@ export const dealNews = [
 		id: 'news-fedex-1',
 		dealId: 'deal-fedex',
 		title: 'Proposal review is now centered on rollout confidence',
-		description:
-			'FedEx moved into proposal review, with the buying team focusing on rollout confidence and executive readiness ahead of commercial discussions.',
 		source: 'news',
 		publishedOnIso: '2026-03-07'
 	},
@@ -488,8 +474,6 @@ export const dealNews = [
 		id: 'news-caterpillar-1',
 		dealId: 'deal-caterpillar',
 		title: 'Negotiation momentum now depends on executive alignment',
-		description:
-			'The deal remains active in negotiation, but momentum depends on converting current stakeholder interest into a cleaner executive buying path.',
 		source: 'linkedin',
 		publishedOnIso: '2026-03-08'
 	},
@@ -497,8 +481,6 @@ export const dealNews = [
 		id: 'news-southwest-1',
 		dealId: 'deal-southwest',
 		title: 'Buyer engagement strengthened during negotiation',
-		description:
-			'Southwest is still progressing through negotiation, with stronger buyer engagement than earlier in the quarter and clearer urgency around the initiative.',
 		source: 'linkedin',
 		publishedOnIso: '2026-03-08'
 	},
@@ -506,8 +488,6 @@ export const dealNews = [
 		id: 'news-john-deere-1',
 		dealId: 'deal-john-deere',
 		title: 'Closed-won rollout is becoming a strong reference account',
-		description:
-			'John Deere is closed won, and the account now serves as a referenceable example of a successful enterprise rollout for similar buyers.',
 		source: 'news',
 		publishedOnIso: '2026-03-05'
 	},
@@ -515,8 +495,6 @@ export const dealNews = [
 		id: 'news-hilton-1',
 		dealId: 'deal-hilton',
 		title: 'Closed-lost review is now informing qualification decisions',
-		description:
-			'Hilton is closed lost, and the account is now primarily useful as a signal on where messaging or timing broke down in the sales cycle.',
 		source: 'news',
 		publishedOnIso: '2026-03-01'
 	}
@@ -528,8 +506,6 @@ export const dealInsights = [
 		dealId: 'deal-honeywell',
 		kind: 'opportunity',
 		title: 'CFO was a customer at his last job',
-		summary:
-			"Honeywell's CFO has prior context on this category, which could help Julien earn executive sponsorship faster.",
 		activityLevel: 'low',
 		ownerBrokerIds: ['yash', 'julien'],
 		timeline: [
@@ -592,8 +568,6 @@ export const dealInsights = [
 		dealId: 'deal-3m',
 		kind: 'risk',
 		title: "We've lost multiple RFPs at 3M",
-		summary:
-			"3M's current evaluation looks exposed to the same procurement and security objections that blocked earlier RFPs.",
 		activityLevel: 'high',
 		ownerBrokerIds: ['yash', 'julien'],
 		timeline: [

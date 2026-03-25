@@ -1,6 +1,8 @@
 <script lang="ts">
-	import DashboardFeedLayout from '$lib/dashboard/layout/DashboardFeedLayout.svelte';
+	import { Lightbulb, TriangleAlert } from 'lucide-svelte';
+	import { getDashboardLayoutMaxWidth } from '$lib/dashboard/layout/tokens';
 	import CanvasHero from '$lib/ui/custom/CanvasHero.svelte';
+	import SectionTabPanel from '$lib/ui/custom/SectionTabPanel.svelte';
 	import SectionTabs from '$lib/ui/custom/SectionTabs.svelte';
 	import OpportunityTileList from './OpportunityTileList.svelte';
 
@@ -11,23 +13,19 @@
 		{ id: 'risks-tiles', label: 'Risks' }
 	] as const;
 
-	let activeTabId = $state<(typeof tabs)[number]['id']>(tabs[0].id);
+	const maxWidth = getDashboardLayoutMaxWidth('normal');
 </script>
 
-{#snippet header()}
-	<CanvasHero hero={data.hero} />
-{/snippet}
-
-<DashboardFeedLayout {header}>
-	<section class="space-y-4">
-		<div class="flex items-center gap-6 border-b border-zinc-100">
-			<SectionTabs {tabs} bind:value={activeTabId} />
-		</div>
-
-		{#if activeTabId === 'opportunities-tiles'}
-			<OpportunityTileList tiles={data.opportunityTiles} />
-		{:else}
-			<OpportunityTileList tiles={data.riskTiles} />
-		{/if}
-	</section>
-</DashboardFeedLayout>
+<div class="relative mx-auto w-full" style={`max-width: ${maxWidth};`}>
+		<div class="px-4 pt-8 pb-6 sm:px-6 lg:px-8">
+			<CanvasHero hero={data.hero} />
+				<SectionTabs {tabs}>
+					<SectionTabPanel tabId="opportunities-tiles">
+						<OpportunityTileList tiles={data.opportunityTiles} icon={Lightbulb} />
+					</SectionTabPanel>
+					<SectionTabPanel tabId="risks-tiles">
+						<OpportunityTileList tiles={data.riskTiles} icon={TriangleAlert} />
+					</SectionTabPanel>
+				</SectionTabs>
+			</div>
+	</div>

@@ -131,8 +131,7 @@ export function getAllActivityDetailViewById(dealId: string): AllActivityDetailV
 		hero: {
 			dealNumber: deal.dealNumber,
 			title: deal.dealName,
-			description: `${deal.dealName} is in ${deal.stage} and is ${deal.probability}% likely to close with ${activityLabel}. ${context.summary}`,
-			iconKind: 'list'
+			description: `${deal.dealName} is in ${deal.stage} and is ${deal.probability}% likely to close with ${activityLabel}. ${context.summary}`
 		},
 		activityItems,
 		orgChartRoot: toOrgChartNode(context.orgChartRoot),

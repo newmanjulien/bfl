@@ -3,7 +3,6 @@
 	import { formatIsoDateTimeRelative } from '$lib/format/date-time';
 	import ActivityLevelLabel from '$lib/ui/custom/ActivityLevelLabel.svelte';
 	import PersonInline from '$lib/ui/custom/PersonInline.svelte';
-	import ResponsiveTableShell from '$lib/ui/custom/ResponsiveTableShell.svelte';
 	import { cn } from '$lib/support/cn';
 	import type { AllActivityTableRow } from './projection';
 
@@ -14,7 +13,7 @@
 	let { rows }: Props = $props();
 
 	const headers = ['Deal', 'Probability', 'Activity level', 'Owner', 'Stage', 'Last activity'] as const;
-	const columnsClass =
+	const columnClass =
 		'grid-cols-[minmax(9rem,1.2fr)_minmax(9rem,1fr)_minmax(8.5rem,0.95fr)_minmax(9.5rem,1fr)_minmax(8rem,0.85fr)_minmax(8rem,0.85fr)] md:grid-cols-6';
 	const minWidthClass = 'min-w-[58rem] md:min-w-full';
 </script>
@@ -49,30 +48,48 @@
 	</span>
 {/snippet}
 
-<ResponsiveTableShell
-	headers={headers}
-	{columnsClass}
-	{minWidthClass}
-	interactiveRows={true}
-	isEmpty={rows.length === 0}
-	ariaLabel="All activity deals table"
-	class="pt-1"
->
-	{#snippet body()}
-		{#each rows as row (row.id)}
-			{#if row.navigation.kind === 'detail'}
-				<a
-					href={resolve(row.navigation.href)}
-					data-table-row
-					class={cn(columnsClass, 'group no-underline')}
-				>
-					{@render rowCells(row, true)}
-				</a>
-			{:else}
-				<div data-table-row class={columnsClass}>
-					{@render rowCells(row, false)}
+<div class="pt-1">
+	<div
+		class="dashboard-table-shell rounded-sm border border-zinc-100 bg-white"
+		data-interactive-rows="true"
+	>
+		<div
+			data-table-scroll
+			class="overflow-x-auto overflow-y-hidden overscroll-x-contain"
+			role="region"
+			aria-label="All activity deals table"
+		>
+			<div class={cn('w-max min-w-full md:w-full', minWidthClass)}>
+				<div class={cn('grid border-b border-zinc-100 bg-zinc-50/80', columnClass)}>
+					{#each headers as header (header)}
+						<span data-table-header-cell class="text-left font-normal text-zinc-500">
+							{header}
+						</span>
+					{/each}
 				</div>
-			{/if}
-		{/each}
-	{/snippet}
-</ResponsiveTableShell>
+
+				{#if rows.length === 0}
+					<div data-table-empty class="text-zinc-500">No rows available.</div>
+				{:else}
+					<div class="divide-y divide-zinc-100">
+						{#each rows as row (row.id)}
+							{#if row.navigation.kind === 'detail'}
+								<a
+									href={resolve(row.navigation.href)}
+									data-table-row
+									class={cn(columnClass, 'group no-underline')}
+								>
+									{@render rowCells(row, true)}
+								</a>
+							{:else}
+								<div data-table-row class={columnClass}>
+									{@render rowCells(row, false)}
+								</div>
+							{/if}
+						{/each}
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+</div>

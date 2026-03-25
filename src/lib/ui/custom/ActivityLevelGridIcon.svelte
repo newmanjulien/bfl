@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { cn } from '$lib/support/cn';
-
 	export type ActivityLevelGridVariant = 'full-grid' | 'half-grid' | 'quarter-grid';
 
 	type Props = {
@@ -8,7 +6,7 @@
 		class?: string;
 	};
 
-	let { variant, class: className = '' }: Props = $props();
+	let { variant, class: classProp = '' }: Props = $props();
 
 	const GRID_CELLS: Array<[row: number, column: number]> = [
 		[0, 0],
@@ -29,7 +27,12 @@
 	};
 </script>
 
-<svg viewBox="0 0 12 12" fill="none" aria-hidden="true" class={cn('shrink-0', className)}>
+<svg
+	viewBox="0 0 12 12"
+	fill="none"
+	aria-hidden="true"
+	class={classProp ? `shrink-0 ${classProp}` : 'shrink-0'}
+>
 	{#each GRID_CELLS as [row, column] (`${row}:${column}`)}
 		{@const cellKey = `${row}:${column}`}
 		{@const isActive = ACTIVE_CELL_KEYS[variant].has(cellKey)}

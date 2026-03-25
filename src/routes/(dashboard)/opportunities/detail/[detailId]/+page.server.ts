@@ -1,5 +1,4 @@
 import { error } from '@sveltejs/kit';
-import { DASHBOARD_BACK_HREFS } from '$lib/dashboard/routes';
 import {
 	getOpportunityDetailEntries,
 	getOpportunityDetailViewById
@@ -13,18 +12,8 @@ export const load = ({ params }) => {
 	if (!detail) error(404, 'Not found');
 
 	return {
-		header: {
-			mode: 'context',
-			title: detail.hero.title,
-			control: {
-				kind: 'back-link',
-				href: DASHBOARD_BACK_HREFS.opportunities,
-				label: 'Opportunities & risks'
-			},
-			actions: ['share', 'broker-switch'],
-			extra: 'none'
-		},
 		hero: detail.hero,
+		kind: detail.kind,
 		activityItems: detail.activityItems,
 		orgChartRoot: detail.orgChartRoot,
 		update: detail.update,

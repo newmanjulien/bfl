@@ -1,8 +1,8 @@
 	<script lang="ts">
-	import { ChevronRight, Ellipsis, PanelLeft } from 'lucide-svelte';
-	import type { DashboardHeader } from '$lib/dashboard/types';
+		import { ChevronRight, Ellipsis, PanelLeft } from 'lucide-svelte';
+		import type { DashboardHeader } from '$lib/dashboard/shell/dashboard-header';
 	import type { PersonSummary } from '$lib/domain/people';
-	import { shellState } from '$lib/dashboard/state.svelte';
+	import { useDashboardShellState } from '$lib/dashboard/state.svelte';
 	import { mockDb } from '$lib/mock-db';
 	import ActivityLevelFilterMenu from '$lib/dashboard/shell/menus/ActivityLevelFilterMenu.svelte';
 	import BrokerFilterMenu from '$lib/dashboard/shell/menus/BrokerFilterMenu.svelte';
@@ -15,11 +15,12 @@
 	};
 
 	let { header }: Props = $props();
+	const shellState = useDashboardShellState();
 
 	const people: PersonSummary[] = mockDb.brokers
 		.list()
 		.map(({ id, name, avatar }) => ({ id, name, avatar }));
-	const contextControlClassName = 'mr-2 ml-1 hover:text-zinc-400';
+	const contextControlClass = 'mr-2 ml-1 hover:text-zinc-400';
 </script>
 
 {#if header}
@@ -29,7 +30,9 @@
 				type="button"
 				aria-label="Toggle sidebar"
 				class="mr-1 ml-1 inline-flex items-center text-xs font-medium tracking-wide text-zinc-500 transition-colors hover:text-zinc-400"
-				onclick={() => shellState.toggleSidebar()}
+				onclick={() => {
+					shellState.isSidebarExpanded = !shellState.isSidebarExpanded;
+				}}
 			>
 				<PanelLeft class="h-3.5 w-3.5" />
 			</button>
@@ -40,7 +43,7 @@
 						control={header.control}
 						menuId="desktop-header-context-control"
 						placement="bottom-start"
-						className={contextControlClassName}
+						class={contextControlClass}
 					/>
 				{/if}
 
@@ -80,7 +83,6 @@
 				</div>
 			{/if}
 
-			{#if header.showOverflowButton !== false}
 				<button
 					type="button"
 					aria-label="More actions"
@@ -88,7 +90,6 @@
 				>
 					<Ellipsis class="h-3 w-3" />
 				</button>
-			{/if}
-		</div>
-	</header>
-{/if}
+			</div>
+		</header>
+	{/if}

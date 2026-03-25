@@ -6,21 +6,21 @@
 	type Props = {
 		person: PersonSummary;
 		avatarSize?: number;
+		truncate?: boolean;
 		class?: string;
-		avatarClass?: string;
-		nameClass?: string;
 	};
 
 	let {
 		person,
 		avatarSize = 20,
-		class: className = '',
-		avatarClass = '',
-		nameClass = ''
+		truncate = false,
+		class: classProp = ''
 	}: Props = $props();
 </script>
 
-<span class={cn('inline-flex items-center gap-1.5', className)}>
-	<AppAvatar person={person} size={avatarSize} class={avatarClass} />
-	<span class={cn('leading-none text-current', nameClass)}>{person.name}</span>
+<span class={cn('inline-flex min-w-0 items-center gap-1.5', classProp)}>
+	<AppAvatar person={person} size={avatarSize} />
+	<span class={cn('leading-none text-current', truncate && 'min-w-0 truncate')}>
+		{person.name}
+	</span>
 </span>

@@ -39,7 +39,6 @@ export type MyDealsTableRow = {
 export type MyDealsNewsItem = {
 	id: string;
 	title: string;
-	description: string;
 	source: NewsSource;
 };
 
@@ -92,7 +91,7 @@ function toTableRow(dealId: string): MyDealsTableRow {
 				},
 		deal: deal.dealName,
 		latestNewsSource: latestNews.source,
-		latestNews: latestNews.description,
+		latestNews: latestNews.title,
 		lastActivityDescription: latestActivity.body,
 		owner: resolveOptionalBrokerPerson(mockDb.deals.getCurrentOwnerBrokerId(deal.dealId))
 	};
@@ -125,13 +124,11 @@ export function getMyDealsDetailViewById(dealId: string): MyDealsDetailView | nu
 		hero: {
 			dealNumber: deal.dealNumber,
 			title: deal.dealName,
-			description: `${deal.dealName} is in ${deal.stage} and is ${deal.probability}% likely to close with ${activityLabel}. ${context.summary}`,
-			iconKind: 'rss'
+			description: `${deal.dealName} is in ${deal.stage} and is ${deal.probability}% likely to close with ${activityLabel}. ${context.summary}`
 		},
 		newsItems: newsItems.map((newsItem) => ({
 			id: newsItem.id,
 			title: newsItem.title,
-			description: newsItem.description,
 			source: newsItem.source
 		})),
 		activityItems: activityItems.map((activity) => toTimelineItem(activity)),

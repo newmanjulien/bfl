@@ -1,44 +1,38 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
-	import type { DashboardHeader } from '$lib/dashboard/types';
+	import { MediaQuery } from 'svelte/reactivity';
+	import { getDashboardHeader } from '$lib/dashboard/shell/dashboard-header';
 	import DesktopHeader from '$lib/dashboard/shell/DesktopHeader.svelte';
 	import MobileDrawer from '$lib/dashboard/shell/MobileDrawer.svelte';
 	import MobileHeader from '$lib/dashboard/shell/MobileHeader.svelte';
 	import Sidebar from '$lib/dashboard/shell/Sidebar.svelte';
-	import { shellState } from '$lib/dashboard/state.svelte';
+	import {
+		provideDashboardShellState,
+		type DashboardShellState
+	} from '$lib/dashboard/state.svelte';
 
 	let { children } = $props();
 
-	const header = $derived(page.data.header as DashboardHeader | null | undefined);
+	const header = $derived(getDashboardHeader(page.url.pathname, page.data));
+	const desktopViewport = new MediaQuery('(min-width: 768px)', true);
+	const shellState = $state<DashboardShellState>({
+		isSidebarExpanded: true,
+		isMobileDrawerOpen: false
+	});
 
-	onMount(() => {
-		const desktopMedia = window.matchMedia('(min-width: 768px)');
+	provideDashboardShellState(shellState);
 
-		shellState.setSidebarExpanded(desktopMedia.matches);
-		shellState.setMobileDrawerOpen(false);
-
-		const onChange = (event: MediaQueryListEvent) => {
-			if (event.matches) {
-				shellState.setMobileDrawerOpen(false);
-				return;
-			}
-
-			shellState.setSidebarExpanded(false);
-		};
-
-		desktopMedia.addEventListener('change', onChange);
-
-		return () => {
-			desktopMedia.removeEventListener('change', onChange);
-		};
+	$effect(() => {
+		if (desktopViewport.current && shellState.isMobileDrawerOpen) {
+			shellState.isMobileDrawerOpen = false;
+		}
 	});
 </script>
 
 <div class="h-dvh min-h-dvh overflow-hidden bg-zinc-50">
 	<div
 		class="dashboard-canvas flex h-full min-h-0 md:gap-(--dashboard-canvas-gap)"
-		data-sidebar-state={shellState.isSidebarExpanded ? 'expanded' : 'collapsed'}
+		data-sidebar-state={desktopViewport.current && shellState.isSidebarExpanded ? 'expanded' : 'collapsed'}
 	>
 		<Sidebar class="hidden md:flex" />
 		<main class="min-w-0 flex min-h-0 flex-1 flex-col overflow-hidden bg-white md:rounded-sm md:border md:border-zinc-100">
