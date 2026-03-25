@@ -44,7 +44,11 @@
 		{row.stage}
 	</span>
 	<span data-table-cell class="whitespace-nowrap text-zinc-500">
-		{formatIsoDateTimeRelative(row.lastActivityAtIso)}
+		{#if row.lastActivity.kind === 'relative'}
+			{formatIsoDateTimeRelative(row.lastActivity.atIso)}
+		{:else}
+			{row.lastActivity.label}
+		{/if}
 	</span>
 {/snippet}
 

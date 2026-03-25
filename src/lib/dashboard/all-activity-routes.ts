@@ -3,7 +3,11 @@ import { DASHBOARD_STATIC_ROUTES } from '$lib/dashboard/routes';
 const ALL_ACTIVITY_BASE_PATH = DASHBOARD_STATIC_ROUTES['all-activity'];
 
 export const DEFAULT_ALL_ACTIVITY_VIEW = 'deals' as const;
-export const ALL_ACTIVITY_NON_DEFAULT_VIEWS = ['need-support', 'duplicated-work'] as const;
+export const ALL_ACTIVITY_NON_DEFAULT_VIEWS = [
+	'need-support',
+	'duplicated-work',
+	'no-activity'
+] as const;
 
 export type NonDefaultAllActivityView = (typeof ALL_ACTIVITY_NON_DEFAULT_VIEWS)[number];
 export type AllActivityView = typeof DEFAULT_ALL_ACTIVITY_VIEW | NonDefaultAllActivityView;
@@ -11,7 +15,8 @@ export type AllActivityView = typeof DEFAULT_ALL_ACTIVITY_VIEW | NonDefaultAllAc
 export const ALL_ACTIVITY_VIEW_OPTIONS = [
 	{ id: DEFAULT_ALL_ACTIVITY_VIEW, label: 'Deals' },
 	{ id: 'need-support', label: 'Need support' },
-	{ id: 'duplicated-work', label: 'Duplicated work' }
+	{ id: 'duplicated-work', label: 'Duplicated work' },
+	{ id: 'no-activity', label: 'No activity' }
 ] as const;
 
 export type AllActivityListHref =

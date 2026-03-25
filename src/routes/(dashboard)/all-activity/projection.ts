@@ -40,6 +40,16 @@ export type AllActivityRowNavigation =
 			kind: 'none';
 	  };
 
+export type AllActivityRowLastActivity =
+	| {
+			kind: 'relative';
+			atIso: IsoDateTimeString;
+	  }
+	| {
+			kind: 'text';
+			label: string;
+	  };
+
 export type AllActivityTableRow = {
 	id: string;
 	navigation: AllActivityRowNavigation;
@@ -47,7 +57,7 @@ export type AllActivityTableRow = {
 	activityLevel: ActivityLevel;
 	deal: string;
 	stage: string;
-	lastActivityAtIso: IsoDateTimeString;
+	lastActivity: AllActivityRowLastActivity;
 	owner: PersonSummary | null;
 };
 
@@ -58,6 +68,7 @@ const NEED_SUPPORT_ROW_IDS = new Set([
 ]);
 
 const DUPLICATED_WORK_ROW_IDS = new Set(['deal-3m']);
+const NO_ACTIVITY_LABEL = 'No recorded activity';
 
 function requireLastActivityAtIso(deal: DealRecord) {
 	if (!deal.lastActivityAtIso) {
@@ -83,32 +94,65 @@ function toRightRailData(deal: DealRecord, context: DealContextRecord): DetailRi
 	]);
 }
 
-function toAllActivityTableRow(deal: DealRecord): AllActivityTableRow {
+function toAllActivityRowNavigation(dealId: string): AllActivityRowNavigation {
+	return mockDb.contexts.getByDealId(dealId)
+		? {
+				kind: 'detail',
+				href: buildAllActivityDetailHref(dealId, DEFAULT_ALL_ACTIVITY_VIEW)
+			}
+		: {
+				kind: 'none'
+			};
+}
+
+function toAllActivityTableRow(
+	deal: DealRecord,
+	lastActivity: AllActivityRowLastActivity
+): AllActivityTableRow {
 	return {
 		id: deal.dealId,
-		navigation: mockDb.contexts.getByDealId(deal.dealId)
-			? {
-					kind: 'detail',
-					href: buildAllActivityDetailHref(deal.dealId, DEFAULT_ALL_ACTIVITY_VIEW)
-				}
-			: {
-					kind: 'none'
-				},
+		navigation: toAllActivityRowNavigation(deal.dealId),
 		probability: deal.probability,
 		activityLevel: deal.activityLevel,
 		deal: deal.dealName,
 		stage: deal.stage,
-		lastActivityAtIso: requireLastActivityAtIso(deal),
+		lastActivity,
 		owner: resolveOptionalBrokerPerson(mockDb.deals.getCurrentOwnerBrokerId(deal.dealId))
 	};
 }
 
-const allActivityDeals = mockDb
-	.deals
-	.list()
-	.filter(hasListActivityData);
+function toRelativeLastActivityRow(deal: DealRecord & { lastActivityAtIso: IsoDateTimeString }) {
+	return toAllActivityTableRow(deal, {
+		kind: 'relative',
+		atIso: requireLastActivityAtIso(deal)
+	});
+}
 
-export const allActivityTableRows = allActivityDeals.map(toAllActivityTableRow);
+function toNoActivityRow(deal: DealRecord) {
+	return toAllActivityTableRow(deal, {
+		kind: 'text',
+		label: NO_ACTIVITY_LABEL
+	});
+}
+
+const allDeals = mockDb.deals.list();
+const allActivityDeals = allDeals.reduce<
+	Array<
+		DealRecord & {
+			lastActivityAtIso: NonNullable<DealRecord['lastActivityAtIso']>;
+		}
+	>
+>((rows, deal) => {
+	if (hasListActivityData(deal)) {
+		rows.push(deal);
+	}
+
+	return rows;
+}, []);
+const noActivityDeals = allDeals.filter((deal) => !hasListActivityData(deal));
+
+export const allActivityTableRows = allActivityDeals.map(toRelativeLastActivityRow);
+export const noActivityTableRows = noActivityDeals.map(toNoActivityRow);
 const allActivityTableRowsById = new Map(allActivityTableRows.map((row) => [row.id, row] as const));
 
 function applyAllActivityViewToRow(
@@ -147,15 +191,20 @@ function getVisibleAllActivityRowIds(view: AllActivityView) {
 }
 
 export function getAllActivityRowsForView(view: AllActivityView) {
-	const visibleRowIds = getVisibleAllActivityRowIds(view);
 	const rows =
-		visibleRowIds === null
-			? allActivityTableRows
-			: [...visibleRowIds].flatMap((rowId) => {
-					const row = allActivityTableRowsById.get(rowId);
+		view === 'no-activity'
+			? noActivityTableRows
+			: (() => {
+					const visibleRowIds = getVisibleAllActivityRowIds(view);
 
-					return row ? [row] : [];
-				});
+					return visibleRowIds === null
+						? allActivityTableRows
+						: [...visibleRowIds].flatMap((rowId) => {
+								const row = allActivityTableRowsById.get(rowId);
+
+								return row ? [row] : [];
+							});
+				})();
 
 	if (view === DEFAULT_ALL_ACTIVITY_VIEW) {
 		return rows;

@@ -7,12 +7,15 @@ import {
 import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
 import { getDashboardHeader } from '$lib/dashboard/shell/dashboard-header';
 import { mockDb } from '$lib/mock-db';
+import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
 import {
 	allActivityTableRows,
 	getAllActivityDetailViewById,
 	getAllActivityRowsForView
 } from './all-activity/projection';
+import { loadAllActivityListData } from './all-activity/route-data';
+import AllActivityTable from './all-activity/AllActivityTable.svelte';
 import { getMyDealsDetailViewById, myDealsTableRows } from './my-deals/projection';
 import {
 	getOpportunityDetailViewById,
@@ -57,20 +60,56 @@ describe('dashboard data adapters', () => {
 			'deal-fedex'
 		]);
 		expect(getAllActivityRowsForView('duplicated-work').map((row) => row.id)).toEqual(['deal-3m']);
+		expect(getAllActivityRowsForView('no-activity').map((row) => row.id)).toEqual([
+			'deal-whirlpool',
+			'deal-honeywell'
+		]);
 		expect(isNonDefaultAllActivityView('need-support')).toBe(true);
 		expect(isNonDefaultAllActivityView('duplicated-work')).toBe(true);
+		expect(isNonDefaultAllActivityView('no-activity')).toBe(true);
 		expect(isNonDefaultAllActivityView('deals')).toBe(false);
 		expect(isNonDefaultAllActivityView('unexpected-view')).toBe(false);
 		expect(buildAllActivityListHref('deals')).toBe('/all-activity');
 		expect(buildAllActivityListHref('need-support')).toBe('/all-activity/need-support');
+		expect(buildAllActivityListHref('no-activity')).toBe('/all-activity/no-activity');
 		expect(buildAllActivityDetailHref('deal-3m', 'deals')).toBe('/all-activity/detail/deal-3m');
 		expect(buildAllActivityDetailHref('deal-3m', 'duplicated-work')).toBe(
 			'/all-activity/duplicated-work/detail/deal-3m'
+		);
+		expect(buildAllActivityDetailHref('deal-whirlpool', 'no-activity')).toBe(
+			'/all-activity/no-activity/detail/deal-whirlpool'
 		);
 		expect(getAllActivityRowsForView('duplicated-work')[0]?.navigation).toEqual({
 			kind: 'detail',
 			href: '/all-activity/duplicated-work/detail/deal-3m'
 		});
+		expect(getAllActivityRowsForView('no-activity').every((row) => row.lastActivity.kind === 'text')).toBe(
+			true
+		);
+	});
+
+	it('builds a no-activity list header menu option and fallback last-activity copy', () => {
+		const noActivityListData = loadAllActivityListData('no-activity');
+		const noActivityHtml = render(AllActivityTable, {
+			props: {
+				rows: noActivityListData.rows
+			}
+		}).body;
+
+		expect(noActivityListData.headerTitleMenu.activeLabel).toBe('No activity');
+		expect(noActivityListData.headerTitleMenu.options.map((option) => option.label)).toEqual([
+			'Deals',
+			'Need support',
+			'Duplicated work',
+			'No activity'
+		]);
+		expect(noActivityListData.headerTitleMenu.options.find((option) => option.id === 'no-activity')).toEqual({
+			id: 'no-activity',
+			label: 'No activity',
+			href: '/all-activity/no-activity',
+			current: true
+		});
+		expect(noActivityHtml).toContain('No recorded activity');
 	});
 
 	it('uses the canonical deal number for deal detail views', () => {
@@ -216,6 +255,18 @@ describe('dashboard header model', () => {
 					label: 'Need support',
 					href: '/all-activity/need-support',
 					current: true
+				},
+				{
+					id: 'duplicated-work',
+					label: 'Duplicated work',
+					href: '/all-activity/duplicated-work',
+					current: false
+				},
+				{
+					id: 'no-activity',
+					label: 'No activity',
+					href: '/all-activity/no-activity',
+					current: false
 				}
 			]
 		};
