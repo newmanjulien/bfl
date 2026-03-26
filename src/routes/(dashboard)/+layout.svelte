@@ -5,6 +5,10 @@
 	import DesktopHeader from '$lib/dashboard/shell/DesktopHeader.svelte';
 	import MobileDrawer from '$lib/dashboard/shell/MobileDrawer.svelte';
 	import MobileHeader from '$lib/dashboard/shell/MobileHeader.svelte';
+	import {
+		createDashboardHeaderUiController,
+		provideDashboardHeaderUiController
+	} from '$lib/dashboard/shell/dashboard-header-ui';
 	import Sidebar from '$lib/dashboard/shell/Sidebar.svelte';
 	import {
 		provideDashboardShellState,
@@ -19,8 +23,10 @@
 		isSidebarExpanded: true,
 		isMobileDrawerOpen: false
 	});
+	const headerUiController = createDashboardHeaderUiController();
 
 	provideDashboardShellState(shellState);
+	provideDashboardHeaderUiController(headerUiController);
 
 	$effect(() => {
 		if (desktopViewport.current && shellState.isMobileDrawerOpen) {

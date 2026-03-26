@@ -6,7 +6,8 @@ export const DEFAULT_ALL_ACTIVITY_VIEW = 'deals' as const;
 export const ALL_ACTIVITY_NON_DEFAULT_VIEWS = [
 	'need-support',
 	'duplicated-work',
-	'no-activity'
+	'unassigned',
+	'likely-out-of-date'
 ] as const;
 
 export type NonDefaultAllActivityView = (typeof ALL_ACTIVITY_NON_DEFAULT_VIEWS)[number];
@@ -16,7 +17,8 @@ export const ALL_ACTIVITY_VIEW_OPTIONS = [
 	{ id: DEFAULT_ALL_ACTIVITY_VIEW, label: 'Deals' },
 	{ id: 'need-support', label: 'Need support' },
 	{ id: 'duplicated-work', label: 'Duplicated work' },
-	{ id: 'no-activity', label: 'No activity' }
+	{ id: 'unassigned', label: 'Unassigned' },
+	{ id: 'likely-out-of-date', label: 'Likely out of date' }
 ] as const;
 
 export type AllActivityListHref =

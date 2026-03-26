@@ -20,7 +20,9 @@ import {
   getAllActivityRowsForView,
 } from "./all-activity/projection";
 import { loadAllActivityListData } from "./all-activity/route-data";
+import AllActivityPage from "./all-activity/AllActivityPage.svelte";
 import AllActivityTable from "./all-activity/AllActivityTable.svelte";
+import LikelyOutOfDateTable from "./all-activity/LikelyOutOfDateTable.svelte";
 import MyDealsLinkedInEmptyState from "./my-deals/MyDealsLinkedInEmptyState.svelte";
 import MyDealsPage from "./my-deals/MyDealsPage.svelte";
 import {
@@ -82,19 +84,26 @@ describe("dashboard data adapters", () => {
       getAllActivityRowsForView("duplicated-work").map((row) => row.id),
     ).toEqual(["deal-3m"]);
     expect(
-      getAllActivityRowsForView("no-activity").map((row) => row.id),
+      getAllActivityRowsForView("unassigned").map((row) => row.id),
     ).toEqual(["deal-whirlpool", "deal-honeywell"]);
+    expect(
+      getAllActivityRowsForView("likely-out-of-date").map((row) => row.id),
+    ).toEqual(["deal-honeywell"]);
     expect(isNonDefaultAllActivityView("need-support")).toBe(true);
     expect(isNonDefaultAllActivityView("duplicated-work")).toBe(true);
-    expect(isNonDefaultAllActivityView("no-activity")).toBe(true);
+    expect(isNonDefaultAllActivityView("unassigned")).toBe(true);
+    expect(isNonDefaultAllActivityView("likely-out-of-date")).toBe(true);
     expect(isNonDefaultAllActivityView("deals")).toBe(false);
     expect(isNonDefaultAllActivityView("unexpected-view")).toBe(false);
     expect(buildAllActivityListHref("deals")).toBe("/all-activity");
     expect(buildAllActivityListHref("need-support")).toBe(
       "/all-activity/need-support",
     );
-    expect(buildAllActivityListHref("no-activity")).toBe(
-      "/all-activity/no-activity",
+    expect(buildAllActivityListHref("unassigned")).toBe(
+      "/all-activity/unassigned",
+    );
+    expect(buildAllActivityListHref("likely-out-of-date")).toBe(
+      "/all-activity/likely-out-of-date",
     );
     expect(buildAllActivityDetailHref("deal-3m", "deals")).toBe(
       "/all-activity/detail/deal-3m",
@@ -102,9 +111,12 @@ describe("dashboard data adapters", () => {
     expect(buildAllActivityDetailHref("deal-3m", "duplicated-work")).toBe(
       "/all-activity/duplicated-work/detail/deal-3m",
     );
-    expect(buildAllActivityDetailHref("deal-whirlpool", "no-activity")).toBe(
-      "/all-activity/no-activity/detail/deal-whirlpool",
+    expect(buildAllActivityDetailHref("deal-whirlpool", "unassigned")).toBe(
+      "/all-activity/unassigned/detail/deal-whirlpool",
     );
+    expect(
+      buildAllActivityDetailHref("deal-honeywell", "likely-out-of-date"),
+    ).toBe("/all-activity/likely-out-of-date/detail/deal-honeywell");
     expect(getAllActivityRowsForView("duplicated-work")[0]?.navigation).toEqual(
       {
         kind: "detail",
@@ -112,35 +124,124 @@ describe("dashboard data adapters", () => {
       },
     );
     expect(
-      getAllActivityRowsForView("no-activity").every(
+      getAllActivityRowsForView("likely-out-of-date")[0]?.navigation,
+    ).toEqual({
+      kind: "none",
+    });
+    expect(
+      getAllActivityRowsForView("likely-out-of-date").every(
+        (row) => row.navigation.kind === "none",
+      ),
+    ).toBe(true);
+    expect(
+      getAllActivityRowsForView("unassigned").every(
         (row) => row.lastActivity.kind === "text",
       ),
     ).toBe(true);
   });
 
-  it("builds a no-activity list header menu option and fallback last-activity copy", () => {
-    const noActivityListData = loadAllActivityListData("no-activity");
+  it("builds an unassigned list header menu option and fallback last-activity copy", () => {
+    const noActivityListData = loadAllActivityListData("unassigned");
     const noActivityHtml = render(AllActivityTable, {
       props: {
         rows: noActivityListData.rows,
       },
     }).body;
 
-    expect(noActivityListData.headerTitleMenu.activeLabel).toBe("No activity");
+    expect(noActivityListData.headerTitleMenu.activeLabel).toBe("Unassigned");
     expect(
       noActivityListData.headerTitleMenu.options.map((option) => option.label),
-    ).toEqual(["Deals", "Need support", "Duplicated work", "No activity"]);
+    ).toEqual([
+      "Deals",
+      "Need support",
+      "Duplicated work",
+      "Unassigned",
+      "Likely out of date",
+    ]);
     expect(
       noActivityListData.headerTitleMenu.options.find(
-        (option) => option.id === "no-activity",
+        (option) => option.id === "unassigned",
       ),
     ).toEqual({
-      id: "no-activity",
-      label: "No activity",
-      href: "/all-activity/no-activity",
+      id: "unassigned",
+      label: "Unassigned",
+      href: "/all-activity/unassigned",
       current: true,
     });
     expect(noActivityHtml).toContain("No recorded activity");
+  });
+
+  it("builds a likely-out-of-date list header menu option from deal data", () => {
+    const likelyOutOfDateListData = loadAllActivityListData("likely-out-of-date");
+
+    expect(likelyOutOfDateListData.headerTitleMenu.activeLabel).toBe(
+      "Likely out of date",
+    );
+    expect(likelyOutOfDateListData.rows.map((row) => row.id)).toEqual([
+      "deal-honeywell",
+    ]);
+    expect(
+      likelyOutOfDateListData.headerTitleMenu.options.find(
+        (option) => option.id === "likely-out-of-date",
+      ),
+    ).toEqual({
+      id: "likely-out-of-date",
+      label: "Likely out of date",
+      href: "/all-activity/likely-out-of-date",
+      current: true,
+    });
+  });
+
+  it("renders a selection column inside the table only for the likely-out-of-date view", () => {
+    const likelyOutOfDateListData = loadAllActivityListData("likely-out-of-date");
+    const likelyOutOfDateHtml = render(AllActivityPage, {
+      props: {
+        data: likelyOutOfDateListData,
+      },
+    }).body;
+    const dealsHtml = render(AllActivityPage, {
+      props: {
+        data: loadAllActivityListData("deals"),
+      },
+    }).body;
+
+    expect(likelyOutOfDateHtml).toContain('data-interactive-rows="false"');
+    expect(likelyOutOfDateHtml).toContain("data-table-select-header");
+    expect(likelyOutOfDateHtml).toContain("Select");
+    expect(likelyOutOfDateHtml.indexOf("Select")).toBeLessThan(
+      likelyOutOfDateHtml.indexOf("Deal"),
+    );
+    expect((likelyOutOfDateHtml.match(/data-table-select-cell/g) ?? []).length).toBe(
+      likelyOutOfDateListData.rows.length,
+    );
+    expect((likelyOutOfDateHtml.match(/data-selection-checkbox/g) ?? []).length).toBe(
+      likelyOutOfDateListData.rows.length,
+    );
+    expect(likelyOutOfDateHtml).toContain('aria-label="Select Honeywell deal"');
+    expect(likelyOutOfDateHtml).not.toContain("data-selection-rail");
+    expect(likelyOutOfDateHtml).not.toContain(
+      'href="/all-activity/likely-out-of-date/detail/deal-honeywell"',
+    );
+    expect(likelyOutOfDateHtml).toContain("data-likely-out-of-date-info-bar");
+    expect(likelyOutOfDateHtml).toContain(
+      "Use this view to find stale deals, then select the ones you want to ask for an update.",
+    );
+    expect(dealsHtml).not.toContain("data-table-select-header");
+    expect(dealsHtml).not.toContain("data-likely-out-of-date-info-bar");
+  });
+
+  it("keeps the select header inside the table when likely-out-of-date has no rows", () => {
+    const html = render(LikelyOutOfDateTable, {
+      props: {
+        rows: [],
+      },
+    }).body;
+
+    expect(html).toContain("data-table-select-header");
+    expect(html).not.toContain("data-selection-rail");
+    expect((html.match(/data-selection-checkbox/g) ?? []).length).toBe(0);
+    expect(html).toContain("No rows available.");
+    expect(html).not.toContain("data-likely-out-of-date-info-bar");
   });
 
   it("uses the route view as the source of truth for my-deals list routes", () => {
@@ -494,9 +595,15 @@ describe("dashboard header model", () => {
           current: false,
         },
         {
-          id: "no-activity",
-          label: "No activity",
-          href: "/all-activity/no-activity",
+          id: "unassigned",
+          label: "Unassigned",
+          href: "/all-activity/unassigned",
+          current: false,
+        },
+        {
+          id: "likely-out-of-date",
+          label: "Likely out of date",
+          href: "/all-activity/likely-out-of-date",
           current: false,
         },
       ],

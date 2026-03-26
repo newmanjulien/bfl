@@ -2,6 +2,10 @@
 	import { Ellipsis, PanelLeft } from 'lucide-svelte';
 	import type { PersonSummary } from '$lib/domain/people';
 	import type { DashboardHeader } from '$lib/dashboard/shell/dashboard-header';
+	import {
+		useDashboardHeaderUiController,
+		type DashboardHeaderButtonId
+	} from '$lib/dashboard/shell/dashboard-header-ui';
 	import { useDashboardShellState } from '$lib/dashboard/state.svelte';
 	import { mockDb } from '$lib/mock-db';
 	import ActivityLevelFilterMenu from '$lib/dashboard/shell/menus/ActivityLevelFilterMenu.svelte';
@@ -16,10 +20,18 @@
 
 	let { header }: Props = $props();
 	const shellState = useDashboardShellState();
+	const headerUiController = useDashboardHeaderUiController();
 
 	const people: PersonSummary[] = mockDb.brokers
 		.list()
 		.map(({ id, name, avatar }) => ({ id, name, avatar }));
+	const overlayState = $derived(headerUiController.getState());
+	const actionButtonClass =
+		'flex h-7 items-center justify-center rounded-sm border border-zinc-100 px-2 text-xs font-medium tracking-wide text-zinc-500 transition-colors hover:bg-zinc-100';
+
+	function runHeaderButton(buttonId: DashboardHeaderButtonId) {
+		void overlayState.handlers[buttonId]?.();
+	}
 </script>
 
 {#if header}
@@ -53,7 +65,9 @@
 			{#if header.extra?.kind === 'add-deal'}
 				<button
 					type="button"
-					class="mr-2 flex h-7 items-center justify-center rounded-sm border border-zinc-100 px-2 text-xs font-medium tracking-wide text-zinc-500 transition-colors hover:bg-zinc-100"
+					data-dashboard-header-button="add-deal"
+					class={actionButtonClass}
+					onclick={() => runHeaderButton('add-deal')}
 				>
 					Add deal
 				</button>
@@ -68,6 +82,18 @@
 					{/each}
 				</div>
 			{/if}
+
+			{#each overlayState.buttons as button (button.id)}
+				<button
+					type="button"
+					data-dashboard-header-overlay-button
+					data-dashboard-header-button={button.id}
+					class={actionButtonClass}
+					onclick={() => runHeaderButton(button.id)}
+				>
+					{button.label}
+				</button>
+			{/each}
 
 			<button
 				type="button"

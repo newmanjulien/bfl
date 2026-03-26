@@ -135,6 +135,10 @@ function toNoActivityRow(deal: DealRecord) {
 	});
 }
 
+function toAllActivityListRow(deal: DealRecord) {
+	return hasListActivityData(deal) ? toRelativeLastActivityRow(deal) : toNoActivityRow(deal);
+}
+
 const allDeals = mockDb.deals.list();
 const allActivityDeals = allDeals.reduce<
 	Array<
@@ -150,10 +154,27 @@ const allActivityDeals = allDeals.reduce<
 	return rows;
 }, []);
 const noActivityDeals = allDeals.filter((deal) => !hasListActivityData(deal));
+const likelyOutOfDateDeals = allDeals.filter((deal) => deal.isLikelyOutOfDate);
 
 export const allActivityTableRows = allActivityDeals.map(toRelativeLastActivityRow);
 export const noActivityTableRows = noActivityDeals.map(toNoActivityRow);
+export const likelyOutOfDateTableRows = likelyOutOfDateDeals.map(toAllActivityListRow);
 const allActivityTableRowsById = new Map(allActivityTableRows.map((row) => [row.id, row] as const));
+
+function toNonNavigableAllActivityRow(row: AllActivityTableRow): AllActivityTableRow {
+	if (row.navigation.kind === 'none') {
+		return row;
+	}
+
+	return {
+		...row,
+		navigation: {
+			kind: 'none'
+		}
+	};
+}
+
+const likelyOutOfDateViewRows = likelyOutOfDateTableRows.map(toNonNavigableAllActivityRow);
 
 function applyAllActivityViewToRow(
 	row: AllActivityTableRow,
@@ -192,19 +213,21 @@ function getVisibleAllActivityRowIds(view: AllActivityView) {
 
 export function getAllActivityRowsForView(view: AllActivityView) {
 	const rows =
-		view === 'no-activity'
+		view === 'unassigned'
 			? noActivityTableRows
-			: (() => {
-					const visibleRowIds = getVisibleAllActivityRowIds(view);
+			: view === 'likely-out-of-date'
+				? likelyOutOfDateViewRows
+				: (() => {
+						const visibleRowIds = getVisibleAllActivityRowIds(view);
 
-					return visibleRowIds === null
-						? allActivityTableRows
-						: [...visibleRowIds].flatMap((rowId) => {
-								const row = allActivityTableRowsById.get(rowId);
+						return visibleRowIds === null
+							? allActivityTableRows
+							: [...visibleRowIds].flatMap((rowId) => {
+									const row = allActivityTableRowsById.get(rowId);
 
-								return row ? [row] : [];
-							});
-				})();
+									return row ? [row] : [];
+								});
+					})();
 
 	if (view === DEFAULT_ALL_ACTIVITY_VIEW) {
 		return rows;

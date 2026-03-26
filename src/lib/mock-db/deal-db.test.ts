@@ -36,6 +36,8 @@ describe('mockDb selectors', () => {
 		expect(Object.isFrozen(deal)).toBe(true);
 		expect(deal.activityLevel).toBe('high');
 		expect(deal.isReservedInEpic).toBe(true);
+		expect(deal.isLikelyOutOfDate).toBe(false);
+		expect(honeywell.isLikelyOutOfDate).toBe(true);
 		expect('activityTrend' in deal).toBe(false);
 		expect(Object.isFrozen(broker)).toBe(true);
 		expect(Object.isFrozen(honeywellInsight)).toBe(true);
@@ -52,6 +54,9 @@ describe('mockDb selectors', () => {
 		}).toThrow();
 		expect(() => {
 			(deal as { isReservedInEpic: boolean }).isReservedInEpic = false;
+		}).toThrow();
+		expect(() => {
+			(deal as { isLikelyOutOfDate: boolean }).isLikelyOutOfDate = true;
 		}).toThrow();
 		expect(() => {
 			(honeywellInsight as { title: string }).title = 'Mutated insight';

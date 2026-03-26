@@ -359,6 +359,9 @@ button {
 	--dashboard-table-cell-py: 0.75rem;
 	--dashboard-table-font-size: 0.75rem;
 	--dashboard-table-line-height: 1rem;
+	--dashboard-table-header-row-min-height: calc(
+		var(--dashboard-table-line-height) + (var(--dashboard-table-cell-py) * 2)
+	);
 	--dashboard-table-row-min-height: calc(22px + (var(--dashboard-table-cell-py) * 2));
 	--dashboard-table-hover-bg: rgb(250 250 250 / 0.8);
 }
@@ -371,11 +374,28 @@ button {
 	}
 }
 
+.dashboard-table-shell [data-table-header-row] {
+	display: grid;
+	align-items: center;
+	min-height: var(--dashboard-table-header-row-min-height);
+}
+
 .dashboard-table-shell [data-table-row] {
 	display: grid;
 	align-items: center;
 	min-height: var(--dashboard-table-row-min-height);
 	transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+.dashboard-table-shell [data-table-select-header],
+.dashboard-table-shell [data-table-select-cell] {
+	padding-inline: calc(var(--dashboard-table-cell-px) * 0.5);
+}
+
+.dashboard-table-shell [data-table-select-cell] {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .dashboard-table-shell[data-interactive-rows='true'] [data-table-row]:hover {

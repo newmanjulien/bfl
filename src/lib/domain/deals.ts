@@ -18,6 +18,7 @@ export type DealRecord<BrokerId extends string = string> = {
 	accountName: string;
 	dealName: string;
 	isReservedInEpic: boolean;
+	isLikelyOutOfDate: boolean;
 	probability: number;
 	stage: DealStage;
 	activityLevel: ActivityLevel;
