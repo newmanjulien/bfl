@@ -1,37 +1,47 @@
-import { sortDealActivitiesAscending } from '$lib/dashboard/deal-derivations';
 import { activeMeetingDateIso } from '$lib/dashboard/meeting-date';
-import { toTimelineItem } from '$lib/dashboard/deal-view';
+import { sortDealActivitiesAscending } from '$lib/dashboard/deal-derivations';
+import {
+	createPersonSummaryMap,
+	toTimelineItem
+} from '$lib/dashboard/deal-view';
 import { mockDb } from '$lib/mock-db';
 import type { DealSummaryRow } from '$lib/presentation/deal-summary';
 
 export const sinceLastMeetingReferenceIso = activeMeetingDateIso;
 
-const meetingUpdateActivities = sortDealActivitiesAscending(
-	mockDb.activities
-		.list({ stream: 'meeting-update' })
-		.filter((activity) => activity.occurredOnIso >= sinceLastMeetingReferenceIso)
-);
+function getMeetingUpdateActivities() {
+	return sortDealActivitiesAscending(
+		mockDb.activities
+			.list({ stream: 'meeting-update' })
+			.filter((activity) => activity.occurredOnIso >= sinceLastMeetingReferenceIso)
+	);
+}
 
-export const sinceLastMeetingTimelineItems = meetingUpdateActivities
-	.map((activity) => toTimelineItem(activity));
+export function getSinceLastMeetingTimelineItems() {
+	const peopleById = createPersonSummaryMap(mockDb.brokers.list());
 
-const seenDealIds = new Set<string>();
-const dealsSinceLastMeeting = meetingUpdateActivities.flatMap((activity) => {
-	if (seenDealIds.has(activity.dealId)) {
-		return [];
-	}
+	return getMeetingUpdateActivities().map((activity) => toTimelineItem(activity, peopleById));
+}
 
-	seenDealIds.add(activity.dealId);
-	return [mockDb.deals.requireById(activity.dealId)];
-});
+export function getSinceLastMeetingDeals() {
+	const seenDealIds = new Set<string>();
 
-export const sinceLastMeetingDeals = dealsSinceLastMeeting
-	.map((deal) => {
-		return {
-			id: deal.dealId,
-			deal: deal.dealName,
-			probability: deal.probability,
-			activityLevel: deal.activityLevel,
-			stage: deal.stage
-		};
-	}) satisfies readonly DealSummaryRow[];
+	return getMeetingUpdateActivities()
+		.flatMap((activity) => {
+			if (seenDealIds.has(activity.dealId)) {
+				return [];
+			}
+
+			seenDealIds.add(activity.dealId);
+			return [mockDb.deals.requireById(activity.dealId)];
+		})
+		.map((deal) => {
+			return {
+				id: deal.dealId,
+				deal: deal.dealName,
+				probability: deal.probability,
+				activityLevel: deal.activityLevel,
+				stage: deal.stage
+			};
+		}) satisfies readonly DealSummaryRow[];
+}

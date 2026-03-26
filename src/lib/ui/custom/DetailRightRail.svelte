@@ -1,7 +1,9 @@
 <script lang="ts">
-	import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
+	import type { DetailRightRailData, DetailRightRailRow } from '$lib/dashboard/detail-rail-model';
+	import { DEAL_INDUSTRIES, type DealIndustry } from '$lib/domain/deals';
 	import { formatDealNumber } from '$lib/format/deals';
 	import ActivityLevelLabel from '$lib/ui/custom/ActivityLevelLabel.svelte';
+	import IndustryPicker from '$lib/ui/custom/IndustryPicker.svelte';
 	import PersonInline from '$lib/ui/custom/PersonInline.svelte';
 
 	type Props = {
@@ -9,6 +11,22 @@
 	};
 
 	let { data }: Props = $props();
+	let selectedIndustries = $state<Record<string, DealIndustry>>({});
+
+	function getSelectedIndustry(rowId: string, initialIndustry: string) {
+		return selectedIndustries[rowId] ?? (initialIndustry as DealIndustry);
+	}
+
+	function updateSelectedIndustry(rowId: string, value: string) {
+		selectedIndustries = {
+			...selectedIndustries,
+			[rowId]: value as DealIndustry
+		};
+	}
+
+	function isIndustryRow(row: DetailRightRailRow) {
+		return row.kind === 'text' && row.id === 'industry';
+	}
 </script>
 
 <div class="w-full bg-white">
@@ -18,9 +36,13 @@
 				<section class="border-t border-zinc-100 px-4 py-4 first:border-t-0">
 					<div class="grid gap-4">
 						{#each section.rows as row (row.id)}
-							<div class="grid grid-cols-[4.25rem_minmax(0,1fr)] gap-2.5">
-								<p class="text-[11px] tracking-wide text-zinc-400">{row.label}</p>
-								<div class="min-w-0 text-[11px] leading-relaxed tracking-wide text-zinc-700">
+							<div class="grid items-center grid-cols-[4.25rem_minmax(0,1fr)] gap-2.5">
+								<p class="self-center text-[11px] leading-relaxed tracking-wide text-zinc-400">
+									{row.label}
+								</p>
+								<div
+									class="flex min-w-0 items-center text-[11px] leading-relaxed tracking-wide text-zinc-700"
+								>
 									{#if row.kind === 'activity-level'}
 										<ActivityLevelLabel activityLevel={row.activityLevel} />
 									{:else if row.kind === 'person'}
@@ -30,9 +52,20 @@
 											<span>{row.emptyValue ?? 'Unassigned'}</span>
 										{/if}
 									{:else if row.kind === 'deal-number'}
-										{formatDealNumber(row.dealNumber)}
-									{:else}
-										{row.value}
+										<span>{formatDealNumber(row.dealNumber)}</span>
+									{:else if row.kind === 'text'}
+										{#if isIndustryRow(row)}
+											<IndustryPicker
+												summary={getSelectedIndustry(row.id, row.value)}
+												options={DEAL_INDUSTRIES.map((industry) => ({ id: industry, label: industry }))}
+												selectedValue={getSelectedIndustry(row.id, row.value)}
+												onSelect={(industry) => updateSelectedIndustry(row.id, industry)}
+												searchLabel="Search industries"
+												searchPlaceholder="Search industries"
+											/>
+										{:else}
+											<span>{row.value}</span>
+										{/if}
 									{/if}
 								</div>
 							</div>

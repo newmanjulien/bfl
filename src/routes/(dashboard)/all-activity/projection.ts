@@ -5,8 +5,13 @@ import {
 	type AllActivityView
 } from '$lib/dashboard/all-activity-routes';
 import { sortDealActivitiesAscending } from '$lib/dashboard/deal-derivations';
-import { getActivityLevelLabel } from '$lib/presentation/activity-level';
-import { resolveOptionalBrokerPerson, toOrgChartNode, toTimelineItem } from '$lib/dashboard/deal-view';
+import {
+	createPersonSummaryMap,
+	resolveOptionalBrokerPerson,
+	type PersonSummaryMap,
+	toOrgChartNode,
+	toTimelineItem
+} from '$lib/dashboard/deal-view';
 import {
 	toDetailRightRailData,
 	toDetailRightRailHelpfulContactsSection,
@@ -15,11 +20,12 @@ import {
 } from '$lib/dashboard/detail-rail';
 import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
 import type { ActivityLevel } from '$lib/domain/activity-level';
-import type { DealContextRecord, DealRecord } from '$lib/domain/deals';
+import type { DealContextRecord, DealSnapshotRecord } from '$lib/domain/deals';
 import type { IsoDateTimeString } from '$lib/domain/date-time';
-import { mockDb } from '$lib/mock-db';
 import type { PersonSummary } from '$lib/domain/people';
+import { getActivityLevelLabel } from '$lib/presentation/activity-level';
 import type { OrgChartNode, TimelineItem } from '$lib/presentation/models';
+import { mockDb } from '$lib/mock-db';
 import type { CanvasHeroData } from '$lib/ui/custom/canvas-hero';
 import type { FileUploadFieldData } from '$lib/ui/skeleton/file-upload';
 
@@ -70,7 +76,18 @@ const NEED_SUPPORT_ROW_IDS = new Set([
 const DUPLICATED_WORK_ROW_IDS = new Set(['deal-3m']);
 const NO_ACTIVITY_LABEL = 'No recorded activity';
 
-function requireLastActivityAtIso(deal: DealRecord) {
+function createPeopleById() {
+	return createPersonSummaryMap(mockDb.brokers.list());
+}
+
+function resolveDealOwner(
+	dealId: string,
+	peopleById: PersonSummaryMap
+) {
+	return resolveOptionalBrokerPerson(peopleById, mockDb.deals.getCurrentOwnerBrokerId(dealId));
+}
+
+function requireLastActivityAtIso(deal: DealSnapshotRecord) {
 	if (!deal.lastActivityAtIso) {
 		throw new Error(`Deal ${deal.dealId} is missing lastActivityAtIso.`);
 	}
@@ -79,16 +96,20 @@ function requireLastActivityAtIso(deal: DealRecord) {
 }
 
 function hasListActivityData(
-	deal: DealRecord
-): deal is DealRecord & {
-	lastActivityAtIso: NonNullable<DealRecord['lastActivityAtIso']>;
+	deal: DealSnapshotRecord
+): deal is DealSnapshotRecord & {
+	lastActivityAtIso: NonNullable<DealSnapshotRecord['lastActivityAtIso']>;
 } {
 	return Boolean(deal.lastActivityAtIso);
 }
 
-function toRightRailData(deal: DealRecord, context: DealContextRecord): DetailRightRailData {
+function toRightRailData(
+	deal: DealSnapshotRecord,
+	context: DealContextRecord,
+	peopleById: PersonSummaryMap
+): DetailRightRailData {
 	return toDetailRightRailData([
-		toDetailRightRailOverviewSection(deal),
+		toDetailRightRailOverviewSection(deal, resolveDealOwner(deal.dealId, peopleById)),
 		toDetailRightRailTimingSection(deal, context),
 		toDetailRightRailHelpfulContactsSection(context)
 	]);
@@ -106,8 +127,9 @@ function toAllActivityRowNavigation(dealId: string): AllActivityRowNavigation {
 }
 
 function toAllActivityTableRow(
-	deal: DealRecord,
-	lastActivity: AllActivityRowLastActivity
+	deal: DealSnapshotRecord,
+	lastActivity: AllActivityRowLastActivity,
+	peopleById: PersonSummaryMap
 ): AllActivityTableRow {
 	return {
 		id: deal.dealId,
@@ -117,49 +139,40 @@ function toAllActivityTableRow(
 		deal: deal.dealName,
 		stage: deal.stage,
 		lastActivity,
-		owner: resolveOptionalBrokerPerson(mockDb.deals.getCurrentOwnerBrokerId(deal.dealId))
+		owner: resolveDealOwner(deal.dealId, peopleById)
 	};
 }
 
-function toRelativeLastActivityRow(deal: DealRecord & { lastActivityAtIso: IsoDateTimeString }) {
-	return toAllActivityTableRow(deal, {
-		kind: 'relative',
-		atIso: requireLastActivityAtIso(deal)
-	});
+function toRelativeLastActivityRow(
+	deal: DealSnapshotRecord & { lastActivityAtIso: IsoDateTimeString },
+	peopleById: PersonSummaryMap
+) {
+	return toAllActivityTableRow(
+		deal,
+		{
+			kind: 'relative',
+			atIso: requireLastActivityAtIso(deal)
+		},
+		peopleById
+	);
 }
 
-function toNoActivityRow(deal: DealRecord) {
-	return toAllActivityTableRow(deal, {
-		kind: 'text',
-		label: NO_ACTIVITY_LABEL
-	});
+function toNoActivityRow(deal: DealSnapshotRecord, peopleById: PersonSummaryMap) {
+	return toAllActivityTableRow(
+		deal,
+		{
+			kind: 'text',
+			label: NO_ACTIVITY_LABEL
+		},
+		peopleById
+	);
 }
 
-function toAllActivityListRow(deal: DealRecord) {
-	return hasListActivityData(deal) ? toRelativeLastActivityRow(deal) : toNoActivityRow(deal);
+function toAllActivityListRow(deal: DealSnapshotRecord, peopleById: PersonSummaryMap) {
+	return hasListActivityData(deal)
+		? toRelativeLastActivityRow(deal, peopleById)
+		: toNoActivityRow(deal, peopleById);
 }
-
-const allDeals = mockDb.deals.list();
-const allActivityDeals = allDeals.reduce<
-	Array<
-		DealRecord & {
-			lastActivityAtIso: NonNullable<DealRecord['lastActivityAtIso']>;
-		}
-	>
->((rows, deal) => {
-	if (hasListActivityData(deal)) {
-		rows.push(deal);
-	}
-
-	return rows;
-}, []);
-const noActivityDeals = allDeals.filter((deal) => !hasListActivityData(deal));
-const likelyOutOfDateDeals = allDeals.filter((deal) => deal.isLikelyOutOfDate);
-
-export const allActivityTableRows = allActivityDeals.map(toRelativeLastActivityRow);
-export const noActivityTableRows = noActivityDeals.map(toNoActivityRow);
-export const likelyOutOfDateTableRows = likelyOutOfDateDeals.map(toAllActivityListRow);
-const allActivityTableRowsById = new Map(allActivityTableRows.map((row) => [row.id, row] as const));
 
 function toNonNavigableAllActivityRow(row: AllActivityTableRow): AllActivityTableRow {
 	if (row.navigation.kind === 'none') {
@@ -173,8 +186,6 @@ function toNonNavigableAllActivityRow(row: AllActivityTableRow): AllActivityTabl
 		}
 	};
 }
-
-const likelyOutOfDateViewRows = likelyOutOfDateTableRows.map(toNonNavigableAllActivityRow);
 
 function applyAllActivityViewToRow(
 	row: AllActivityTableRow,
@@ -211,7 +222,47 @@ function getVisibleAllActivityRowIds(view: AllActivityView) {
 	return null;
 }
 
+function buildAllActivityRowCollections(peopleById: PersonSummaryMap) {
+	const allDeals = mockDb.deals.list();
+	const allActivityDeals = allDeals.reduce<
+		Array<
+			DealSnapshotRecord & {
+				lastActivityAtIso: NonNullable<DealSnapshotRecord['lastActivityAtIso']>;
+			}
+		>
+	>((rows, deal) => {
+		if (hasListActivityData(deal)) {
+			rows.push(deal);
+		}
+
+		return rows;
+	}, []);
+	const noActivityDeals = allDeals.filter((deal) => !hasListActivityData(deal));
+	const likelyOutOfDateDeals = allDeals.filter((deal) => deal.isLikelyOutOfDate);
+	const allActivityTableRows = allActivityDeals.map((deal) => toRelativeLastActivityRow(deal, peopleById));
+	const noActivityTableRows = noActivityDeals.map((deal) => toNoActivityRow(deal, peopleById));
+	const likelyOutOfDateTableRows = likelyOutOfDateDeals.map((deal) =>
+		toAllActivityListRow(deal, peopleById)
+	);
+
+	return {
+		allActivityTableRows,
+		noActivityTableRows,
+		likelyOutOfDateViewRows: likelyOutOfDateTableRows.map(toNonNavigableAllActivityRow),
+		allActivityTableRowsById: new Map(
+			allActivityTableRows.map((row) => [row.id, row] as const)
+		)
+	};
+}
+
 export function getAllActivityRowsForView(view: AllActivityView) {
+	const peopleById = createPeopleById();
+	const {
+		allActivityTableRows,
+		noActivityTableRows,
+		likelyOutOfDateViewRows,
+		allActivityTableRowsById
+	} = buildAllActivityRowCollections(peopleById);
 	const rows =
 		view === 'unassigned'
 			? noActivityTableRows
@@ -244,10 +295,11 @@ export function getAllActivityDetailViewById(dealId: string): AllActivityDetailV
 		return null;
 	}
 
+	const peopleById = createPeopleById();
 	const activityLabel = getActivityLevelLabel(deal.activityLevel).toLowerCase();
 	const activityItems = sortDealActivitiesAscending(
 		mockDb.activities.listByDealId(deal.dealId, { stream: 'deal-detail' })
-	).map((activity) => toTimelineItem(activity));
+	).map((activity) => toTimelineItem(activity, peopleById));
 
 	return {
 		hero: {
@@ -256,13 +308,13 @@ export function getAllActivityDetailViewById(dealId: string): AllActivityDetailV
 			description: `${deal.dealName} is in ${deal.stage} and is ${deal.probability}% likely to close with ${activityLabel}. ${context.summary}`
 		},
 		activityItems,
-		orgChartRoot: toOrgChartNode(context.orgChartRoot),
+		orgChartRoot: toOrgChartNode(context.orgChartRoot, peopleById),
 		update: {
 			sectionId: 'update',
 			uploadLabel: 'Upload files',
 			uploadDescription: `Upload call notes, security review feedback, or procurement documents that add context to ${deal.dealName}.`
 		},
-		rightRail: toRightRailData(deal, context)
+		rightRail: toRightRailData(deal, context, peopleById)
 	};
 }
 

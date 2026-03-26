@@ -3,6 +3,7 @@
 	import { getDashboardDetailRailWidth } from '$lib/dashboard/layout/tokens';
 	import { cn } from '$lib/support/cn';
 	import ActivityLevelGridIcon from '$lib/ui/custom/ActivityLevelGridIcon.svelte';
+	import IndustryPickerPanel from '$lib/ui/custom/IndustryPickerPanel.svelte';
 	import AllActivityFilterDrawerSectionShell from './AllActivityFilterDrawerSection.svelte';
 	import type {
 		AllActivityFilterDrawerSection,
@@ -88,13 +89,35 @@
 
 			<div class="min-h-0 flex-1 overflow-y-auto bg-white">
 				{#each sections as section, sectionIndex (section.id)}
-					<AllActivityFilterDrawerSectionShell
-						{section}
-						showDivider={sectionIndex > 0}
-						{onToggleSection}
-					>
-						<ul class="space-y-1">
-							{#if section.id === 'broker'}
+					{#if section.id === 'industry'}
+						<AllActivityFilterDrawerSectionShell
+							{section}
+							showDivider={sectionIndex > 0}
+							{onToggleSection}
+						>
+							<IndustryPickerPanel
+								mode="multiple"
+								options={section.options.map((option) => ({ id: option.id, label: option.label }))}
+								selectedValues={section.options
+									.filter((option) => option.selected)
+									.map((option) => option.id)}
+								onSelect={(industry) =>
+									onToggleOption({
+										sectionId: section.id,
+										optionId: industry
+									})}
+								searchLabel="Search industries"
+								searchPlaceholder="Search industries"
+							/>
+						</AllActivityFilterDrawerSectionShell>
+					{:else}
+						<AllActivityFilterDrawerSectionShell
+							{section}
+							showDivider={sectionIndex > 0}
+							{onToggleSection}
+						>
+							<ul class="space-y-1">
+								{#if section.id === 'broker'}
 								{#each section.options as option (option.id)}
 									<li>
 										<button
@@ -126,7 +149,7 @@
 										</button>
 									</li>
 								{/each}
-							{:else if section.id === 'activity-level'}
+								{:else if section.id === 'activity-level'}
 								{#each section.options as option (option.id)}
 									<li>
 										<button
@@ -155,32 +178,10 @@
 										</button>
 									</li>
 								{/each}
-							{:else}
-								{#each section.options as option (option.id)}
-									<li>
-										<button
-											type="button"
-											aria-pressed={option.selected}
-											class={getOptionClassName(option.selected)}
-											onclick={() =>
-												onToggleOption({
-													sectionId: section.id,
-													optionId: option.id
-												})}
-										>
-											<span class="truncate">{option.label}</span>
-											<Check
-												class={cn(
-													'ml-3 size-3.5 shrink-0 text-zinc-400',
-													option.selected ? 'opacity-100' : 'opacity-0'
-												)}
-											/>
-										</button>
-									</li>
-								{/each}
-							{/if}
-						</ul>
-					</AllActivityFilterDrawerSectionShell>
+								{/if}
+							</ul>
+						</AllActivityFilterDrawerSectionShell>
+					{/if}
 				{/each}
 			</div>
 		</aside>

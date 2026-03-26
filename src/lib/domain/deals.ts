@@ -21,23 +21,28 @@ export const DEAL_INDUSTRIES = [
 export type DealStage = (typeof DEAL_STAGES)[number];
 export type DealIndustry = (typeof DEAL_INDUSTRIES)[number];
 
-export type DealRecord<BrokerId extends string = string> = {
+export type DealRecord = {
 	dealId: string;
 	dealNumber: number;
 	accountName: string;
 	industry: DealIndustry;
 	dealName: string;
 	isReservedInEpic: boolean;
-	isLikelyOutOfDate: boolean;
 	probability: number;
 	stage: DealStage;
-	activityLevel: ActivityLevel;
-	lastActivityAtIso?: IsoDateTimeString;
-	insights?: readonly DealInsightRecord<BrokerId>[];
 };
 
+export type DealStateRecord = {
+	dealId: string;
+	isLikelyOutOfDate: boolean;
+	activityLevel: ActivityLevel;
+	lastActivityAtIso?: IsoDateTimeString;
+};
+
+export type DealSnapshotRecord = DealRecord & DealStateRecord;
+
 export type DealSnapshot = Pick<
-	DealRecord,
+	DealSnapshotRecord,
 	'dealId' | 'dealName' | 'probability' | 'stage'
 >;
 

@@ -1,7 +1,11 @@
 import type {
 	DealActivityStream,
 	DealContextRecord,
-	DealRecord
+	DealInsightKind,
+	DealSnapshotRecord,
+	DealRecord,
+	DealInsightRecord,
+	DealStateRecord
 } from '$lib/domain/deals';
 import type { BrokerId } from '../reference/records';
 import { createSnapshot } from '../snapshot';
@@ -9,17 +13,38 @@ import {
 	dealActivities,
 	dealBrokerLinks,
 	dealContexts,
+	dealInsights,
 	dealNews,
+	dealStates,
 	deals
 } from './records';
 
 const dealsById = new Map<string, DealRecord>(deals.map((record) => [record.dealId, record]));
+const dealStatesByDealId = new Map<string, DealStateRecord>(
+	dealStates.map((record) => [record.dealId, record])
+);
 const contextsByDealId = new Map<string, DealContextRecord<BrokerId>>(
 	dealContexts.map((record) => [record.dealId, record])
 );
+const insightsById = new Map<string, DealInsightRecord<BrokerId>>(
+	dealInsights.map((record) => [record.id, record])
+);
+
+function toDealSnapshotRecord(deal: DealRecord): DealSnapshotRecord {
+	const dealState = dealStatesByDealId.get(deal.dealId);
+
+	if (!dealState) {
+		throw new Error(`Unknown deal state for deal "${deal.dealId}".`);
+	}
+
+	return {
+		...deal,
+		...dealState
+	};
+}
 
 function listDeals() {
-	return createSnapshot(deals);
+	return createSnapshot(deals.map((record) => toDealSnapshotRecord(record)));
 }
 
 function listDealIds() {
@@ -29,7 +54,7 @@ function listDealIds() {
 function getDealById(dealId: string) {
 	const deal = dealsById.get(dealId);
 
-	return deal ? createSnapshot(deal) : null;
+	return deal ? createSnapshot(toDealSnapshotRecord(deal)) : null;
 }
 
 function requireDealById(dealId: string) {
@@ -96,6 +121,44 @@ function getContextByDealId(dealId: string) {
 	return context ? createSnapshot(context) : null;
 }
 
+function listInsights(options?: {
+	kind?: DealInsightKind;
+}) {
+	return createSnapshot(
+		dealInsights.filter((record) => !options?.kind || record.kind === options.kind)
+	);
+}
+
+function listInsightsByDealId(
+	dealId: string,
+	options?: {
+		kind?: DealInsightKind;
+	}
+) {
+	return createSnapshot(
+		dealInsights.filter(
+			(record) =>
+				record.dealId === dealId && (!options?.kind || record.kind === options.kind)
+		)
+	);
+}
+
+function getInsightById(insightId: string) {
+	const insight = insightsById.get(insightId);
+
+	return insight ? createSnapshot(insight) : null;
+}
+
+function requireInsightById(insightId: string) {
+	const insight = getInsightById(insightId);
+
+	if (!insight) {
+		throw new Error(`Unknown insight id "${insightId}".`);
+	}
+
+	return insight;
+}
+
 export const dealReaders = Object.freeze({
 	deals: Object.freeze({
 		list: listDeals,
@@ -116,5 +179,11 @@ export const dealReaders = Object.freeze({
 	contexts: Object.freeze({
 		list: listContexts,
 		getByDealId: getContextByDealId
+	}),
+	insights: Object.freeze({
+		list: listInsights,
+		listByDealId: listInsightsByDealId,
+		getById: getInsightById,
+		requireById: requireInsightById
 	})
 });

@@ -1,19 +1,18 @@
 import type {
 	DealContextRecord,
 	DealHelpfulContactRecord,
-	DealRecord
+	DealSnapshotRecord
 } from '$lib/domain/deals';
+import type { PersonSummary } from '$lib/domain/people';
 import {
 	formatIsoDateTimeRelative,
 	formatIsoDateTimeRelativeMonths
 } from '$lib/format/date-time';
-import { mockDb } from '$lib/mock-db';
 import type {
 	DetailRightRailData,
 	DetailRightRailHelpfulContact,
 	DetailRightRailSection
 } from './detail-rail-model';
-import { resolveOptionalBrokerPerson } from './deal-view';
 
 function isDetailRightRailSection(
 	section: DetailRightRailSection | null | undefined | false
@@ -41,7 +40,10 @@ export function toDetailRightRailData(
 	};
 }
 
-export function toDetailRightRailOverviewSection(deal: DealRecord): DetailRightRailSection {
+export function toDetailRightRailOverviewSection(
+	deal: DealSnapshotRecord,
+	owner: PersonSummary | null
+): DetailRightRailSection {
 	return {
 		id: 'deal-overview',
 		kind: 'rows',
@@ -65,10 +67,16 @@ export function toDetailRightRailOverviewSection(deal: DealRecord): DetailRightR
 				activityLevel: deal.activityLevel
 			},
 			{
+				id: 'industry',
+				label: 'Industry',
+				kind: 'text',
+				value: deal.industry
+			},
+			{
 				id: 'owner',
 				label: 'Owner',
 				kind: 'person',
-				person: resolveOptionalBrokerPerson(mockDb.deals.getCurrentOwnerBrokerId(deal.dealId)),
+				person: owner,
 				emptyValue: 'Unassigned'
 			},
 			{
@@ -82,7 +90,7 @@ export function toDetailRightRailOverviewSection(deal: DealRecord): DetailRightR
 }
 
 export function toDetailRightRailTimingSection(
-	deal: DealRecord,
+	deal: DealSnapshotRecord,
 	detailContext: DealContextRecord
 ): DetailRightRailSection {
 	return {

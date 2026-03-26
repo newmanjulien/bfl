@@ -4,11 +4,13 @@ import type {
 	DealContextRecord,
 	DealInsightRecord,
 	DealNewsRecord,
-	DealRecord
+	DealRecord,
+	DealStateRecord
 } from '$lib/domain/deals';
 import type { BrokerId } from '../reference/records';
 
-type BrokerScopedDeal = DealRecord<BrokerId>;
+type BrokerScopedDeal = DealRecord;
+type BrokerScopedDealState = DealStateRecord;
 type BrokerScopedDealActivity = DealActivityRecord<BrokerId>;
 type BrokerScopedDealBrokerLink = DealBrokerLinkRecord<BrokerId>;
 type BrokerScopedDealContext = DealContextRecord<BrokerId>;
@@ -150,12 +152,8 @@ export const deals: readonly BrokerScopedDeal[] = [
 		industry: 'Industrials',
 		dealName: '3M deal',
 		isReservedInEpic: true,
-		isLikelyOutOfDate: false,
 		probability: 25,
-		stage: 'Discovery',
-		activityLevel: 'high',
-		lastActivityAtIso: '2026-03-08T12:00:00Z',
-		insights: threeMRiskInsights
+		stage: 'Discovery'
 	},
 	{
 		dealId: 'deal-fedex',
@@ -164,11 +162,8 @@ export const deals: readonly BrokerScopedDeal[] = [
 		industry: 'Transportation & logistics',
 		dealName: 'FedEx deal',
 		isReservedInEpic: true,
-		isLikelyOutOfDate: false,
 		probability: 60,
-		stage: 'Proposal',
-		activityLevel: 'high',
-		lastActivityAtIso: '2026-03-07T18:00:00Z'
+		stage: 'Proposal'
 	},
 	{
 		dealId: 'deal-caterpillar',
@@ -177,11 +172,8 @@ export const deals: readonly BrokerScopedDeal[] = [
 		industry: 'Industrials',
 		dealName: 'Caterpillar deal',
 		isReservedInEpic: true,
-		isLikelyOutOfDate: false,
 		probability: 35,
-		stage: 'Negotiation',
-		activityLevel: 'medium',
-		lastActivityAtIso: '2026-03-08T15:00:00Z'
+		stage: 'Negotiation'
 	},
 	{
 		dealId: 'deal-southwest',
@@ -190,11 +182,8 @@ export const deals: readonly BrokerScopedDeal[] = [
 		industry: 'Transportation & logistics',
 		dealName: 'Southwest Airlines deal',
 		isReservedInEpic: true,
-		isLikelyOutOfDate: false,
 		probability: 75,
-		stage: 'Negotiation',
-		activityLevel: 'high',
-		lastActivityAtIso: '2026-03-08T14:00:00Z'
+		stage: 'Negotiation'
 	},
 	{
 		dealId: 'deal-john-deere',
@@ -203,11 +192,8 @@ export const deals: readonly BrokerScopedDeal[] = [
 		industry: 'Industrials',
 		dealName: 'John Deere deal',
 		isReservedInEpic: true,
-		isLikelyOutOfDate: false,
 		probability: 100,
-		stage: 'Closed won',
-		activityLevel: 'low',
-		lastActivityAtIso: '2026-03-05T13:00:00Z'
+		stage: 'Closed won'
 	},
 	{
 		dealId: 'deal-hilton',
@@ -216,11 +202,8 @@ export const deals: readonly BrokerScopedDeal[] = [
 		industry: 'Hospitality',
 		dealName: 'Hilton deal',
 		isReservedInEpic: true,
-		isLikelyOutOfDate: false,
 		probability: 0,
-		stage: 'Closed lost',
-		activityLevel: 'low',
-		lastActivityAtIso: '2026-03-01T16:00:00Z'
+		stage: 'Closed lost'
 	},
 	{
 		dealId: 'deal-whirlpool',
@@ -229,10 +212,8 @@ export const deals: readonly BrokerScopedDeal[] = [
 		industry: 'Consumer goods',
 		dealName: 'Whirlpool deal',
 		isReservedInEpic: true,
-		isLikelyOutOfDate: false,
 		probability: 25,
-		stage: 'Discovery',
-		activityLevel: 'low'
+		stage: 'Discovery'
 	},
 	{
 		dealId: 'deal-tyson',
@@ -241,11 +222,8 @@ export const deals: readonly BrokerScopedDeal[] = [
 		industry: 'Food & beverage',
 		dealName: 'Tyson Foods deal',
 		isReservedInEpic: true,
-		isLikelyOutOfDate: false,
 		probability: 85,
-		stage: 'Proposal',
-		activityLevel: 'high',
-		lastActivityAtIso: '2026-03-08T11:00:00Z'
+		stage: 'Proposal'
 	},
 	{
 		dealId: 'deal-honeywell',
@@ -254,13 +232,70 @@ export const deals: readonly BrokerScopedDeal[] = [
 		industry: 'Industrials',
 		dealName: 'Honeywell deal',
 		isReservedInEpic: true,
-		isLikelyOutOfDate: true,
 		probability: 40,
-		stage: 'Discovery',
-		activityLevel: 'low',
-		insights: honeywellInsights
+		stage: 'Discovery'
 	}
 ];
+
+export const dealStates: readonly BrokerScopedDealState[] = [
+	{
+		dealId: 'deal-3m',
+		isLikelyOutOfDate: false,
+		activityLevel: 'high',
+		lastActivityAtIso: '2026-03-08T12:00:00Z'
+	},
+	{
+		dealId: 'deal-fedex',
+		isLikelyOutOfDate: false,
+		activityLevel: 'high',
+		lastActivityAtIso: '2026-03-07T18:00:00Z'
+	},
+	{
+		dealId: 'deal-caterpillar',
+		isLikelyOutOfDate: false,
+		activityLevel: 'medium',
+		lastActivityAtIso: '2026-03-08T15:00:00Z'
+	},
+	{
+		dealId: 'deal-southwest',
+		isLikelyOutOfDate: false,
+		activityLevel: 'high',
+		lastActivityAtIso: '2026-03-08T14:00:00Z'
+	},
+	{
+		dealId: 'deal-john-deere',
+		isLikelyOutOfDate: false,
+		activityLevel: 'low',
+		lastActivityAtIso: '2026-03-05T13:00:00Z'
+	},
+	{
+		dealId: 'deal-hilton',
+		isLikelyOutOfDate: false,
+		activityLevel: 'low',
+		lastActivityAtIso: '2026-03-01T16:00:00Z'
+	},
+	{
+		dealId: 'deal-whirlpool',
+		isLikelyOutOfDate: false,
+		activityLevel: 'low'
+	},
+	{
+		dealId: 'deal-tyson',
+		isLikelyOutOfDate: false,
+		activityLevel: 'high',
+		lastActivityAtIso: '2026-03-08T11:00:00Z'
+	},
+	{
+		dealId: 'deal-honeywell',
+		isLikelyOutOfDate: true,
+		activityLevel: 'low'
+	}
+];
+
+export const dealInsights = [
+	...threeMRiskInsights,
+	...honeywellInsights
+] as const satisfies readonly BrokerScopedDealInsight[];
 
 export const dealBrokerLinks = [
 	{

@@ -2,31 +2,49 @@ import type { DealActivityRecord } from '$lib/domain/deals';
 import type { OrgChartContactNode } from '$lib/domain/org-chart';
 import type { PersonSummary } from '$lib/domain/people';
 import { formatIsoDateLong } from '$lib/format/date-time';
-import { mockDb, type BrokerId } from '$lib/mock-db';
 import type {
 	OrgChartNode,
 	TimelineItem,
 	TimelineMarker
 } from '$lib/presentation/models';
 
+export type PersonSummaryMap = ReadonlyMap<PersonSummary['id'], PersonSummary>;
+
+export function createPersonSummaryMap(
+	people: readonly PersonSummary[]
+): PersonSummaryMap {
+	return new Map(people.map((person) => [person.id, person]));
+}
+
 export function resolveBrokerPerson(
-	brokerId: BrokerId
+	peopleById: PersonSummaryMap,
+	brokerId: string
 ): PersonSummary {
-	return mockDb.brokers.requireById(brokerId);
+	const broker = peopleById.get(brokerId);
+
+	if (!broker) {
+		throw new Error(`Unknown broker id "${brokerId}".`);
+	}
+
+	return broker;
 }
 
 export function resolveOptionalBrokerPerson(
-	brokerId: BrokerId | null
+	peopleById: PersonSummaryMap,
+	brokerId: string | null
 ): PersonSummary | null {
-	return brokerId ? resolveBrokerPerson(brokerId) : null;
+	return brokerId ? resolveBrokerPerson(peopleById, brokerId) : null;
 }
 
-export function toTimelineItem(record: DealActivityRecord<BrokerId>): TimelineItem {
+export function toTimelineItem<BrokerId extends string>(
+	record: DealActivityRecord<BrokerId>,
+	peopleById: PersonSummaryMap
+): TimelineItem {
 	const marker: TimelineMarker =
 		record.marker.kind === 'broker-avatar'
 			? {
 					kind: 'avatar',
-					person: resolveBrokerPerson(record.marker.brokerId)
+					person: resolveBrokerPerson(peopleById, record.marker.brokerId)
 				}
 			: { kind: 'dot' };
 
@@ -34,7 +52,7 @@ export function toTimelineItem(record: DealActivityRecord<BrokerId>): TimelineIt
 		return {
 			kind: 'actor-action',
 			id: record.id,
-			actor: resolveBrokerPerson(record.actorBrokerId),
+			actor: resolveBrokerPerson(peopleById, record.actorBrokerId),
 			action: record.action,
 			occurredOnIso: record.occurredOnIso,
 			body: record.body,
@@ -52,8 +70,11 @@ export function toTimelineItem(record: DealActivityRecord<BrokerId>): TimelineIt
 	};
 }
 
-export function toOrgChartNode(record: OrgChartContactNode<BrokerId>): OrgChartNode {
-	const broker = resolveBrokerPerson(record.lastContactedById);
+export function toOrgChartNode<ContactById extends string>(
+	record: OrgChartContactNode<ContactById>,
+	peopleById: PersonSummaryMap
+): OrgChartNode {
+	const broker = resolveBrokerPerson(peopleById, record.lastContactedById);
 
 	return {
 		id: record.id,
@@ -65,7 +86,9 @@ export function toOrgChartNode(record: OrgChartContactNode<BrokerId>): OrgChartN
 		},
 		...(record.directReports
 			? {
-					directReports: record.directReports.map((directReport) => toOrgChartNode(directReport))
+					directReports: record.directReports.map((directReport) =>
+						toOrgChartNode(directReport, peopleById)
+					)
 				}
 			: {})
 	};

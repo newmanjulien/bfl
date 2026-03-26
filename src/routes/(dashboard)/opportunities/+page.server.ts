@@ -1,4 +1,4 @@
-import { opportunitiesTiles, opportunityRiskTiles } from './projection';
+import { getOpportunityRiskTiles, getOpportunityTiles } from './projection';
 
 export const load = () => {
 	return {
@@ -6,7 +6,7 @@ export const load = () => {
 			title: 'Opportunities & risks you might help with',
 			description: 'Help Julien take advantage of key opportunities and risks'
 		},
-		opportunityTiles: opportunitiesTiles,
-		riskTiles: opportunityRiskTiles
+		opportunityTiles: getOpportunityTiles(),
+		riskTiles: getOpportunityRiskTiles()
 	};
 };

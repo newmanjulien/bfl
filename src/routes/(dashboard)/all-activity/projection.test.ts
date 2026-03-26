@@ -56,10 +56,17 @@ describe('all-activity projection', () => {
 		}
 
 		const dealNumberRow = getRightRailRow(detail.rightRail, 'deal-number');
+		const industryRow = getRightRailRow(detail.rightRail, 'industry');
 		const helpfulContacts = getHelpfulContactsSection(detail.rightRail);
 
 		expect(detail.hero.dealNumber).toBe(74);
 		expect(dealNumberRow?.kind).toBe('deal-number');
+		expect(industryRow).toEqual({
+			id: 'industry',
+			label: 'Industry',
+			kind: 'text',
+			value: 'Industrials'
+		});
 
 		if (dealNumberRow?.kind !== 'deal-number' || !helpfulContacts) {
 			throw new Error('Expected deal-number and helpful-contacts sections.');

@@ -4,16 +4,19 @@ import type {
 	DealContextRecord,
 	DealHelpfulContactRecord,
 	DealInsightRecord,
-	DealNewsRecord
+	DealNewsRecord,
+	DealStateRecord
 } from '$lib/domain/deals';
 import { DEAL_INDUSTRIES } from '$lib/domain/deals';
 import type { OrgChartContactNode } from '$lib/domain/org-chart';
-import { brokersById, type BrokerId } from '../reference/records';
+import { brokerRecords, type BrokerId } from '../reference/records';
 import {
 	dealActivities,
 	dealBrokerLinks,
 	dealContexts,
+	dealInsights,
 	dealNews,
+	dealStates,
 	deals
 } from './records';
 
@@ -25,8 +28,10 @@ function assertUniqueValue(value: string | number, values: Set<string | number>,
 	values.add(value);
 }
 
+const brokerIds = new Set<string>(brokerRecords.map((broker) => broker.id));
+
 function hasBrokerId(brokerId: string): brokerId is BrokerId {
-	return brokerId in brokersById;
+	return brokerIds.has(brokerId);
 }
 
 function assertBrokerIdExists(brokerId: string, context: string) {
@@ -99,22 +104,12 @@ function assertContextHelpfulContacts(context: DealContextRecord<BrokerId>) {
 	}
 }
 
-function assertDealInsights(
-	insights: readonly DealInsightRecord<BrokerId>[] | undefined,
-	dealId: string,
-	dealIds: ReadonlySet<string>,
-	dealInsightIdValues: Set<string | number>
+function assertDealStateReferences(
+	dealState: DealStateRecord,
+	dealIds: ReadonlySet<string>
 ) {
-	for (const insight of insights ?? []) {
-		assertUniqueValue(insight.id, dealInsightIdValues, 'deal insight id');
-
-		if (insight.dealId !== dealId) {
-			throw new Error(
-				`Deal ${dealId} contains insight ${insight.id} with mismatched dealId ${insight.dealId}.`
-			);
-		}
-
-		assertInsightReferences(insight, dealIds);
+	if (!dealIds.has(dealState.dealId)) {
+		throw new Error(`Deal state references an unknown deal: ${dealState.dealId}.`);
 	}
 }
 
@@ -122,6 +117,7 @@ function assertDealReferencesExist() {
 	const dealIds = new Set(deals.map((deal) => deal.dealId));
 	const dealNumberValues = new Set<string | number>();
 	const dealIdValues = new Set<string | number>();
+	const dealStateDealIdValues = new Set<string | number>();
 	const dealBrokerLinkIdValues = new Set<string | number>();
 	const dealActivityIdValues = new Set<string | number>();
 	const dealNewsIdValues = new Set<string | number>();
@@ -135,8 +131,11 @@ function assertDealReferencesExist() {
 		if (!DEAL_INDUSTRIES.includes(deal.industry)) {
 			throw new Error(`Deal ${deal.dealId} has unknown industry "${deal.industry}".`);
 		}
+	}
 
-		assertDealInsights(deal.insights, deal.dealId, dealIds, dealInsightIdValues);
+	for (const dealState of dealStates) {
+		assertUniqueValue(dealState.dealId, dealStateDealIdValues, 'deal state dealId');
+		assertDealStateReferences(dealState, dealIds);
 	}
 
 	for (const link of dealBrokerLinks) {
@@ -154,12 +153,21 @@ function assertDealReferencesExist() {
 		assertNewsReferences(newsItem, dealIds);
 	}
 
+	for (const insight of dealInsights) {
+		assertUniqueValue(insight.id, dealInsightIdValues, 'deal insight id');
+		assertInsightReferences(insight, dealIds);
+	}
+
 	for (const context of dealContexts) {
 		assertUniqueValue(context.dealId, dealContextDealIdValues, 'deal context dealId');
 		assertContextReferences(context, dealIds);
 	}
 
 	for (const dealId of dealIds) {
+		if (!dealStateDealIdValues.has(dealId)) {
+			throw new Error(`Deal ${dealId} is missing a deal state record.`);
+		}
+
 		const ownerLinks = dealBrokerLinks.filter(
 			(link) => link.dealId === dealId && link.relationship === 'owner'
 		);

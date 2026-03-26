@@ -1,9 +1,9 @@
 import type { FileUploadFieldData } from '$lib/ui/skeleton/file-upload';
 import { formatIsoDateMonthDayLong } from '$lib/format/date-time';
 import {
-	sinceLastMeetingReferenceIso,
-	sinceLastMeetingDeals,
-	sinceLastMeetingTimelineItems
+	getSinceLastMeetingDeals,
+	getSinceLastMeetingTimelineItems,
+	sinceLastMeetingReferenceIso
 } from './projection';
 
 export const load = () => {
@@ -19,8 +19,8 @@ export const load = () => {
 			description:
 				`Get a quick overview of what progress Julien has made since your last meeting on ${formatIsoDateMonthDayLong(sinceLastMeetingReferenceIso)}`
 		},
-		timelineItems: sinceLastMeetingTimelineItems,
-		deals: sinceLastMeetingDeals,
+		timelineItems: getSinceLastMeetingTimelineItems(),
+		deals: getSinceLastMeetingDeals(),
 		update
 	};
 };

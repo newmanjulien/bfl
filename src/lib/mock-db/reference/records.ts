@@ -1,22 +1,25 @@
 import type { IsoDateString } from '$lib/domain/date-time';
 
-export const brokersById = {
-	julien: {
+export type BrokerId = string;
+
+export type BrokerRecord = {
+	id: BrokerId;
+	name: string;
+	avatar: string;
+};
+
+export const brokerRecords = [
+	{
 		id: 'julien',
 		name: 'Julien Newman',
 		avatar: '/avatars/aditya.jpg'
 	},
-	yash: {
+	{
 		id: 'yash',
 		name: 'Yash Patel',
 		avatar: '/avatars/yash.webp'
 	}
-} as const;
-
-export type BrokerId = keyof typeof brokersById;
-export type BrokerRecord = (typeof brokersById)[BrokerId];
-
-export const brokerRecords = [brokersById.julien, brokersById.yash] as const satisfies readonly BrokerRecord[];
+] as const satisfies readonly BrokerRecord[];
 
 export const meetingDateIsos = [
 	'2025-12-01',

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
-import { getOpportunityDetailViewById, opportunitiesTiles, opportunityRiskTiles } from './projection';
+import {
+	getOpportunityDetailViewById,
+	getOpportunityRiskTiles,
+	getOpportunityTiles
+} from './projection';
 
 function getRightRailRow(rightRail: DetailRightRailData, rowId: string) {
 	return (
@@ -18,8 +22,8 @@ function getRowsSection(rightRail: DetailRightRailData, sectionId: string) {
 
 describe('opportunities projection', () => {
 	it('uses parent deal numbers for tiles and detail views', () => {
-		const opportunityTile = opportunitiesTiles.find((tile) => tile.id === 'insight-118');
-		const riskTile = opportunityRiskTiles.find((tile) => tile.id === 'insight-119');
+		const opportunityTile = getOpportunityTiles().find((tile) => tile.id === 'insight-118');
+		const riskTile = getOpportunityRiskTiles().find((tile) => tile.id === 'insight-119');
 		const riskDetail = getOpportunityDetailViewById('insight-119');
 		const riskDealNumberRow = riskDetail ? getRightRailRow(riskDetail.rightRail, 'deal-number') : null;
 

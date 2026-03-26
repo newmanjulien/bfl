@@ -5,22 +5,27 @@ import {
 	sortDealNewsDescending
 } from '$lib/dashboard/deal-derivations';
 import {
+	createPersonSummaryMap,
+	resolveOptionalBrokerPerson,
+	type PersonSummaryMap,
+	toTimelineItem
+} from '$lib/dashboard/deal-view';
+import {
 	DEFAULT_MY_DEALS_VIEW,
 	buildMyDealsDetailHref,
 	type MyDealsDetailHref,
 	type MyDealsView
 } from '$lib/dashboard/my-deals-routes';
-import type { IsoDateString } from '$lib/domain/date-time';
-import { getActivityLevelLabel } from '$lib/presentation/activity-level';
-import { resolveOptionalBrokerPerson, toTimelineItem } from '$lib/dashboard/deal-view';
 import {
 	toDetailRightRailData,
 	toDetailRightRailOverviewSection
 } from '$lib/dashboard/detail-rail';
 import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
-import type { DealNewsRecord, DealRecord } from '$lib/domain/deals';
-import type { NewsSource, TimelineItem } from '$lib/presentation/models';
+import type { DealNewsRecord, DealSnapshotRecord } from '$lib/domain/deals';
+import type { IsoDateString } from '$lib/domain/date-time';
 import type { PersonSummary } from '$lib/domain/people';
+import { getActivityLevelLabel } from '$lib/presentation/activity-level';
+import type { NewsSource, TimelineItem } from '$lib/presentation/models';
 import { mockDb } from '$lib/mock-db';
 import type { CanvasHeroData } from '$lib/ui/custom/canvas-hero';
 import type { FileUploadFieldData } from '$lib/ui/skeleton/file-upload';
@@ -60,6 +65,21 @@ export type MyDealsDetailView = {
 	rightRail: DetailRightRailData;
 };
 
+function createPeopleById() {
+	return createPersonSummaryMap(mockDb.brokers.list());
+}
+
+function listMyDeals() {
+	return mockDb.deals.list().filter((deal) => mockDb.deals.getMemberBrokerIds(deal.dealId).length > 0);
+}
+
+function resolveDealOwner(
+	dealId: string,
+	peopleById: PersonSummaryMap
+) {
+	return resolveOptionalBrokerPerson(peopleById, mockDb.deals.getCurrentOwnerBrokerId(dealId));
+}
+
 function toMyDealsNewsItem(newsItem: DealNewsRecord): MyDealsNewsItem {
 	return {
 		id: newsItem.id,
@@ -69,8 +89,13 @@ function toMyDealsNewsItem(newsItem: DealNewsRecord): MyDealsNewsItem {
 	};
 }
 
-function toRightRailData(deal: DealRecord): DetailRightRailData {
-	return toDetailRightRailData([toDetailRightRailOverviewSection(deal)]);
+function toRightRailData(
+	deal: DealSnapshotRecord,
+	peopleById: PersonSummaryMap
+): DetailRightRailData {
+	return toDetailRightRailData([
+		toDetailRightRailOverviewSection(deal, resolveDealOwner(deal.dealId, peopleById))
+	]);
 }
 
 function hasMyDealsDetailView(dealId: string) {
@@ -95,7 +120,11 @@ function isInSameWeek(leftIso: IsoDateString, rightIso: IsoDateString) {
 	return getWeekStartIso(leftIso) === getWeekStartIso(rightIso);
 }
 
-function toTableRow(dealId: string, selectedView: MyDealsView): MyDealsTableRow {
+function toTableRow(
+	dealId: string,
+	selectedView: MyDealsView,
+	peopleById: PersonSummaryMap
+): MyDealsTableRow {
 	const deal = mockDb.deals.requireById(dealId);
 	const newsItems = sortDealNewsDescending(mockDb.news.listByDealId(dealId));
 	const activityItems = sortDealActivitiesAscending(
@@ -124,23 +153,19 @@ function toTableRow(dealId: string, selectedView: MyDealsView): MyDealsTableRow 
 		latestNewsSource: latestNews.source,
 		latestNews: latestNews.title,
 		lastActivityDescription: latestActivity.body,
-		owner: resolveOptionalBrokerPerson(mockDb.deals.getCurrentOwnerBrokerId(deal.dealId)),
+		owner: resolveDealOwner(deal.dealId, peopleById),
 		isReservedInEpic: deal.isReservedInEpic
 	};
 }
 
-const myDeals = mockDb
-	.deals
-	.list()
-	.filter((deal) => mockDb.deals.getMemberBrokerIds(deal.dealId).length > 0);
-
 export function getMyDealsTableRowsForView(selectedView: MyDealsView = DEFAULT_MY_DEALS_VIEW) {
-	return myDeals.map((deal) => toTableRow(deal.dealId, selectedView));
+	const peopleById = createPeopleById();
+
+	return listMyDeals().map((deal) => toTableRow(deal.dealId, selectedView, peopleById));
 }
 
-export const myDealsTableRows = getMyDealsTableRowsForView('deals');
-
 export function getMyDealsNewsItems() {
+	const myDeals = listMyDeals();
 	const sortedNews = sortDealNewsDescending(
 		myDeals
 			.filter((deal) => hasMyDealsDetailView(deal.dealId))
@@ -165,6 +190,7 @@ export function getMyDealsDetailViewById(dealId: string): MyDealsDetailView | nu
 		return null;
 	}
 
+	const peopleById = createPeopleById();
 	const activityLabel = getActivityLevelLabel(deal.activityLevel).toLowerCase();
 	const newsItems = sortDealNewsDescending(mockDb.news.listByDealId(dealId));
 	const activityItems = sortDealActivitiesAscending(
@@ -178,18 +204,18 @@ export function getMyDealsDetailViewById(dealId: string): MyDealsDetailView | nu
 			description: `${deal.dealName} is in ${deal.stage} and is ${deal.probability}% likely to close with ${activityLabel}. ${context.summary}`
 		},
 		newsItems: newsItems.map((newsItem) => toMyDealsNewsItem(newsItem)),
-		activityItems: activityItems.map((activity) => toTimelineItem(activity)),
+		activityItems: activityItems.map((activity) => toTimelineItem(activity, peopleById)),
 		update: {
 			sectionId: 'update',
 			uploadLabel: 'Upload files',
 			uploadDescription: `Upload call notes, security review feedback, or procurement documents that add context to ${deal.dealName}.`
 		},
-		rightRail: toRightRailData(deal)
+		rightRail: toRightRailData(deal, peopleById)
 	};
 }
 
 export function getMyDealsDetailEntries() {
-	return myDeals
+	return listMyDeals()
 		.filter((deal) => hasMyDealsDetailView(deal.dealId))
 		.map((deal) => ({
 			detailId: deal.dealId

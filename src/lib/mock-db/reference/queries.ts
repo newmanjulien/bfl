@@ -1,22 +1,27 @@
 import { createSnapshot } from '../snapshot';
 import {
 	brokerRecords,
-	brokersById,
 	meetingDateIsos,
 	type BrokerId,
 	type BrokerRecord
 } from './records';
 
+const brokersById = new Map<BrokerId, BrokerRecord>(
+	brokerRecords.map((record) => [record.id, record])
+);
+
 function hasBrokerId(brokerId: string): brokerId is BrokerId {
-	return brokerId in brokersById;
+	return brokersById.has(brokerId);
 }
 
 function listBrokers() {
 	return createSnapshot(brokerRecords);
 }
 
-function getBrokerById(brokerId: BrokerId): BrokerRecord {
-	return createSnapshot(brokersById[brokerId]);
+function getBrokerById(brokerId: string): BrokerRecord | null {
+	const broker = brokersById.get(brokerId);
+
+	return broker ? createSnapshot(broker) : null;
 }
 
 function requireBrokerById(brokerId: string): BrokerRecord {
@@ -24,7 +29,13 @@ function requireBrokerById(brokerId: string): BrokerRecord {
 		throw new Error(`Unknown broker id "${brokerId}".`);
 	}
 
-	return getBrokerById(brokerId);
+	const broker = getBrokerById(brokerId);
+
+	if (!broker) {
+		throw new Error(`Unknown broker id "${brokerId}".`);
+	}
+
+	return broker;
 }
 
 function listMeetingDateIsos() {

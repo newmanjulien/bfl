@@ -5,6 +5,7 @@ const FORBIDDEN_DATASET_EXPORTS = new Set([
 	'brokersById',
 	'brokerRecords',
 	'deals',
+	'dealStates',
 	'dealBrokerLinks',
 	'dealActivities',
 	'dealNews',

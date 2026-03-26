@@ -83,9 +83,7 @@ export type AllActivityActivityLevelFilterSection = BaseSection<
 export type AllActivityIndustryFilterSection = BaseSection<
 	'industry',
 	AllActivityIndustryFilterOption
-> & {
-	search: AllActivityFilterSearch;
-};
+>;
 
 export type AllActivityFilterDrawerSection =
 	| AllActivityBrokerFilterSection
@@ -213,11 +211,6 @@ function buildIndustrySection(
 		summary: getSectionSummary(params.selectedIndustries.length),
 		expanded: params.expandedSections.industry,
 		collapsible: true,
-		search: {
-			label: 'Search industries',
-			placeholder: 'Search industries',
-			disabled: true
-		},
 		options
 	};
 }

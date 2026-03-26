@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { activeMeetingDateIso } from '$lib/dashboard/meeting-date';
 import { mockDb } from '$lib/mock-db';
-import { sinceLastMeetingDeals, sinceLastMeetingTimelineItems } from './projection';
+import {
+	getSinceLastMeetingDeals,
+	getSinceLastMeetingTimelineItems
+} from './projection';
 
 describe('since-last-meeting projection', () => {
 	it('keeps the timeline and deal list aligned to post-meeting activities', () => {
+		const sinceLastMeetingTimelineItems = getSinceLastMeetingTimelineItems();
+		const sinceLastMeetingDeals = getSinceLastMeetingDeals();
 		const meetingUpdateActivities = mockDb.activities
 			.list({ stream: 'meeting-update' })
 			.filter((activity) => activity.occurredOnIso >= activeMeetingDateIso)

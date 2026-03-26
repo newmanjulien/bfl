@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest';
+import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
 import {
 	getMyDealsDetailViewById,
 	getMyDealsNewsItems,
 	getMyDealsTableRowsForView
 } from './projection';
+
+function getRightRailRow(rightRail: DetailRightRailData, rowId: string) {
+	return (
+		rightRail.sections
+			.flatMap((section) => (section.kind === 'rows' ? section.rows : []))
+			.find((row) => row.id === rowId) ?? null
+	);
+}
 
 function getWeekStartIso(isoDate: string) {
 	const date = new Date(`${isoDate}T00:00:00Z`);
@@ -55,7 +64,15 @@ describe('my-deals projection', () => {
 			throw new Error('Expected a my-deals detail view for deal-3m.');
 		}
 
+		const industryRow = getRightRailRow(detail.rightRail, 'industry');
+
 		expect(detail.hero.dealNumber).toBe(74);
 		expect(detail.rightRail.sections.map((section) => section.id)).toEqual(['deal-overview']);
+		expect(industryRow).toEqual({
+			id: 'industry',
+			label: 'Industry',
+			kind: 'text',
+			value: 'Industrials'
+		});
 	});
 });

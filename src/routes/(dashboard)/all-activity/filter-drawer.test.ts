@@ -24,7 +24,7 @@ describe('all-activity filter drawer data', () => {
 		]);
 	});
 
-	it('builds default sections with summaries, expansion state, and inert search config', () => {
+	it('builds default sections with summaries, expansion state, and search config where needed', () => {
 		const data = getAllActivityFilterDrawerData();
 		const sections = buildAllActivityFilterDrawerSections({
 			data,
@@ -62,7 +62,7 @@ describe('all-activity filter drawer data', () => {
 				summary: '5 selected',
 				expanded: false,
 				collapsible: true,
-				searchLabel: 'Search industries'
+				searchLabel: null
 			}
 		]);
 	});
