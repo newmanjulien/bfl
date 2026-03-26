@@ -21,7 +21,11 @@ describe('my-deals projection', () => {
 
 		expect(detailRows.length).toBeGreaterThan(0);
 		expect(
-			detailRows.every((row) => row.navigation.href.startsWith('/my-deals/deals/detail/'))
+			detailRows.every(
+				(row) =>
+					row.navigation.kind === 'detail' &&
+					row.navigation.href.startsWith('/my-deals/deals/detail/')
+			)
 		).toBe(true);
 	});
 

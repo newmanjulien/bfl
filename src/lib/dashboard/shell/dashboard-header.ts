@@ -25,15 +25,6 @@ export type DashboardHeaderControl =
 	  };
 
 export type DashboardHeaderAction = 'share' | 'broker-switch';
-export type DashboardHeaderFilter = 'broker' | 'activity-level';
-export type DashboardHeaderExtra =
-	| {
-			kind: 'add-deal';
-	  }
-	| {
-			kind: 'filters';
-			filters: readonly DashboardHeaderFilter[];
-	  };
 
 export type DashboardHeaderTitleMenuOption = {
 	id: string;
@@ -70,7 +61,6 @@ export type DashboardHeaderLeading =
 export type DashboardHeader = {
 	leading: DashboardHeaderLeading;
 	actions?: readonly DashboardHeaderAction[];
-	extra?: DashboardHeaderExtra;
 };
 
 function normalizePathname(pathname: string) {
@@ -167,14 +157,6 @@ function getHeaderBackHref(data: unknown) {
 		: null;
 }
 
-function getMyDealsHeaderExtra(data: unknown): DashboardHeaderExtra | undefined {
-	if (!data || typeof data !== 'object' || !('selectedView' in data)) {
-		return undefined;
-	}
-
-	return data.selectedView === 'deals' ? { kind: 'add-deal' } : undefined;
-}
-
 function getSectionBackLabel(href: DashboardHeaderHref) {
 	return getAllActivityListLabel(href) ?? getMyDealsListLabel(href);
 }
@@ -206,14 +188,12 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 
 	if (isMyDealsListPath(normalizedPathname)) {
 		const titleMenu = getHeaderTitleMenu(data);
-		const extra = getMyDealsHeaderExtra(data);
 
 		return {
 			leading: titleMenu
 				? { kind: 'title-menu', title: 'My deals', menu: titleMenu }
 				: { kind: 'title', title: 'My deals' },
-			actions: ['share'],
-			extra
+			actions: ['share']
 		};
 	}
 
@@ -224,11 +204,7 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 			leading: titleMenu
 				? { kind: 'title-menu', title: 'All activity', menu: titleMenu }
 				: { kind: 'title', title: 'All activity' },
-			actions: ['share'],
-			extra: {
-				kind: 'filters',
-				filters: ['broker', 'activity-level']
-			}
+			actions: ['share']
 		};
 	}
 

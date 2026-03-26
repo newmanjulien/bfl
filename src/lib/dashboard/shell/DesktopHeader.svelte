@@ -8,8 +8,6 @@
 	} from '$lib/dashboard/shell/dashboard-header-ui';
 	import { useDashboardShellState } from '$lib/dashboard/state.svelte';
 	import { mockDb } from '$lib/mock-db';
-	import ActivityLevelFilterMenu from '$lib/dashboard/shell/menus/ActivityLevelFilterMenu.svelte';
-	import BrokerFilterMenu from '$lib/dashboard/shell/menus/BrokerFilterMenu.svelte';
 	import BrokerSwitchMenu from '$lib/dashboard/shell/menus/BrokerSwitchMenu.svelte';
 	import ShareMenu from '$lib/dashboard/shell/menus/ShareMenu.svelte';
 	import DesktopHeaderLeading from './DesktopHeaderLeading.svelte';
@@ -60,27 +58,6 @@
 						<ShareMenu menuId="desktop-share" {people} />
 					{/if}
 				{/each}
-			{/if}
-
-			{#if header.extra?.kind === 'add-deal'}
-				<button
-					type="button"
-					data-dashboard-header-button="add-deal"
-					class={actionButtonClass}
-					onclick={() => runHeaderButton('add-deal')}
-				>
-					Add deal
-				</button>
-			{:else if header.extra?.kind === 'filters'}
-				<div class="flex items-center gap-2">
-					{#each header.extra.filters as filter (filter)}
-						{#if filter === 'broker'}
-							<BrokerFilterMenu menuId="desktop-broker-filter" {people} />
-						{:else if filter === 'activity-level'}
-							<ActivityLevelFilterMenu menuId="desktop-activity-filter" />
-						{/if}
-					{/each}
-				</div>
 			{/if}
 
 			{#each overlayState.buttons as button (button.id)}

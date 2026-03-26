@@ -1,10 +1,12 @@
 <script lang="ts">
 	import type { MyDealsView } from '$lib/dashboard/my-deals-routes';
 	import { getDashboardLayoutMaxWidth } from '$lib/dashboard/layout/tokens';
+	import { useDashboardHeaderUiController } from '$lib/dashboard/shell/dashboard-header-ui';
 	import CanvasHero from '$lib/ui/custom/CanvasHero.svelte';
 	import SectionTabPanel from '$lib/ui/custom/SectionTabPanel.svelte';
 	import SectionTabs from '$lib/ui/custom/SectionTabs.svelte';
 	import type { CanvasHeroData } from '$lib/ui/custom/canvas-hero';
+	import { getMyDealsHeaderUiScope, MY_DEALS_HEADER_SCOPE_ID } from './header-ui';
 	import MyDealsLinkedInEmptyState from './MyDealsLinkedInEmptyState.svelte';
 	import MyDealsNewsList from './MyDealsNewsList.svelte';
 	import MyDealsTable from './MyDealsTable.svelte';
@@ -20,6 +22,7 @@
 	};
 
 	let { data }: Props = $props();
+	const headerUiController = useDashboardHeaderUiController();
 	const maxWidth = $derived(
 		getDashboardLayoutMaxWidth(data.selectedView === 'news' ? 'normal' : 'wide')
 	);
@@ -27,6 +30,20 @@
 		{ id: 'news', label: 'News' },
 		{ id: 'linkedin', label: 'LinkedIn' }
 	] as const;
+
+	$effect(() => {
+		const scope = getMyDealsHeaderUiScope(data.selectedView);
+
+		if (scope) {
+			headerUiController.setScope(MY_DEALS_HEADER_SCOPE_ID, scope);
+		} else {
+			headerUiController.clearScope(MY_DEALS_HEADER_SCOPE_ID);
+		}
+
+		return () => {
+			headerUiController.clearScope(MY_DEALS_HEADER_SCOPE_ID);
+		};
+	});
 </script>
 
 <div class="relative mx-auto w-full" style={`max-width: ${maxWidth};`}>

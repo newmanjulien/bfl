@@ -45,7 +45,8 @@
 					<ol class="space-y-2.5">
 						{#each section.contacts as contact (contact.id)}
 							<li>
-								<a
+								<svelte:element
+									this={'a'}
 									href={contact.linkedInUrl}
 									target="_blank"
 									rel="noreferrer"
@@ -68,7 +69,7 @@
 											</p>
 										</div>
 									</div>
-								</a>
+								</svelte:element>
 							</li>
 						{/each}
 					</ol>

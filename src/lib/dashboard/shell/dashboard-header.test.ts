@@ -52,10 +52,9 @@ describe('dashboard header', () => {
 
 		expectCurrentMenuOption(myDealsNewsHeader, 'My deals', "This week's news", '/my-deals');
 		expect(myDealsNewsHeader?.actions).toEqual(['share']);
-		expect(myDealsNewsHeader?.extra).toBeUndefined();
 
 		expectCurrentMenuOption(myDealsDealsHeader, 'My deals', 'Deals', '/my-deals/deals');
-		expect(myDealsDealsHeader?.extra).toEqual({ kind: 'add-deal' });
+		expect(myDealsDealsHeader?.actions).toEqual(['share']);
 
 		expectCurrentMenuOption(
 			allActivityHeader,
@@ -63,10 +62,7 @@ describe('dashboard header', () => {
 			'Need support',
 			'/all-activity/need-support'
 		);
-		expect(allActivityHeader?.extra).toEqual({
-			kind: 'filters',
-			filters: ['broker', 'activity-level']
-		});
+		expect(allActivityHeader?.actions).toEqual(['share']);
 	});
 
 	it.each([

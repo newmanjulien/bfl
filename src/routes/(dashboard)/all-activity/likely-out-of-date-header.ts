@@ -13,7 +13,8 @@ export function getLikelyOutOfDateHeaderUiScope(
 		buttons: [
 			{
 				id: 'ask-for-update',
-				label: 'Ask for update'
+				label: 'Ask for update',
+				order: 30
 			}
 		]
 	};

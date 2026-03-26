@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEAL_INDUSTRIES } from '$lib/domain/deals';
 import { mockDb } from '$lib/mock-db';
 
 describe('mockDb selectors', () => {
@@ -65,5 +66,11 @@ describe('mockDb selectors', () => {
 		);
 		expect(mockDb.brokers.getById('julien')?.name).toBe(originalBrokerName);
 		expect(mockDb.meetings.listDateIsos()).toEqual(originalMeetingDateIsos);
+	});
+
+	it('exposes a valid industry on every deal snapshot', () => {
+		for (const deal of mockDb.deals.list()) {
+			expect(DEAL_INDUSTRIES.includes(deal.industry)).toBe(true);
+		}
 	});
 });

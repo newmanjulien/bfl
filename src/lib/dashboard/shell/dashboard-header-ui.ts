@@ -5,11 +5,12 @@ const DASHBOARD_HEADER_UI_CONTROLLER_KEY = Symbol('dashboard-header-ui-controlle
 
 export type DashboardHeaderButtonHandler = () => void | Promise<void>;
 
-export type DashboardHeaderButtonId = 'ask-for-update' | 'add-deal';
+export type DashboardHeaderButtonId = 'ask-for-update' | 'add-deal' | 'filter';
 
 export type DashboardHeaderOverlayButton = {
 	id: DashboardHeaderButtonId;
 	label: string;
+	order?: number;
 };
 
 export type DashboardHeaderUiScope = {
@@ -60,8 +61,18 @@ export function resolveDashboardHeaderUiState(
 		Object.assign(handlers, scope.handlers);
 	}
 
+	const buttons = [...buttonById.values()];
+
 	return {
-		buttons: [...buttonById.values()],
+		buttons: buttons
+			.map((button, index) => ({ button, index }))
+			.sort((left, right) => {
+				const leftOrder = left.button.order ?? Number.MAX_SAFE_INTEGER;
+				const rightOrder = right.button.order ?? Number.MAX_SAFE_INTEGER;
+
+				return leftOrder === rightOrder ? left.index - right.index : leftOrder - rightOrder;
+			})
+			.map(({ button }) => button),
 		handlers
 	};
 }

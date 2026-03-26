@@ -6,6 +6,7 @@ import type {
 	DealInsightRecord,
 	DealNewsRecord
 } from '$lib/domain/deals';
+import { DEAL_INDUSTRIES } from '$lib/domain/deals';
 import type { OrgChartContactNode } from '$lib/domain/org-chart';
 import { brokersById, type BrokerId } from '../reference/records';
 import {
@@ -130,6 +131,11 @@ function assertDealReferencesExist() {
 	for (const deal of deals) {
 		assertUniqueValue(deal.dealId, dealIdValues, 'dealId');
 		assertUniqueValue(deal.dealNumber, dealNumberValues, 'dealNumber');
+
+		if (!DEAL_INDUSTRIES.includes(deal.industry)) {
+			throw new Error(`Deal ${deal.dealId} has unknown industry "${deal.industry}".`);
+		}
+
 		assertDealInsights(deal.insights, deal.dealId, dealIds, dealInsightIdValues);
 	}
 

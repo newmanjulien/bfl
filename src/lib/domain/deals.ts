@@ -10,12 +10,22 @@ export const DEAL_STAGES = [
 	'Closed lost'
 ] as const;
 
+export const DEAL_INDUSTRIES = [
+	'Industrials',
+	'Transportation & logistics',
+	'Hospitality',
+	'Consumer goods',
+	'Food & beverage'
+] as const;
+
 export type DealStage = (typeof DEAL_STAGES)[number];
+export type DealIndustry = (typeof DEAL_INDUSTRIES)[number];
 
 export type DealRecord<BrokerId extends string = string> = {
 	dealId: string;
 	dealNumber: number;
 	accountName: string;
+	industry: DealIndustry;
 	dealName: string;
 	isReservedInEpic: boolean;
 	isLikelyOutOfDate: boolean;
