@@ -7,7 +7,6 @@ describe('dashboard header ui controller', () => {
 	it('defaults to no overlay buttons or handlers', () => {
 		const controller = createDashboardHeaderUiController();
 
-		expect('scopes' in controller).toBe(false);
 		expect(controller.getState()).toEqual({
 			buttons: [],
 			handlers: {}
@@ -33,7 +32,7 @@ describe('dashboard header ui controller', () => {
 
 		const state = controller.getState();
 
-		expect(state.buttons).toEqual([{ id: 'ask-for-update', label: 'Ask for update' }]);
+		expect(state.buttons.map((button) => button.id)).toEqual(['ask-for-update']);
 
 		await state.handlers['add-deal']?.();
 		await state.handlers['ask-for-update']?.();

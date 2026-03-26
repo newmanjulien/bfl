@@ -43,6 +43,16 @@
 			</SectionTabs>
 		{:else}
 			<MyDealsTable rows={data.rows} />
+			{#if data.rows.length > 0}
+				<div
+					data-my-deals-deals-info-bar
+					class="mt-3 rounded-sm border border-zinc-100 bg-zinc-50/35 px-3 py-2"
+				>
+					<p class="text-xs leading-relaxed tracking-wide text-zinc-500">
+						We automatially reserve deals for you in Epic and deals which are reserved have a checkmark
+					</p>
+				</div>
+			{/if}
 		{/if}
 	</div>
 </div>

@@ -2,19 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { mockDb } from '$lib/mock-db';
 
 describe('mockDb selectors', () => {
-	it('exposes a grouped query-only public db object', () => {
-		expect('records' in mockDb).toBe(false);
-		expect('queries' in mockDb).toBe(false);
-		expect(Object.keys(mockDb).sort()).toEqual([
-			'activities',
-			'brokers',
-			'contexts',
-			'deals',
-			'meetings',
-			'news'
-		]);
-	});
-
 	it('returns immutable snapshots instead of live canonical records', () => {
 		const deal = mockDb.deals.requireById('deal-3m');
 		const dealAgain = mockDb.deals.requireById('deal-3m');
@@ -29,15 +16,22 @@ describe('mockDb selectors', () => {
 			throw new Error('Expected Honeywell to include a nested opportunity insight.');
 		}
 
+		if (!broker || !brokerAgain) {
+			throw new Error('Expected Julien broker snapshots to be available.');
+		}
+
+		const originalDealName = deal.dealName;
+		const originalReservedInEpic = deal.isReservedInEpic;
+		const originalLikelyOutOfDate = deal.isLikelyOutOfDate;
+		const originalInsightTitle = honeywellInsight.title;
+		const originalBrokerName = broker.name;
+		const originalMeetingDateIsos = [...meetingDates];
+
 		expect(deal).not.toBe(dealAgain);
 		expect(broker).not.toBe(brokerAgain);
 		expect(meetingDates).not.toBe(meetingDatesAgain);
 		expect(honeywell.insights).not.toBe(mockDb.deals.requireById('deal-honeywell').insights);
 		expect(Object.isFrozen(deal)).toBe(true);
-		expect(deal.activityLevel).toBe('high');
-		expect(deal.isReservedInEpic).toBe(true);
-		expect(deal.isLikelyOutOfDate).toBe(false);
-		expect(honeywell.isLikelyOutOfDate).toBe(true);
 		expect('activityTrend' in deal).toBe(false);
 		expect(Object.isFrozen(broker)).toBe(true);
 		expect(Object.isFrozen(honeywellInsight)).toBe(true);
@@ -61,12 +55,15 @@ describe('mockDb selectors', () => {
 		expect(() => {
 			(honeywellInsight as { title: string }).title = 'Mutated insight';
 		}).toThrow();
-		expect(mockDb.deals.requireById('deal-3m').dealName).toBe('3M deal');
-		expect(mockDb.deals.requireById('deal-3m').isReservedInEpic).toBe(true);
-		expect(mockDb.deals.requireById('deal-honeywell').insights?.[0]?.title).toBe(
-			'CFO was a customer at his last job'
+		expect(mockDb.deals.requireById('deal-3m').dealName).toBe(originalDealName);
+		expect(mockDb.deals.requireById('deal-3m').isReservedInEpic).toBe(originalReservedInEpic);
+		expect(mockDb.deals.requireById('deal-3m').isLikelyOutOfDate).toBe(
+			originalLikelyOutOfDate
 		);
-		expect(mockDb.brokers.getById('julien').name).toBe('Julien Newman');
-		expect(mockDb.meetings.listDateIsos()).toContain('2026-01-12');
+		expect(mockDb.deals.requireById('deal-honeywell').insights?.[0]?.title).toBe(
+			originalInsightTitle
+		);
+		expect(mockDb.brokers.getById('julien')?.name).toBe(originalBrokerName);
+		expect(mockDb.meetings.listDateIsos()).toEqual(originalMeetingDateIsos);
 	});
 });

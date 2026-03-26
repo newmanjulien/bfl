@@ -61,7 +61,7 @@
 		class="mt-3 rounded-sm border border-zinc-100 bg-zinc-50/35 px-3 py-2"
 	>
 		<p class="text-xs leading-relaxed tracking-wide text-zinc-500">
-			Use this view to find stale deals, then select the ones you want to ask for an update.
+			Our automatic data collection doesn't track in-person conversations so deals sometimes get out of date
 		</p>
 	</div>
 {/if}
