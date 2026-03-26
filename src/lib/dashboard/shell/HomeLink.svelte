@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { DEFAULT_DASHBOARD_ROUTE } from '$lib/dashboard/routes';
 
 	type Props = {
 		onclick?: (event: MouseEvent) => void;
@@ -10,8 +11,8 @@
 </script>
 
 <a
-	href={resolve('/since-last-meeting')}
-	aria-label="Go to since last meeting"
+	href={resolve(DEFAULT_DASHBOARD_ROUTE)}
+	aria-label="Go to all activity"
 	class={`overflow-hidden rounded-sm ${className}`}
 	{onclick}
 >

@@ -1,7 +1,3 @@
-import { myDealsTableRows } from './projection';
+import { loadMyDealsListData } from './route-data';
 
-export const load = () => {
-	return {
-		rows: myDealsTableRows
-	};
-};
+export const load = () => loadMyDealsListData();

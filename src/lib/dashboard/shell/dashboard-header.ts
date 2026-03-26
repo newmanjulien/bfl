@@ -3,9 +3,14 @@ import {
 	isAllActivityListPath,
 	type AllActivityListHref
 } from '$lib/dashboard/all-activity-routes';
+import {
+	isMyDealsDetailPath,
+	isMyDealsListPath,
+	type MyDealsListHref
+} from '$lib/dashboard/my-deals-routes';
 import { DASHBOARD_STATIC_ROUTES, type DashboardStaticHref } from '$lib/dashboard/routes';
 
-type DashboardHeaderHref = DashboardStaticHref | AllActivityListHref;
+type DashboardHeaderHref = DashboardStaticHref | AllActivityListHref | MyDealsListHref;
 
 export type DashboardHeaderControl =
 	| {
@@ -185,9 +190,13 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 		};
 	}
 
-	if (normalizedPathname === DASHBOARD_STATIC_ROUTES['my-deals']) {
+	if (isMyDealsListPath(normalizedPathname)) {
+		const titleMenu = getHeaderTitleMenu(data);
+
 		return {
-			leading: { kind: 'title', title: 'My deals' },
+			leading: titleMenu
+				? { kind: 'title-menu', title: 'My deals', menu: titleMenu }
+				: { kind: 'title', title: 'My deals' },
 			actions: ['share'],
 			extra: { kind: 'add-deal' }
 		};
@@ -227,14 +236,16 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 		};
 	}
 
-	if (matchesDetailPath(normalizedPathname, DASHBOARD_STATIC_ROUTES['my-deals'])) {
+	if (isMyDealsDetailPath(normalizedPathname)) {
+		const headerBackHref = getHeaderBackHref(data) ?? DASHBOARD_STATIC_ROUTES['my-deals'];
+
 		return {
 			leading: {
 				kind: 'control-title',
 				title: heroTitle ?? 'My deals',
 				control: {
 					kind: 'back-link',
-					href: DASHBOARD_STATIC_ROUTES['my-deals'],
+					href: headerBackHref,
 					label: 'My deals'
 				}
 			},
