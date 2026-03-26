@@ -35,6 +35,7 @@ describe('mockDb selectors', () => {
 		expect(honeywell.insights).not.toBe(mockDb.deals.requireById('deal-honeywell').insights);
 		expect(Object.isFrozen(deal)).toBe(true);
 		expect(deal.activityLevel).toBe('high');
+		expect(deal.isReservedInEpic).toBe(true);
 		expect('activityTrend' in deal).toBe(false);
 		expect(Object.isFrozen(broker)).toBe(true);
 		expect(Object.isFrozen(honeywellInsight)).toBe(true);
@@ -50,9 +51,13 @@ describe('mockDb selectors', () => {
 			(deal as { activityLevel: string }).activityLevel = 'low';
 		}).toThrow();
 		expect(() => {
+			(deal as { isReservedInEpic: boolean }).isReservedInEpic = false;
+		}).toThrow();
+		expect(() => {
 			(honeywellInsight as { title: string }).title = 'Mutated insight';
 		}).toThrow();
 		expect(mockDb.deals.requireById('deal-3m').dealName).toBe('3M deal');
+		expect(mockDb.deals.requireById('deal-3m').isReservedInEpic).toBe(true);
 		expect(mockDb.deals.requireById('deal-honeywell').insights?.[0]?.title).toBe(
 			'CFO was a customer at his last job'
 		);

@@ -42,6 +42,7 @@ export type MyDealsTableRow = {
 	latestNews: string;
 	lastActivityDescription: string;
 	owner: PersonSummary | null;
+	isReservedInEpic: boolean;
 };
 
 export type MyDealsNewsItem = {
@@ -123,7 +124,8 @@ function toTableRow(dealId: string, selectedView: MyDealsView): MyDealsTableRow 
 		latestNewsSource: latestNews.source,
 		latestNews: latestNews.title,
 		lastActivityDescription: latestActivity.body,
-		owner: resolveOptionalBrokerPerson(mockDb.deals.getCurrentOwnerBrokerId(deal.dealId))
+		owner: resolveOptionalBrokerPerson(mockDb.deals.getCurrentOwnerBrokerId(deal.dealId)),
+		isReservedInEpic: deal.isReservedInEpic
 	};
 }
 

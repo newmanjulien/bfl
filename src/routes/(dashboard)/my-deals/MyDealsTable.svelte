@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { Check } from 'lucide-svelte';
 	import NewsSourceInline from '$lib/ui/custom/NewsSourceInline.svelte';
 	import PersonInline from '$lib/ui/custom/PersonInline.svelte';
 	import { cn } from '$lib/support/cn';
@@ -11,13 +12,14 @@
 
 	let { rows }: Props = $props();
 
-	const headers = ['Deal', 'Latest news', 'Last activity', 'Owner'] as const;
+	const headers = ['Deal', 'Latest news', 'Last activity', 'Owner', 'Reserved in Epic'] as const;
 	const columnClass =
-		'justify-start grid-cols-[minmax(8.5rem,10rem)_minmax(13rem,16rem)_minmax(13rem,16rem)_minmax(8rem,10rem)] md:grid-cols-[minmax(11rem,14rem)_minmax(18rem,24rem)_minmax(18rem,24rem)_minmax(10rem,13rem)]';
-	const minWidthClass = 'min-w-[42.5rem] md:min-w-full';
+		'justify-start grid-cols-[minmax(8.5rem,10rem)_minmax(13rem,16rem)_minmax(13rem,16rem)_minmax(8rem,10rem)_minmax(8.5rem,10rem)] md:grid-cols-[minmax(11rem,14rem)_minmax(18rem,24rem)_minmax(18rem,24rem)_minmax(10rem,13rem)_minmax(9rem,11rem)]';
+	const minWidthClass = 'min-w-[52rem] md:min-w-full';
 </script>
 
 {#snippet rowCells(row: MyDealsTableRow, isLinked: boolean)}
+	{@const showReservedInEpic = row.owner?.id === 'julien' && row.isReservedInEpic}
 	<span
 		data-table-cell
 		class={`overflow-hidden font-medium text-zinc-600${
@@ -45,6 +47,14 @@
 			/>
 		{:else}
 			<span class="block truncate">Unassigned</span>
+		{/if}
+	</span>
+	<span data-table-cell class="flex items-center justify-center text-zinc-600">
+		{#if showReservedInEpic}
+			<Check aria-hidden="true" class="size-3.5" />
+			<span class="sr-only">Reserved in Epic: Yes</span>
+		{:else}
+			<span class="sr-only">Reserved in Epic: No</span>
 		{/if}
 	</span>
 {/snippet}

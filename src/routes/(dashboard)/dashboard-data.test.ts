@@ -188,6 +188,14 @@ describe("dashboard data adapters", () => {
       kind: "detail",
       href: "/my-deals/deals/detail/deal-3m",
     });
+    expect(
+      dealsListData.rows.find((row) => row.id === "deal-3m")
+        ?.isReservedInEpic,
+    ).toBe(true);
+    expect(
+      dealsListData.rows.find((row) => row.id === "deal-fedex")
+        ?.isReservedInEpic,
+    ).toBe(true);
     expect(newsListData.newsItems.map((item) => item.id)).toEqual([
       "news-3m-1",
       "news-3m-2",
@@ -359,6 +367,9 @@ describe("dashboard data adapters", () => {
     expect(newsHtml).not.toContain('aria-label="My deals table"');
     expect(dealsHtml).toContain('aria-label="My deals table"');
     expect(dealsHtml).toContain("Latest news");
+    expect(dealsHtml).toContain("Reserved in Epic");
+    expect(dealsHtml.match(/Reserved in Epic: Yes/g) ?? []).toHaveLength(3);
+    expect(dealsHtml.match(/Reserved in Epic: No/g) ?? []).toHaveLength(3);
     expect(dealsHtml).toContain("max-width: 88rem;");
   });
 });
