@@ -18,7 +18,7 @@
 	}: Props = $props();
 </script>
 
-<span class={cn('inline-flex min-w-0 items-center gap-1.5', classProp)}>
+<span class={cn('flex min-w-0 items-center gap-1.5', classProp)}>
 	<AppAvatar person={person} size={avatarSize} />
 	<span class={cn('leading-none text-current', truncate && 'min-w-0 truncate')}>
 		{person.name}
