@@ -5,6 +5,7 @@
 	import SectionTabPanel from '$lib/ui/custom/SectionTabPanel.svelte';
 	import SectionTabs from '$lib/ui/custom/SectionTabs.svelte';
 	import type { CanvasHeroData } from '$lib/ui/custom/canvas-hero';
+	import MyDealsLinkedInEmptyState from './MyDealsLinkedInEmptyState.svelte';
 	import MyDealsNewsList from './MyDealsNewsList.svelte';
 	import MyDealsTable from './MyDealsTable.svelte';
 	import type { MyDealsNewsItem, MyDealsTableRow } from './projection';
@@ -22,7 +23,10 @@
 	const maxWidth = $derived(
 		getDashboardLayoutMaxWidth(data.selectedView === 'news' ? 'normal' : 'wide')
 	);
-	const tabs = [{ id: 'news', label: "This week's news" }] as const;
+	const tabs = [
+		{ id: 'news', label: 'News' },
+		{ id: 'linkedin', label: 'LinkedIn' }
+	] as const;
 </script>
 
 <div class="relative mx-auto w-full" style={`max-width: ${maxWidth};`}>
@@ -32,6 +36,9 @@
 			<SectionTabs {tabs}>
 				<SectionTabPanel tabId="news">
 					<MyDealsNewsList items={data.newsItems} />
+				</SectionTabPanel>
+				<SectionTabPanel tabId="linkedin">
+					<MyDealsLinkedInEmptyState />
 				</SectionTabPanel>
 			</SectionTabs>
 		{:else}

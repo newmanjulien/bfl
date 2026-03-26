@@ -21,6 +21,7 @@ import {
 } from "./all-activity/projection";
 import { loadAllActivityListData } from "./all-activity/route-data";
 import AllActivityTable from "./all-activity/AllActivityTable.svelte";
+import MyDealsLinkedInEmptyState from "./my-deals/MyDealsLinkedInEmptyState.svelte";
 import MyDealsPage from "./my-deals/MyDealsPage.svelte";
 import {
   getMyDealsDetailViewById,
@@ -145,6 +146,8 @@ describe("dashboard data adapters", () => {
   it("uses the route view as the source of truth for my-deals list routes", () => {
     const newsListData = loadMyDealsListData();
     const dealsListData = loadMyDealsListData("deals");
+    const newsHeader = getDashboardHeader("/my-deals", newsListData);
+    const dealsHeader = getDashboardHeader("/my-deals/deals", dealsListData);
 
     expect(isNonDefaultMyDealsView("deals")).toBe(true);
     expect(isNonDefaultMyDealsView("news")).toBe(false);
@@ -208,6 +211,8 @@ describe("dashboard data adapters", () => {
       "2026-03-06",
       "2026-03-03",
     ]);
+    expect(newsHeader?.extra).toBeUndefined();
+    expect(dealsHeader?.extra).toEqual({ kind: "add-deal" });
   });
 
   it("uses the canonical deal number for deal detail views", () => {
@@ -354,7 +359,9 @@ describe("dashboard data adapters", () => {
       },
     }).body;
 
-    expect(newsHtml.match(/role="tab"/g) ?? []).toHaveLength(1);
+    expect(newsHtml.match(/role="tab"/g) ?? []).toHaveLength(2);
+    expect(newsHtml).toContain("LinkedIn");
+    expect(newsHtml).toContain("News");
     expect(newsHtml).toContain("This week's news");
     expect(newsHtml).toContain(
       "Procurement review reopened familiar rollout concerns",
@@ -372,10 +379,20 @@ describe("dashboard data adapters", () => {
     expect(dealsHtml.match(/Reserved in Epic: No/g) ?? []).toHaveLength(3);
     expect(dealsHtml).toContain("max-width: 88rem;");
   });
+
+  it("renders a styled LinkedIn empty state for my-deals", () => {
+    const html = render(MyDealsLinkedInEmptyState).body;
+
+    expect(html).toContain("No LinkedIn updates yet");
+    expect(html).toContain(
+      "This tab will fill with company posts, contact moves, and hiring updates once",
+    );
+    expect(html).toContain("border-dashed");
+  });
 });
 
 describe("dashboard header model", () => {
-  it("exposes the my-deals title menu while preserving the add-deal extra", () => {
+  it("omits the add-deal extra for the my-deals news view", () => {
     const titleMenu = {
       kind: "link-menu" as const,
       menuId: "desktop-my-deals-view",
@@ -398,6 +415,7 @@ describe("dashboard header model", () => {
       ],
     };
     const header = getDashboardHeader("/my-deals", {
+      selectedView: "news",
       headerTitleMenu: titleMenu,
     });
 
@@ -408,11 +426,10 @@ describe("dashboard header model", () => {
         menu: titleMenu,
       },
       actions: ["share"],
-      extra: { kind: "add-deal" },
     });
   });
 
-  it("renders the my-deals non-default route as a title-menu header", () => {
+  it("renders the my-deals deals route with the add-deal extra", () => {
     const titleMenu = {
       kind: "link-menu" as const,
       menuId: "desktop-my-deals-view",
@@ -435,6 +452,7 @@ describe("dashboard header model", () => {
       ],
     };
     const header = getDashboardHeader("/my-deals/deals", {
+      selectedView: "deals",
       headerTitleMenu: titleMenu,
     });
 

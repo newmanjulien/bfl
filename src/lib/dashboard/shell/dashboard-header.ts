@@ -167,6 +167,14 @@ function getHeaderBackHref(data: unknown) {
 		: null;
 }
 
+function getMyDealsHeaderExtra(data: unknown): DashboardHeaderExtra | undefined {
+	if (!data || typeof data !== 'object' || !('selectedView' in data)) {
+		return undefined;
+	}
+
+	return data.selectedView === 'deals' ? { kind: 'add-deal' } : undefined;
+}
+
 function getSectionBackLabel(href: DashboardHeaderHref) {
 	return getAllActivityListLabel(href) ?? getMyDealsListLabel(href);
 }
@@ -198,13 +206,14 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 
 	if (isMyDealsListPath(normalizedPathname)) {
 		const titleMenu = getHeaderTitleMenu(data);
+		const extra = getMyDealsHeaderExtra(data);
 
 		return {
 			leading: titleMenu
 				? { kind: 'title-menu', title: 'My deals', menu: titleMenu }
 				: { kind: 'title', title: 'My deals' },
 			actions: ['share'],
-			extra: { kind: 'add-deal' }
+			extra
 		};
 	}
 
