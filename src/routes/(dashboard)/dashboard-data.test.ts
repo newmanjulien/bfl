@@ -526,7 +526,26 @@ describe("dashboard header model", () => {
         control: {
           kind: "back-link",
           href: "/all-activity/need-support",
-          label: "All activity",
+          label: "Need support",
+        },
+      },
+      actions: ["share"],
+    });
+  });
+
+  it("uses the default all-activity subsection label for detail back links", () => {
+    const header = getDashboardHeader("/all-activity/detail/deal-3m", {
+      hero: { title: "3M deal" },
+    });
+
+    expect(header).toEqual({
+      leading: {
+        kind: "control-title",
+        title: "3M deal",
+        control: {
+          kind: "back-link",
+          href: "/all-activity",
+          label: "Deals",
         },
       },
       actions: ["share"],
@@ -546,7 +565,26 @@ describe("dashboard header model", () => {
         control: {
           kind: "back-link",
           href: "/my-deals/deals",
-          label: "My deals",
+          label: "Deals",
+        },
+      },
+      actions: ["share"],
+    });
+  });
+
+  it("uses the default my-deals subsection label for detail back links", () => {
+    const header = getDashboardHeader("/my-deals/detail/deal-3m", {
+      hero: { title: "3M deal" },
+    });
+
+    expect(header).toEqual({
+      leading: {
+        kind: "control-title",
+        title: "3M deal",
+        control: {
+          kind: "back-link",
+          href: "/my-deals",
+          label: "This week's news",
         },
       },
       actions: ["share"],

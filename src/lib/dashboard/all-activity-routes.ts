@@ -48,6 +48,22 @@ export function getAllActivityViewLabel(view: AllActivityView) {
 	);
 }
 
+export function getAllActivityListLabel(pathname: string) {
+	const normalizedPathname =
+		pathname !== '/' && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+
+	if (!isAllActivityListPath(normalizedPathname)) {
+		return null;
+	}
+
+	const selectedView =
+		normalizedPathname === ALL_ACTIVITY_BASE_PATH
+			? DEFAULT_ALL_ACTIVITY_VIEW
+			: (normalizedPathname.slice(ALL_ACTIVITY_BASE_PATH.length + 1) as NonDefaultAllActivityView);
+
+	return getAllActivityViewLabel(selectedView);
+}
+
 export function buildAllActivityListHref(view: AllActivityView): AllActivityListHref {
 	if (view === DEFAULT_ALL_ACTIVITY_VIEW) {
 		return ALL_ACTIVITY_BASE_PATH;

@@ -41,6 +41,22 @@ export function getMyDealsViewLabel(view: MyDealsView) {
 	);
 }
 
+export function getMyDealsListLabel(pathname: string) {
+	const normalizedPathname =
+		pathname !== '/' && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+
+	if (!isMyDealsListPath(normalizedPathname)) {
+		return null;
+	}
+
+	const selectedView =
+		normalizedPathname === MY_DEALS_BASE_PATH
+			? DEFAULT_MY_DEALS_VIEW
+			: (normalizedPathname.slice(MY_DEALS_BASE_PATH.length + 1) as NonDefaultMyDealsView);
+
+	return getMyDealsViewLabel(selectedView);
+}
+
 export function buildMyDealsListHref(view: MyDealsView): MyDealsListHref {
 	if (view === DEFAULT_MY_DEALS_VIEW) {
 		return MY_DEALS_BASE_PATH;

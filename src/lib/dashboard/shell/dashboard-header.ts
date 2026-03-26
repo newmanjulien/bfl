@@ -1,9 +1,11 @@
 import {
+	getAllActivityListLabel,
 	isAllActivityDetailPath,
 	isAllActivityListPath,
 	type AllActivityListHref
 } from '$lib/dashboard/all-activity-routes';
 import {
+	getMyDealsListLabel,
 	isMyDealsDetailPath,
 	isMyDealsListPath,
 	type MyDealsListHref
@@ -165,6 +167,10 @@ function getHeaderBackHref(data: unknown) {
 		: null;
 }
 
+function getSectionBackLabel(href: DashboardHeaderHref) {
+	return getAllActivityListLabel(href) ?? getMyDealsListLabel(href);
+}
+
 export function getDashboardHeader(pathname: string, data?: unknown): DashboardHeader | null {
 	const normalizedPathname = normalizePathname(pathname);
 
@@ -221,6 +227,7 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 
 	if (isAllActivityDetailPath(normalizedPathname)) {
 		const headerBackHref = getHeaderBackHref(data) ?? DASHBOARD_STATIC_ROUTES['all-activity'];
+		const headerBackLabel = getSectionBackLabel(headerBackHref) ?? 'All activity';
 
 		return {
 			leading: {
@@ -229,7 +236,7 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 				control: {
 					kind: 'back-link',
 					href: headerBackHref,
-					label: 'All activity'
+					label: headerBackLabel
 				}
 			},
 			actions: ['share']
@@ -238,6 +245,7 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 
 	if (isMyDealsDetailPath(normalizedPathname)) {
 		const headerBackHref = getHeaderBackHref(data) ?? DASHBOARD_STATIC_ROUTES['my-deals'];
+		const headerBackLabel = getSectionBackLabel(headerBackHref) ?? 'My deals';
 
 		return {
 			leading: {
@@ -246,7 +254,7 @@ export function getDashboardHeader(pathname: string, data?: unknown): DashboardH
 				control: {
 					kind: 'back-link',
 					href: headerBackHref,
-					label: 'My deals'
+					label: headerBackLabel
 				}
 			},
 			actions: ['share']
