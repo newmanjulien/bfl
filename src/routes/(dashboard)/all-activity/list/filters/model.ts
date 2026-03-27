@@ -53,7 +53,7 @@ export function createAllActivityFilterDrawerData(
 export function createDefaultAllActivityFilterExpansionState(): AllActivityFilterExpansionState {
 	return {
 		broker: true,
-		'activity-level': true,
+		'activity-level': false,
 		industry: false
 	};
 }

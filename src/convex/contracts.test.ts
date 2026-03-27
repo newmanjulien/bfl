@@ -310,6 +310,12 @@ describe('Convex feature contracts', () => {
 				})
 			])
 		);
+		expect(opportunitiesList.update).toEqual(
+			expect.objectContaining({
+				sectionId: 'update',
+				uploadLabel: 'Upload files'
+			})
+		);
 		expect(opportunityDetail).not.toHaveProperty('header');
 		expect(opportunityDetail?.title).toBe('Expand into adjacent services');
 	});

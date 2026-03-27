@@ -124,7 +124,11 @@ export const getOpportunitiesList = query({
 
 		return {
 			opportunityTiles,
-			riskTiles
+			riskTiles,
+			update: buildDealUploadFieldData(
+				'your opportunities and risks',
+				'Upload call notes, screenshots, or procurement docs that add context to'
+			)
 		};
 	}
 });

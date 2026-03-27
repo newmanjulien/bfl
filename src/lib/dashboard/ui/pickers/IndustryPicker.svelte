@@ -3,7 +3,7 @@
 	import { cn } from '$lib/support/cn';
 	import { dismissibleMenu } from '$lib/dashboard/shell/menus/menu-interactions';
 	import IndustryPickerPanel from '$lib/dashboard/ui/pickers/IndustryPickerPanel.svelte';
-	import type { IndustryPickerOption } from '$lib/dashboard/ui/pickers/industry-picker';
+	import type { IndustryPickerOption } from '$lib/dashboard/ui/pickers/IndustryPickerPanel.svelte';
 	import type { DealIndustry } from '$lib/types/vocab';
 
 	type Props = {

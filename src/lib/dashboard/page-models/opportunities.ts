@@ -38,6 +38,7 @@ export type OpportunitiesListPageData = {
 	hero: typeof OPPORTUNITIES_HERO;
 	opportunityTiles: OpportunityTilePageData[];
 	riskTiles: OpportunityTilePageData[];
+	update: OpportunitiesListReadModel['update'];
 };
 
 export type OpportunityDetailPageData = {
@@ -68,7 +69,8 @@ export function buildOpportunitiesListPageData(params: {
 		riskTiles: readModel.riskTiles.map((tile) => ({
 			...tile,
 			route: toDetailRoute(tile.detail)
-		}))
+		})),
+		update: readModel.update
 	};
 }
 

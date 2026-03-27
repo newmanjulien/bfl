@@ -332,7 +332,8 @@ export const allActivityDetailReadModelValidator = v.object({
 
 export const opportunitiesListReadModelValidator = v.object({
 	opportunityTiles: v.array(opportunityTileReadModelValidator),
-	riskTiles: v.array(opportunityTileReadModelValidator)
+	riskTiles: v.array(opportunityTileReadModelValidator),
+	update: fileUploadFieldValidator
 });
 
 export const opportunityDetailReadModelValidator = v.object({
@@ -476,6 +477,7 @@ export type AllActivityDetailReadModel = {
 export type OpportunitiesListReadModel = {
 	opportunityTiles: OpportunityTileReadModel[];
 	riskTiles: OpportunityTileReadModel[];
+	update: FileUploadFieldData;
 };
 
 export type OpportunityDetailReadModel = {

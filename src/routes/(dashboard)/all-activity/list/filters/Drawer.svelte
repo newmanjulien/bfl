@@ -4,7 +4,8 @@
 	import { fade } from 'svelte/transition';
 	import { getDashboardDetailRailWidth } from '$lib/dashboard/layout/tokens';
 	import ActivityLevelGridIcon from '$lib/dashboard/ui/activity-level/ActivityLevelGridIcon.svelte';
-	import IndustryPickerPanel from '$lib/dashboard/ui/pickers/IndustryPickerPanel.svelte';
+	import SearchableFilterPanel from '$lib/dashboard/ui/pickers/SearchableFilterPanel.svelte';
+	import type { SearchableFilterPanelOption } from '$lib/dashboard/ui/pickers/filter-panel';
 	import SelectableAvatarRow from '$lib/dashboard/ui/shared/SelectableAvatarRow.svelte';
 	import SelectableIconRow from '$lib/dashboard/ui/shared/SelectableIconRow.svelte';
 	import Section from './Section.svelte';
@@ -12,7 +13,11 @@
 		AllActivityFilterOptionToggle,
 		AllActivityFilterSectionId
 	} from './model';
-	import type { AllActivityFilterDrawerSection } from './sections';
+	import type {
+		AllActivityBrokerFilterSection,
+		AllActivityFilterDrawerSection,
+		AllActivityIndustryFilterSection
+	} from './sections';
 
 	type Props = {
 		open: boolean;
@@ -39,10 +44,9 @@
 			easing: cubicOut,
 			css: (t: number) => {
 				const translateX = (1 - t) * 22;
-				const scale = 0.985 + t * 0.015;
-				const opacity = 0.65 + t * 0.35;
+				const opacity = 0.78 + t * 0.22;
 
-				return `transform: translate3d(${translateX}px, 0, 0) scale(${scale}); opacity: ${opacity};`;
+				return `transform: translate3d(${translateX}px, 0, 0); opacity: ${opacity};`;
 			}
 		};
 	}
@@ -69,6 +73,26 @@
 	});
 </script>
 
+{#snippet brokerOptionRow(
+	option: SearchableFilterPanelOption,
+	state: {
+		selected: boolean;
+		highlighted: boolean;
+		onClick: () => void;
+		onMouseEnter: () => void;
+	}
+)}
+	<SelectableAvatarRow
+		label={option.label}
+		avatar={option.avatar as string}
+		selected={state.selected}
+		highlighted={state.highlighted}
+		ariaPressed={state.selected}
+		onClick={state.onClick}
+		onMouseEnter={state.onMouseEnter}
+	/>
+{/snippet}
+
 {#if open}
 	<div
 		class="app-layer-drawer pointer-events-none absolute inset-0 hidden md:block"
@@ -77,7 +101,7 @@
 		<button
 			type="button"
 			aria-label="Close filters"
-			class="pointer-events-auto absolute inset-0 bg-zinc-950/6 backdrop-blur-[1.5px]"
+			class="pointer-events-auto absolute inset-0 bg-zinc-950/6"
 			transition:fade={{ duration: 180 }}
 			onclick={onClose}
 		></button>
@@ -102,26 +126,48 @@
 
 			<div class="min-h-0 flex-1 overflow-y-auto bg-white">
 				{#each sections as section, sectionIndex (section.id)}
-					{#if section.id === 'industry'}
+					{#if section.id !== 'activity-level'}
 						<Section
 							{section}
 							showDivider={sectionIndex > 0}
 							{onToggleSection}
 						>
-							<IndustryPickerPanel
-								mode="multiple"
-								options={section.options.map((option) => ({ id: option.id, label: option.label }))}
-								selectedValues={section.options
-									.filter((option) => option.selected)
-									.map((option) => option.id)}
-								onSelect={(industry) =>
-									onToggleOption({
-										sectionId: section.id,
-										optionId: industry
-									})}
-								searchLabel="Search industries"
-								searchPlaceholder="Search industries"
-							/>
+							{#if section.id === 'broker'}
+								<SearchableFilterPanel
+									mode="multiple"
+									options={section.options}
+									selectedValues={section.options
+										.filter((option) => option.selected)
+										.map((option) => option.id)}
+									onSelect={(optionId) =>
+										onToggleOption({
+											sectionId: 'broker',
+											optionId: optionId as AllActivityBrokerFilterSection['options'][number]['id']
+										})}
+									searchLabel={section.searchLabel}
+									searchPlaceholder={section.searchPlaceholder}
+									emptyLabel={section.emptyLabel}
+									listClass="max-h-40"
+									optionRow={brokerOptionRow}
+								/>
+							{:else}
+								<SearchableFilterPanel
+									mode="multiple"
+									options={section.options}
+									selectedValues={section.options
+										.filter((option) => option.selected)
+										.map((option) => option.id)}
+									onSelect={(optionId) =>
+										onToggleOption({
+											sectionId: 'industry',
+											optionId: optionId as AllActivityIndustryFilterSection['options'][number]['id']
+										})}
+									searchLabel={section.searchLabel}
+									searchPlaceholder={section.searchPlaceholder}
+									emptyLabel={section.emptyLabel}
+									listClass="max-h-40"
+								/>
+							{/if}
 						</Section>
 					{:else}
 						<Section
@@ -129,49 +175,31 @@
 							showDivider={sectionIndex > 0}
 							{onToggleSection}
 						>
-								<ul class="space-y-1">
-									{#if section.id === 'broker'}
-										{#each section.options as option (option.id)}
-											<li>
-												<SelectableAvatarRow
-													label={option.label}
-													avatar={option.avatar}
-													selected={option.selected}
-													ariaPressed={option.selected}
-													onClick={() =>
-														onToggleOption({
-															sectionId: section.id,
-															optionId: option.id
-														})}
+							<ul class="space-y-1">
+								{#each section.options as option (option.id)}
+									<li>
+										<SelectableIconRow
+											label={option.label}
+											selected={option.selected}
+											ariaPressed={option.selected}
+											onClick={() =>
+												onToggleOption({
+													sectionId: section.id,
+													optionId: option.id
+												})}
+										>
+											{#snippet leading()}
+												<ActivityLevelGridIcon
+													variant={option.iconVariant}
+													class="size-3 text-zinc-400"
 												/>
-											</li>
-										{/each}
-									{:else if section.id === 'activity-level'}
-										{#each section.options as option (option.id)}
-											<li>
-												<SelectableIconRow
-													label={option.label}
-													selected={option.selected}
-													ariaPressed={option.selected}
-													onClick={() =>
-														onToggleOption({
-															sectionId: section.id,
-															optionId: option.id
-														})}
-												>
-													{#snippet leading()}
-														<ActivityLevelGridIcon
-															variant={option.iconVariant}
-															class="size-3 text-zinc-400"
-														/>
-													{/snippet}
-												</SelectableIconRow>
-											</li>
-										{/each}
-									{/if}
-								</ul>
-							</Section>
-						{/if}
+											{/snippet}
+										</SelectableIconRow>
+									</li>
+								{/each}
+							</ul>
+						</Section>
+					{/if}
 				{/each}
 			</div>
 		</aside>

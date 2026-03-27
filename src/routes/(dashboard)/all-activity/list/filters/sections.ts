@@ -2,6 +2,7 @@ import {
 	getActivityLevelIconVariant,
 	type ActivityLevelIconVariant
 } from '$lib/dashboard/view-models/deal';
+import type { SearchableFilterPanelOption } from '$lib/dashboard/ui/pickers/filter-panel';
 import type { ActivityLevel, DealIndustry } from '$lib/types/vocab';
 import type {
 	AllActivityFilterDrawerData,
@@ -9,12 +10,6 @@ import type {
 } from './model';
 
 type BrokerOption = AllActivityFilterDrawerData['brokers'][number];
-
-export type AllActivityFilterSearch = {
-	label: string;
-	placeholder: string;
-	disabled: true;
-};
 
 type BaseFilterOption<Id, Extra = object> = {
 	id: Id;
@@ -41,22 +36,28 @@ type BaseSection<Id extends string, Option> = {
 	expanded: boolean;
 	collapsible: boolean;
 	options: readonly Option[];
-	search?: AllActivityFilterSearch;
 };
 
-export type AllActivityBrokerFilterSection = BaseSection<
+type SearchableSection<Id extends string, Option extends SearchableFilterPanelOption> = BaseSection<
+	Id,
+	Option & { selected: boolean }
+> & {
+	searchLabel: string;
+	searchPlaceholder: string;
+	emptyLabel: string;
+};
+
+export type AllActivityBrokerFilterSection = SearchableSection<
 	'broker',
 	AllActivityBrokerFilterOption
-> & {
-	search: AllActivityFilterSearch;
-};
+>;
 
 export type AllActivityActivityLevelFilterSection = BaseSection<
 	'activity-level',
 	AllActivityActivityLevelFilterOption
 >;
 
-export type AllActivityIndustryFilterSection = BaseSection<
+export type AllActivityIndustryFilterSection = SearchableSection<
 	'industry',
 	AllActivityIndustryFilterOption
 >;
@@ -112,11 +113,9 @@ function buildBrokerSection(
 		summary: getSectionSummary(params.selectedBrokerIds.length),
 		expanded: params.expandedSections.broker,
 		collapsible: true,
-		search: {
-			label: 'Search brokers',
-			placeholder: 'Search brokers',
-			disabled: true
-		},
+		searchLabel: 'Search brokers',
+		searchPlaceholder: 'Search brokers',
+		emptyLabel: 'No brokers found',
 		options
 	};
 }
@@ -128,8 +127,8 @@ function buildActivityLevelSection(
 		id: 'activity-level',
 		title: 'Activity level',
 		summary: getSectionSummary(params.selectedActivityLevels.length),
-		expanded: true,
-		collapsible: false,
+		expanded: params.expandedSections['activity-level'],
+		collapsible: true,
 		options: params.data.activityLevels.map((activityLevel) => ({
 			id: activityLevel.id,
 			label: activityLevel.label,
@@ -156,6 +155,9 @@ function buildIndustrySection(
 		summary: getSectionSummary(params.selectedIndustries.length),
 		expanded: params.expandedSections.industry,
 		collapsible: true,
+		searchLabel: 'Search industries',
+		searchPlaceholder: 'Search industries',
+		emptyLabel: 'No industries found',
 		options
 	};
 }

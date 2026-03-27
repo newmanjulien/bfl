@@ -64,13 +64,13 @@
 	}
 
 	function toggleFilterSection(sectionId: AllActivityFilterSectionId) {
-		if (sectionId === 'activity-level') {
-			return;
-		}
+		const isExpanding = !expandedSections[sectionId];
 
 		expandedSections = {
-			...expandedSections,
-			[sectionId]: !expandedSections[sectionId]
+			broker: false,
+			'activity-level': false,
+			industry: false,
+			[sectionId]: isExpanding
 		};
 	}
 

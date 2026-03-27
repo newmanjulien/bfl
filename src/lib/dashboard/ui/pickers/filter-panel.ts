@@ -1,34 +1,33 @@
-import type { DealIndustry } from '$lib/types/vocab';
-
-export type IndustryPickerOption = {
-	id: DealIndustry;
+export type SearchableFilterPanelOption<Id extends string = string> = {
+	id: Id;
 	label: string;
+	[key: string]: unknown;
 };
 
-type GetFilteredIndustryOptionsParams = {
-	options: readonly IndustryPickerOption[];
+type GetFilteredOptionsParams<Option extends SearchableFilterPanelOption> = {
+	options: readonly Option[];
 	query: string;
-	selectedValues?: readonly DealIndustry[];
+	selectedValues?: readonly string[];
 	sortSelectedFirst?: boolean;
 };
 
-type GetInitialHighlightedIndustryIdParams = {
-	options: readonly IndustryPickerOption[];
-	selectedValues?: readonly DealIndustry[];
+type GetInitialHighlightedOptionIdParams<Option extends SearchableFilterPanelOption> = {
+	options: readonly Option[];
+	selectedValues?: readonly string[];
 };
 
-type GetNextHighlightedIndustryIdParams = {
-	options: readonly IndustryPickerOption[];
-	currentIndustryId: DealIndustry | null;
+type GetNextHighlightedOptionIdParams<Option extends SearchableFilterPanelOption> = {
+	options: readonly Option[];
+	currentOptionId: string | null;
 	direction: 1 | -1;
 };
 
-export function getFilteredIndustryOptions({
+export function getFilteredOptions<Option extends SearchableFilterPanelOption>({
 	options,
 	query,
 	selectedValues = [],
 	sortSelectedFirst = false
-}: GetFilteredIndustryOptionsParams) {
+}: GetFilteredOptionsParams<Option>) {
 	const normalizedQuery = query.trim().toLocaleLowerCase();
 	const filteredOptions =
 		normalizedQuery.length === 0
@@ -51,24 +50,24 @@ export function getFilteredIndustryOptions({
 	});
 }
 
-export function getInitialHighlightedIndustryId({
+export function getInitialHighlightedOptionId<Option extends SearchableFilterPanelOption>({
 	options,
 	selectedValues = []
-}: GetInitialHighlightedIndustryIdParams) {
+}: GetInitialHighlightedOptionIdParams<Option>) {
 	return options.find((option) => selectedValues.includes(option.id))?.id ?? options[0]?.id ?? null;
 }
 
-export function getNextHighlightedIndustryId({
+export function getNextHighlightedOptionId<Option extends SearchableFilterPanelOption>({
 	options,
-	currentIndustryId,
+	currentOptionId,
 	direction
-}: GetNextHighlightedIndustryIdParams) {
+}: GetNextHighlightedOptionIdParams<Option>) {
 	if (options.length === 0) {
 		return null;
 	}
 
-	const currentIndex = currentIndustryId
-		? options.findIndex((option) => option.id === currentIndustryId)
+	const currentIndex = currentOptionId
+		? options.findIndex((option) => option.id === currentOptionId)
 		: -1;
 
 	if (currentIndex < 0) {

@@ -6,22 +6,26 @@
 		label: string;
 		avatar: string;
 		selected?: boolean;
+		highlighted?: boolean;
 		role?: 'menuitemcheckbox' | 'menuitem' | undefined;
 		ariaChecked?: boolean | undefined;
 		ariaPressed?: boolean | undefined;
 		weight?: 'normal' | 'medium';
 		onClick: () => void;
+		onMouseEnter?: () => void;
 	};
 
 	let {
 		label,
 		avatar,
 		selected = false,
+		highlighted = false,
 		role,
 		ariaChecked,
 		ariaPressed,
 		weight = 'normal',
-		onClick
+		onClick,
+		onMouseEnter
 	}: Props = $props();
 </script>
 
@@ -32,8 +36,10 @@
 	aria-pressed={ariaPressed}
 	class={cn(
 		'flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
-		selected ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
+		selected ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700',
+		highlighted && 'bg-zinc-100 text-zinc-900'
 	)}
+	onmouseenter={onMouseEnter}
 	onclick={onClick}
 >
 	<div class="flex min-w-0 items-center gap-2">
