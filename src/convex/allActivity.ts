@@ -20,25 +20,26 @@ import {
 } from '../lib/dashboard/detail/right-rail';
 import { DEAL_INDUSTRIES, type ActivityLevel, type DealIndustry } from '../lib/types/vocab';
 import {
-	createAllActivityDetailHeader,
-	createAllActivityListHeader
-} from './headers';
-import {
 	type DealRecordData,
 	toActivityRecord,
 	toDashboardPerson,
 	toDealRecord
 } from './readModels';
 import {
-	type AllActivityDetailQueryResult,
-	type AllActivityListQueryResult,
+	type AllActivityDetailReadModel,
+	type AllActivityListReadModel,
 	type DashboardPerson,
-	allActivityDetailResultValidator,
-	allActivityListResultValidator,
+	allActivityDetailReadModelValidator,
+	allActivityListReadModelValidator,
 	allActivityViewValidator
 } from './validators';
 
-export type { AllActivityDetailQueryResult, AllActivityListQueryResult } from './validators';
+export type {
+	AllActivityDetailReadModel,
+	AllActivityDetailRef,
+	AllActivityListReadModel,
+	DashboardShellReadModel
+} from './validators';
 
 const NO_ACTIVITY_LABEL = 'No recorded activity';
 
@@ -59,21 +60,13 @@ function hasListActivityData(
 }
 
 function toAllActivityRowNavigation(
-	deal: DealRecordData,
-	view: AllActivityView
+	deal: DealRecordData
 ) {
 	return deal.context
 		? {
-				kind: 'internal' as const,
-				route: {
-					kind: 'all-activity-detail' as const,
-					dealId: deal.id,
-					view
-				}
+				dealId: deal.id
 			}
-		: {
-				kind: 'none' as const
-			};
+		: null;
 }
 
 function toAllActivityTableRow(
@@ -92,7 +85,7 @@ function toAllActivityTableRow(
 ) {
 	return {
 		id: deal.id,
-		navigation: toAllActivityRowNavigation(deal, view),
+		detail: toAllActivityRowNavigation(deal),
 		probability: deal.probability,
 		activityLevel: deal.activityLevel,
 		deal: deal.dealName,
@@ -137,15 +130,13 @@ function toNoActivityRow(
 }
 
 function toNonNavigableRow(row: ReturnType<typeof toAllActivityTableRow>) {
-	if (row.navigation.kind === 'none') {
+	if (!row.detail) {
 		return row;
 	}
 
 	return {
 		...row,
-		navigation: {
-			kind: 'none' as const
-		}
+		detail: null
 	};
 }
 
@@ -223,8 +214,8 @@ export const getAllActivityList = query({
 	args: {
 		view: allActivityViewValidator
 	},
-	returns: allActivityListResultValidator,
-	handler: async (ctx, args): Promise<AllActivityListQueryResult> => {
+	returns: allActivityListReadModelValidator,
+	handler: async (ctx, args): Promise<AllActivityListReadModel> => {
 		const selectedView = args.view as AllActivityView;
 		const [brokers, deals] = await Promise.all([
 			ctx.db.query('brokers').collect(),
@@ -236,7 +227,6 @@ export const getAllActivityList = query({
 		const collections = buildRowCollections(dealRecords, selectedView, peopleById);
 
 		return {
-			header: createAllActivityListHeader(selectedView),
 			rows: resolveRowsForView(selectedView, collections),
 			filterDrawerData: createFilterDrawerData(people, dealRecords)
 		};
@@ -248,9 +238,8 @@ export const getAllActivityDetail = query({
 		detailId: v.string(),
 		view: allActivityViewValidator
 	},
-	returns: v.union(allActivityDetailResultValidator, v.null()),
-	handler: async (ctx, args): Promise<AllActivityDetailQueryResult | null> => {
-		const selectedView = args.view as AllActivityView;
+	returns: v.union(allActivityDetailReadModelValidator, v.null()),
+	handler: async (ctx, args): Promise<AllActivityDetailReadModel | null> => {
 		const normalizedDealId = await ctx.db.normalizeId('deals', args.detailId);
 
 		if (!normalizedDealId) {
@@ -283,7 +272,7 @@ export const getAllActivityDetail = query({
 		const peopleById = createPersonSummaryMap(people);
 
 		return {
-			header: createAllActivityDetailHeader(dealRecord.dealName, selectedView),
+			title: dealRecord.dealName,
 			hero: buildDealHero({
 				dealNumber: dealRecord.dealNumber,
 				dealName: dealRecord.dealName,

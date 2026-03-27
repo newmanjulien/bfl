@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { AllActivityListQueryResult } from '../../../../convex/allActivity';
 	import { resolve } from '$app/paths';
 	import { formatIsoDateTimeRelative } from '$lib/format/date-time';
 	import { resolveDashboardRoute } from '$lib/dashboard/routing';
+	import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
 	import ActivityLevelLabel from '$lib/dashboard/ui/activity-level/ActivityLevelLabel.svelte';
 	import PersonInline from '$lib/dashboard/ui/people/PersonInline.svelte';
 	import DashboardTableShell from '$lib/dashboard/ui/shared/DashboardTableShell.svelte';
 	import { cn } from '$lib/support/cn';
-	type AllActivityTableRow = AllActivityListQueryResult['rows'][number];
+	type AllActivityTableRow = AllActivityListPageData['rows'][number];
 
 	type AllActivityTableSelection = {
 		headerLabel: 'Select';

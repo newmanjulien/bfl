@@ -1,6 +1,5 @@
 <script lang="ts">
-	import type { AllActivityListQueryResult } from '../../../../convex/allActivity';
-	import type { AllActivityListRouteRef } from '$lib/dashboard/routing';
+	import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
 	import DashboardPageLayout from '$lib/dashboard/layout/DashboardPageLayout.svelte';
 	import DashboardHeaderScope from '$lib/dashboard/shell/header/DashboardHeaderScope.svelte';
 	import {
@@ -19,15 +18,10 @@
 	} from './filters/model';
 	import { buildAllActivityFilterDrawerSections } from './filters/sections';
 
-	type AllActivityTableRow = AllActivityListQueryResult['rows'][number];
 	type BrokerId = AllActivityFilterDrawerData['brokers'][number]['id'];
 
 	type Props = {
-		data: AllActivityListQueryResult & {
-			route: AllActivityListRouteRef;
-			rows: readonly AllActivityTableRow[];
-			filterDrawerData: AllActivityFilterDrawerData;
-		};
+		data: AllActivityListPageData;
 	};
 
 	const HEADER_SCOPE_ID = 'all-activity-list';

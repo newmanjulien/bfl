@@ -1,11 +1,9 @@
 import { query } from './_generated/server';
-import { formatIsoDateMonthDayLong } from '../lib/format/date-time';
 import { sortDealActivitiesAscending } from '../lib/dashboard/view-models/deal';
 import {
 	createPersonSummaryMap,
 	toTimelineItem
 } from '../lib/dashboard/view-models/deal-content';
-import { createSinceLastMeetingHeader } from './headers';
 import {
 	requireMeetingScheduleDocument,
 	toActivityRecord,
@@ -13,11 +11,11 @@ import {
 	toDealRecord
 } from './readModels';
 import {
-	type SinceLastMeetingQueryResult,
-	sinceLastMeetingResultValidator
+	type SinceLastMeetingReadModel,
+	sinceLastMeetingReadModelValidator
 } from './validators';
 
-export type { SinceLastMeetingQueryResult } from './validators';
+export type { SinceLastMeetingReadModel } from './validators';
 
 function createDealByIdMap(deals: readonly ReturnType<typeof toDealRecord>[]) {
 	return new Map(deals.map((deal) => [deal.id, deal] as const));
@@ -56,8 +54,8 @@ function toSinceLastMeetingDeals(
 
 export const getSinceLastMeeting = query({
 	args: {},
-	returns: sinceLastMeetingResultValidator,
-	handler: async (ctx): Promise<SinceLastMeetingQueryResult> => {
+	returns: sinceLastMeetingReadModelValidator,
+	handler: async (ctx): Promise<SinceLastMeetingReadModel> => {
 		const meetingSchedule = await requireMeetingScheduleDocument(ctx);
 		const [brokers, activities, deals] = await Promise.all([
 			ctx.db.query('brokers').collect(),
@@ -77,12 +75,6 @@ export const getSinceLastMeeting = query({
 		const dealRecords = deals.map((deal) => toDealRecord(deal));
 
 		return {
-			header: createSinceLastMeetingHeader(),
-			hero: {
-				title: 'Since your last meeting with Julien',
-				description:
-					`Get a quick overview of what progress Julien has made since your last meeting on ${formatIsoDateMonthDayLong(meetingSchedule.activeMeetingDateIso)}`
-			},
 			referenceMeetingDateIso: meetingSchedule.activeMeetingDateIso,
 			timelineItems: meetingUpdateActivities.map((activity) => toTimelineItem(activity, peopleById)),
 			deals: toSinceLastMeetingDeals(meetingUpdateActivities, createDealByIdMap(dealRecords)),

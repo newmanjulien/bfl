@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { MyDealsListQueryResult } from '../../../../convex/myDeals';
 	import { resolve } from '$app/paths';
 	import { resolveDashboardRoute } from '$lib/dashboard/routing';
+	import type { MyDealsListPageData } from '$lib/dashboard/page-models/myDeals';
 	import { Check } from 'lucide-svelte';
 	import NewsSourceInline from '$lib/dashboard/ui/detail/NewsSourceInline.svelte';
 	import PersonInline from '$lib/dashboard/ui/people/PersonInline.svelte';
-		import DashboardTableShell from '$lib/dashboard/ui/shared/DashboardTableShell.svelte';
-		import { cn } from '$lib/support/cn';
-		import { DEFAULT_MY_DEALS_ACTIVE_BROKER_LEGACY_ID } from '../data/active-broker';
-		type MyDealsTableRow = MyDealsListQueryResult['rows'][number];
+	import DashboardTableShell from '$lib/dashboard/ui/shared/DashboardTableShell.svelte';
+	import { cn } from '$lib/support/cn';
+	import { DEFAULT_MY_DEALS_ACTIVE_BROKER_LEGACY_ID } from '../data/active-broker';
+	type MyDealsTableRow = MyDealsListPageData['rows'][number];
 
 	type Props = {
 		rows: readonly MyDealsTableRow[];

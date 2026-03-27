@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { OpportunitiesListQueryResult } from '../../../convex/opportunities';
+	import type { OpportunitiesListPageData } from '$lib/dashboard/page-models/opportunities';
 	import { Building } from 'lucide-svelte';
 	import { formatDealNumber } from '$lib/dashboard/view-models/deal';
 	import type { CanvasHeroIcon } from '$lib/dashboard/ui/detail/CanvasHero.types';
@@ -7,7 +7,7 @@
 	import AvatarStack from '$lib/dashboard/ui/people/AvatarStack.svelte';
 	import ListCard from '$lib/dashboard/ui/shared/ListCard.svelte';
 
-	type OpportunityTile = OpportunitiesListQueryResult['opportunityTiles'][number];
+	type OpportunityTile = OpportunitiesListPageData['opportunityTiles'][number];
 
 	type Props = {
 		tiles: readonly OpportunityTile[];

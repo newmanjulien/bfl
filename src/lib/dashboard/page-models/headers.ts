@@ -1,5 +1,9 @@
+import type {
+	AllActivityListRouteRef,
+	MyDealsListRouteRef,
+	OpportunitiesListRouteRef
+} from '$lib/dashboard/routing';
 import type { DashboardHeader } from '$lib/dashboard/shell/header/types';
-import { buildHeaderTitleMenu } from '$lib/dashboard/shell/header/title-menu';
 import {
 	ALL_ACTIVITY_VIEW_OPTIONS,
 	getAllActivityViewLabel,
@@ -10,6 +14,37 @@ import {
 	getMyDealsViewLabel,
 	type MyDealsView
 } from '$lib/dashboard/routing/my-deals';
+
+type HeaderMenuOption<TId extends string> = {
+	id: TId;
+	label: string;
+};
+
+function buildHeaderTitleMenu<TId extends string>(params: {
+	menuId: string;
+	ariaLabel: string;
+	sectionLabel: string;
+	activeLabel: string;
+	selectedId: TId;
+	options: readonly HeaderMenuOption<TId>[];
+	buildRoute: (id: TId) => MyDealsListRouteRef | AllActivityListRouteRef;
+}) {
+	const { menuId, ariaLabel, sectionLabel, activeLabel, selectedId, options, buildRoute } = params;
+
+	return {
+		kind: 'link-menu' as const,
+		menuId,
+		ariaLabel,
+		sectionLabel,
+		activeLabel,
+		options: options.map((option) => ({
+			id: option.id,
+			label: option.label,
+			route: buildRoute(option.id),
+			current: option.id === selectedId
+		}))
+	};
+}
 
 export function createSinceLastMeetingHeader(): DashboardHeader {
 	return {
@@ -33,16 +68,17 @@ export function createOpportunitiesListHeader(): DashboardHeader {
 	};
 }
 
-export function createOpportunitiesDetailHeader(title: string): DashboardHeader {
+export function createOpportunitiesDetailHeader(
+	title: string,
+	backRoute: OpportunitiesListRouteRef = { kind: 'opportunities-list' }
+): DashboardHeader {
 	return {
 		leading: {
 			kind: 'control-title',
 			title,
 			control: {
 				kind: 'back-link',
-				route: {
-					kind: 'opportunities-list'
-				},
+				route: backRoute,
 				label: 'Opportunities & risks'
 			}
 		},

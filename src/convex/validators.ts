@@ -11,16 +11,8 @@ import {
 	type MyDealsDetailTabId,
 	type MyDealsView
 } from '../lib/dashboard/routing/my-deals';
-import type {
-	AllActivityDetailRouteRef,
-	InternalLink,
-	MyDealsDetailRouteRef,
-	Navigation,
-	OpportunitiesDetailRouteRef
-} from '../lib/dashboard/routing';
 import type { DetailRightRailData } from '../lib/dashboard/detail/right-rail';
 import type { OrgChartNodeRecord as SharedOrgChartNodeRecord } from '../lib/domain/org-chart';
-import type { DashboardHeader } from '../lib/dashboard/shell/header/types';
 import type { CanvasHeroData } from '../lib/dashboard/ui/detail/CanvasHero.types';
 import type { FileUploadFieldData } from '../lib/dashboard/ui/detail/FileUploadField.types';
 import type { DealSummaryRow } from '../lib/dashboard/view-models/deal';
@@ -69,52 +61,6 @@ export type AllActivityViewValue = AllActivityView;
 export type MyDealsViewValue = MyDealsView;
 export type MyDealsDetailTabIdValue = MyDealsDetailTabId;
 
-export const myDealsListRouteRefValidator = v.object({
-	kind: v.literal('my-deals-list'),
-	view: myDealsViewValidator
-});
-
-export const myDealsDetailRouteRefValidator = v.object({
-	kind: v.literal('my-deals-detail'),
-	dealId: v.id('deals'),
-	view: myDealsViewValidator,
-	tab: myDealsDetailTabIdValidator
-});
-
-export const allActivityListRouteRefValidator = v.object({
-	kind: v.literal('all-activity-list'),
-	view: allActivityViewValidator
-});
-
-export const allActivityDetailRouteRefValidator = v.object({
-	kind: v.literal('all-activity-detail'),
-	dealId: v.id('deals'),
-	view: allActivityViewValidator
-});
-
-export const opportunitiesListRouteRefValidator = v.object({
-	kind: v.literal('opportunities-list')
-});
-
-export const opportunitiesDetailRouteRefValidator = v.object({
-	kind: v.literal('opportunities-detail'),
-	insightId: v.id('insights')
-});
-
-export const sinceLastMeetingRouteRefValidator = v.object({
-	kind: v.literal('since-last-meeting')
-});
-
-export const dashboardRouteRefValidator = v.union(
-	myDealsListRouteRefValidator,
-	myDealsDetailRouteRefValidator,
-	allActivityListRouteRefValidator,
-	allActivityDetailRouteRefValidator,
-	opportunitiesListRouteRefValidator,
-	opportunitiesDetailRouteRefValidator,
-	sinceLastMeetingRouteRefValidator
-);
-
 export const dashboardPersonValidator = v.object({
 	id: v.id('brokers'),
 	legacyId: v.string(),
@@ -129,87 +75,18 @@ export type DashboardPerson = {
 	avatar: string;
 };
 
-const noNavigationValidator = v.object({
-	kind: v.literal('none')
+export const myDealsDetailRefValidator = v.object({
+	dealId: v.id('deals'),
+	defaultTab: myDealsDetailTabIdValidator
 });
 
-export const myDealsDetailInternalLinkValidator = v.object({
-	kind: v.literal('internal'),
-	route: myDealsDetailRouteRefValidator
+export const allActivityDetailRefValidator = v.object({
+	dealId: v.id('deals')
 });
 
-export const allActivityDetailInternalLinkValidator = v.object({
-	kind: v.literal('internal'),
-	route: allActivityDetailRouteRefValidator
+export const opportunityDetailRefValidator = v.object({
+	insightId: v.id('insights')
 });
-
-export const dashboardInternalLinkValidator = v.object({
-	kind: v.literal('internal'),
-	route: dashboardRouteRefValidator
-});
-
-export const dashboardExternalLinkValidator = v.object({
-	kind: v.literal('external'),
-	href: v.string(),
-	target: v.optional(v.string()),
-	rel: v.optional(v.string())
-});
-
-export const dashboardHeaderTitleMenuOptionValidator = v.object({
-	id: v.string(),
-	label: v.string(),
-	route: v.union(myDealsListRouteRefValidator, allActivityListRouteRefValidator),
-	current: v.boolean()
-});
-
-export const dashboardHeaderTitleMenuValidator = v.object({
-	kind: v.literal('link-menu'),
-	menuId: v.string(),
-	ariaLabel: v.string(),
-	sectionLabel: v.string(),
-	activeLabel: v.string(),
-	options: v.array(dashboardHeaderTitleMenuOptionValidator)
-});
-
-export const dashboardHeaderActionValidator = v.union(
-	v.literal('share'),
-	v.literal('broker-switch')
-);
-
-export const dashboardHeaderValidator = v.object({
-	leading: v.union(
-		v.object({
-			kind: v.literal('title'),
-			title: v.string()
-		}),
-		v.object({
-			kind: v.literal('title-menu'),
-			title: v.string(),
-			menu: dashboardHeaderTitleMenuValidator
-		}),
-		v.object({
-			kind: v.literal('control-title'),
-			title: v.string(),
-			control: v.union(
-				v.object({
-					kind: v.literal('meeting-date')
-				}),
-				v.object({
-					kind: v.literal('back-link'),
-					route: v.union(
-						myDealsListRouteRefValidator,
-						allActivityListRouteRefValidator,
-						opportunitiesListRouteRefValidator
-					),
-					label: v.string()
-				})
-			)
-		})
-	),
-	actions: v.optional(v.array(dashboardHeaderActionValidator))
-});
-
-export type DashboardHeaderData = DashboardHeader;
 
 export const canvasHeroValidator = v.object({
 	title: v.string(),
@@ -337,38 +214,31 @@ export const detailRightRailDataValidator = v.object({
 	sections: v.array(detailRightRailSectionValidator)
 });
 
-export const myDealsFeedItemValidator = v.union(
+export const myDealsFeedItemReadModelValidator = v.union(
 	v.object({
 		id: v.string(),
 		title: v.string(),
 		kind: v.literal('news'),
-		dateIso: v.string(),
-		navigation: noNavigationValidator
+		dateIso: v.string()
 	}),
 	v.object({
 		id: v.string(),
 		title: v.string(),
 		kind: v.literal('linkedin'),
-		dateIso: v.string(),
-		navigation: noNavigationValidator
+		dateIso: v.string()
 	}),
 	v.object({
 		id: v.string(),
 		title: v.string(),
 		kind: v.literal('activity'),
 		dateIso: v.string(),
-		navigation: myDealsDetailInternalLinkValidator
+		detail: myDealsDetailRefValidator
 	})
 );
 
-export const myDealsRowNavigationValidator = v.union(
-	myDealsDetailInternalLinkValidator,
-	noNavigationValidator
-);
-
-export const myDealsTableRowValidator = v.object({
+export const myDealsTableRowReadModelValidator = v.object({
 	id: v.id('deals'),
-	navigation: myDealsRowNavigationValidator,
+	detail: v.union(myDealsDetailRefValidator, v.null()),
 	deal: v.string(),
 	latestNewsSource: v.union(dealNewsSourceValidator, v.null()),
 	latestNews: v.string(),
@@ -376,11 +246,6 @@ export const myDealsTableRowValidator = v.object({
 	owner: v.union(dashboardPersonValidator, v.null()),
 	isReservedInEpic: v.boolean()
 });
-
-export const allActivityRowNavigationValidator = v.union(
-	allActivityDetailInternalLinkValidator,
-	noNavigationValidator
-);
 
 export const allActivityRowLastActivityValidator = v.union(
 	v.object({
@@ -393,9 +258,9 @@ export const allActivityRowLastActivityValidator = v.union(
 	})
 );
 
-export const allActivityTableRowValidator = v.object({
+export const allActivityTableRowReadModelValidator = v.object({
 	id: v.id('deals'),
-	navigation: allActivityRowNavigationValidator,
+	detail: v.union(allActivityDetailRefValidator, v.null()),
 	probability: v.number(),
 	activityLevel: activityLevelValidator,
 	deal: v.string(),
@@ -420,9 +285,9 @@ export const allActivityFilterDrawerDataValidator = v.object({
 	)
 });
 
-export const opportunityTileValidator = v.object({
+export const opportunityTileReadModelValidator = v.object({
 	id: v.id('insights'),
-	route: opportunitiesDetailRouteRefValidator,
+	detail: opportunityDetailRefValidator,
 	title: v.string(),
 	dealNumber: v.number(),
 	dealLabel: v.optional(v.string()),
@@ -436,31 +301,28 @@ export const dashboardShellResultValidator = v.object({
 	activeMeetingDateIso: v.string()
 });
 
-export const myDealsListResultValidator = v.object({
-	header: dashboardHeaderValidator,
-	hero: v.optional(canvasHeroValidator),
-	rows: v.array(myDealsTableRowValidator),
-	newsItems: v.array(myDealsFeedItemValidator),
-	watchlistItems: v.array(myDealsFeedItemValidator)
+export const myDealsListReadModelValidator = v.object({
+	rows: v.array(myDealsTableRowReadModelValidator),
+	newsItems: v.array(myDealsFeedItemReadModelValidator),
+	watchlistItems: v.array(myDealsFeedItemReadModelValidator)
 });
 
-export const myDealsDetailResultValidator = v.object({
-	header: dashboardHeaderValidator,
+export const myDealsDetailReadModelValidator = v.object({
+	title: v.string(),
 	hero: canvasHeroValidator,
-	newsItems: v.array(myDealsFeedItemValidator),
+	newsItems: v.array(myDealsFeedItemReadModelValidator),
 	activityItems: v.array(timelineItemValidator),
 	update: fileUploadFieldValidator,
 	rightRail: detailRightRailDataValidator
 });
 
-export const allActivityListResultValidator = v.object({
-	header: dashboardHeaderValidator,
-	rows: v.array(allActivityTableRowValidator),
+export const allActivityListReadModelValidator = v.object({
+	rows: v.array(allActivityTableRowReadModelValidator),
 	filterDrawerData: allActivityFilterDrawerDataValidator
 });
 
-export const allActivityDetailResultValidator = v.object({
-	header: dashboardHeaderValidator,
+export const allActivityDetailReadModelValidator = v.object({
+	title: v.string(),
 	hero: canvasHeroValidator,
 	activityItems: v.array(timelineItemValidator),
 	orgChartNodes: v.array(orgChartNodeRecordValidator),
@@ -468,15 +330,13 @@ export const allActivityDetailResultValidator = v.object({
 	rightRail: detailRightRailDataValidator
 });
 
-export const opportunitiesListResultValidator = v.object({
-	header: dashboardHeaderValidator,
-	hero: canvasHeroValidator,
-	opportunityTiles: v.array(opportunityTileValidator),
-	riskTiles: v.array(opportunityTileValidator)
+export const opportunitiesListReadModelValidator = v.object({
+	opportunityTiles: v.array(opportunityTileReadModelValidator),
+	riskTiles: v.array(opportunityTileReadModelValidator)
 });
 
-export const opportunityDetailResultValidator = v.object({
-	header: dashboardHeaderValidator,
+export const opportunityDetailReadModelValidator = v.object({
+	title: v.string(),
 	hero: canvasHeroValidator,
 	kind: dealInsightKindValidator,
 	activityItems: v.array(timelineItemValidator),
@@ -485,45 +345,50 @@ export const opportunityDetailResultValidator = v.object({
 	rightRail: detailRightRailDataValidator
 });
 
-export const sinceLastMeetingResultValidator = v.object({
-	header: dashboardHeaderValidator,
-	hero: canvasHeroValidator,
+export const sinceLastMeetingReadModelValidator = v.object({
 	referenceMeetingDateIso: v.string(),
 	timelineItems: v.array(timelineItemValidator),
 	deals: v.array(dealSummaryRowValidator),
 	update: fileUploadFieldValidator
 });
 
-export type MyDealsFeedItemData =
+export type MyDealsDetailRef = {
+	dealId: DealId;
+	defaultTab: MyDealsDetailTabId;
+};
+
+export type AllActivityDetailRef = {
+	dealId: DealId;
+};
+
+export type OpportunityDetailRef = {
+	insightId: InsightId;
+};
+
+export type MyDealsFeedItemReadModel =
 	| {
 			id: string;
 			title: string;
 			kind: 'news';
 			dateIso: IsoDate;
-			navigation: {
-				kind: 'none';
-			};
 	  }
 	| {
 			id: string;
 			title: string;
 			kind: 'linkedin';
 			dateIso: IsoDate;
-			navigation: {
-				kind: 'none';
-			};
 	  }
 	| {
 			id: string;
 			title: string;
 			kind: 'activity';
 			dateIso: IsoDate;
-			navigation: InternalLink<MyDealsDetailRouteRef>;
+			detail: MyDealsDetailRef;
 	  };
 
-export type MyDealsTableRowData = {
+export type MyDealsTableRowReadModel = {
 	id: DealId;
-	navigation: Navigation<MyDealsDetailRouteRef>;
+	detail: MyDealsDetailRef | null;
 	deal: string;
 	latestNewsSource: DealNewsSource | null;
 	latestNews: string;
@@ -532,9 +397,9 @@ export type MyDealsTableRowData = {
 	isReservedInEpic: boolean;
 };
 
-export type AllActivityTableRowData = {
+export type AllActivityTableRowReadModel = {
 	id: DealId;
-	navigation: Navigation<AllActivityDetailRouteRef>;
+	detail: AllActivityDetailRef | null;
 	probability: number;
 	activityLevel: ActivityLevel;
 	deal: string;
@@ -563,9 +428,9 @@ export type AllActivityFilterDrawerData = {
 	}[];
 };
 
-export type OpportunityTileData = {
+export type OpportunityTileReadModel = {
 	id: InsightId;
-	route: OpportunitiesDetailRouteRef;
+	detail: OpportunityDetailRef;
 	title: string;
 	dealNumber: number;
 	dealLabel?: string;
@@ -573,37 +438,34 @@ export type OpportunityTileData = {
 	activityLevel: ActivityLevel;
 };
 
-export type DashboardShellQueryResult = {
+export type DashboardShellReadModel = {
 	people: DashboardPerson[];
 	meetingDateIsos: IsoDate[];
 	activeMeetingDateIso: IsoDate;
 };
 
-export type MyDealsListQueryResult = {
-	header: DashboardHeader;
-	hero?: CanvasHeroData;
-	rows: MyDealsTableRowData[];
-	newsItems: MyDealsFeedItemData[];
-	watchlistItems: MyDealsFeedItemData[];
+export type MyDealsListReadModel = {
+	rows: MyDealsTableRowReadModel[];
+	newsItems: MyDealsFeedItemReadModel[];
+	watchlistItems: MyDealsFeedItemReadModel[];
 };
 
-export type MyDealsDetailQueryResult = {
-	header: DashboardHeader;
+export type MyDealsDetailReadModel = {
+	title: string;
 	hero: CanvasHeroData;
-	newsItems: MyDealsFeedItemData[];
+	newsItems: MyDealsFeedItemReadModel[];
 	activityItems: TimelineItem[];
 	update: FileUploadFieldData;
 	rightRail: DetailRightRailData;
 };
 
-export type AllActivityListQueryResult = {
-	header: DashboardHeader;
-	rows: AllActivityTableRowData[];
+export type AllActivityListReadModel = {
+	rows: AllActivityTableRowReadModel[];
 	filterDrawerData: AllActivityFilterDrawerData;
 };
 
-export type AllActivityDetailQueryResult = {
-	header: DashboardHeader;
+export type AllActivityDetailReadModel = {
+	title: string;
 	hero: CanvasHeroData;
 	activityItems: TimelineItem[];
 	orgChartNodes: OrgChartNodeRecord[];
@@ -611,15 +473,13 @@ export type AllActivityDetailQueryResult = {
 	rightRail: DetailRightRailData;
 };
 
-export type OpportunitiesListQueryResult = {
-	header: DashboardHeader;
-	hero: CanvasHeroData;
-	opportunityTiles: OpportunityTileData[];
-	riskTiles: OpportunityTileData[];
+export type OpportunitiesListReadModel = {
+	opportunityTiles: OpportunityTileReadModel[];
+	riskTiles: OpportunityTileReadModel[];
 };
 
-export type OpportunityDetailQueryResult = {
-	header: DashboardHeader;
+export type OpportunityDetailReadModel = {
+	title: string;
 	hero: CanvasHeroData;
 	kind: DealInsightKind;
 	activityItems: TimelineItem[];
@@ -628,9 +488,7 @@ export type OpportunityDetailQueryResult = {
 	rightRail: DetailRightRailData;
 };
 
-export type SinceLastMeetingQueryResult = {
-	header: DashboardHeader;
-	hero: CanvasHeroData;
+export type SinceLastMeetingReadModel = {
 	referenceMeetingDateIso: IsoDate;
 	timelineItems: TimelineItem[];
 	deals: DealSummaryRow[];

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { MyDealsListQueryResult } from '../../../../convex/myDeals';
 	import { formatIsoDate } from '$lib/format/date-time';
+	import type { MyDealsListPageData } from '$lib/dashboard/page-models/myDeals';
 	import { Activity, Rss } from 'lucide-svelte';
 	import LinkedInGlyph from '$lib/dashboard/ui/icons/LinkedInGlyph.svelte';
 	import InlineInfoBar from '$lib/dashboard/ui/shared/InlineInfoBar.svelte';
@@ -8,7 +8,7 @@
 	import FeedEmptyState from './FeedEmptyState.svelte';
 	import type { FeedTabId } from './feed-tabs';
 
-	type MyDealsFeedItem = MyDealsListQueryResult['newsItems'][number];
+	type MyDealsFeedItem = MyDealsListPageData['newsItems'][number];
 
 	type Props = {
 		items: readonly MyDealsFeedItem[];

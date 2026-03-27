@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { ChevronsUpDown } from 'lucide-svelte';
-	import { page } from '$app/state';
-	import { matchDashboardRoute } from '$lib/dashboard/routing';
+	import type { DashboardRouteRef } from '$lib/dashboard/routing';
 	import { useDashboardShellState } from '$lib/dashboard/shell/state.svelte';
 	import { cn } from '$lib/support/cn';
 	import { sidebarIndicator } from './sidebar-indicator';
@@ -14,13 +13,14 @@
 	} from './nav/model';
 
 	type Props = {
+		route: DashboardRouteRef;
 		class?: string;
 	};
 
-	let { class: className = '' }: Props = $props();
+	let { route, class: className = '' }: Props = $props();
 
 	const shellState = useDashboardShellState();
-	const currentRoute = $derived(page.data.route ?? matchDashboardRoute(page.url));
+	const currentRoute = $derived(route);
 	const activeRoute = $derived(getActiveDashboardNavRoute(currentRoute));
 	let hoveredRoute = $state<DashboardNavRouteRef | null>(null);
 

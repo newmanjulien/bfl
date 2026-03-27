@@ -10,7 +10,6 @@ export const convexTestModules = import.meta.glob([
 	'./sinceLastMeeting.ts',
 	'./_generated/*.js',
 	'!./test.setup.ts',
-	'!./headers.ts',
 	'!./readModels.ts',
 	'!./schema.ts',
 	'!./validators.ts'

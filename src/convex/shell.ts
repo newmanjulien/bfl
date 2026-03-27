@@ -1,11 +1,16 @@
 import { query } from './_generated/server';
 import { requireMeetingScheduleDocument, toDashboardPerson } from './readModels';
-import { dashboardShellResultValidator } from './validators';
+import {
+	dashboardShellResultValidator,
+	type DashboardShellReadModel
+} from './validators';
+
+export type { DashboardShellReadModel } from './validators';
 
 export const getDashboardShell = query({
 	args: {},
 	returns: dashboardShellResultValidator,
-	handler: async (ctx) => {
+	handler: async (ctx): Promise<DashboardShellReadModel> => {
 		const [meetingSchedule, brokers] = await Promise.all([
 			requireMeetingScheduleDocument(ctx),
 			ctx.db.query('brokers').collect()

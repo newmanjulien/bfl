@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { AllActivityListQueryResult } from '../../../../convex/allActivity';
 	import { SvelteSet } from 'svelte/reactivity';
+	import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
 	import DashboardHeaderScope from '$lib/dashboard/shell/header/DashboardHeaderScope.svelte';
 	import InlineInfoBar from '$lib/dashboard/ui/shared/InlineInfoBar.svelte';
 	import Table from './Table.svelte';
@@ -10,7 +10,7 @@
 	} from './likely-out-of-date';
 	import { getStaleLikelyOutOfDateSelectionRowIds } from './likely-out-of-date';
 
-	type AllActivityTableRow = AllActivityListQueryResult['rows'][number];
+	type AllActivityTableRow = AllActivityListPageData['rows'][number];
 
 	type Props = {
 		rows: readonly AllActivityTableRow[];

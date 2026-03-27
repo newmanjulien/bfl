@@ -1,6 +1,6 @@
-import type { MyDealsListQueryResult } from '../../../../convex/myDeals';
+import type { MyDealsListPageData } from '$lib/dashboard/page-models/myDeals';
 
-type MyDealsFeedItem = MyDealsListQueryResult['newsItems'][number];
+type MyDealsFeedItem = MyDealsListPageData['newsItems'][number];
 
 export type FeedTabId = 'news' | 'linkedin' | 'watchlist';
 

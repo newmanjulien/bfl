@@ -1,13 +1,17 @@
 <script lang="ts">
 	import { X } from 'lucide-svelte';
-	import { page } from '$app/state';
-	import { matchDashboardRoute } from '$lib/dashboard/routing';
+	import type { DashboardRouteRef } from '$lib/dashboard/routing';
 	import { useDashboardShellState } from '$lib/dashboard/shell/state.svelte';
 	import HomeLink from './HomeLink.svelte';
 	import NavList from './nav/NavList.svelte';
 	import { DASHBOARD_NAV_SECTIONS } from './nav/model';
 
-	const currentRoute = $derived(page.data.route ?? matchDashboardRoute(page.url));
+	type Props = {
+		route: DashboardRouteRef;
+	};
+
+	let { route }: Props = $props();
+	const currentRoute = $derived(route);
 	const shellState = useDashboardShellState();
 </script>
 

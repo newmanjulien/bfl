@@ -1,12 +1,10 @@
 <script lang="ts">
-	import type { MyDealsListQueryResult } from '../../../../convex/myDeals';
-	import type { MyDealsListRouteRef } from '$lib/dashboard/routing';
+	import type { MyDealsListPageData } from '$lib/dashboard/page-models/myDeals';
 	import type { MyDealsView } from '$lib/dashboard/routing/my-deals';
 	import DashboardPageLayout from '$lib/dashboard/layout/DashboardPageLayout.svelte';
 	import DashboardTabbedPage from '$lib/dashboard/layout/DashboardTabbedPage.svelte';
 	import DashboardHeaderScope from '$lib/dashboard/shell/header/DashboardHeaderScope.svelte';
 	import type { DashboardHeaderUiScope } from '$lib/dashboard/shell/header/ui-controller';
-	import type { CanvasHeroData } from '$lib/dashboard/ui/detail/CanvasHero.types';
 	import InlineInfoBar from '$lib/dashboard/ui/shared/InlineInfoBar.svelte';
 	import SectionTabPanel from '$lib/dashboard/ui/tabs/SectionTabPanel.svelte';
 	import NewsList from './NewsList.svelte';
@@ -14,10 +12,7 @@
 	import { buildMyDealsFeedTabs } from './feed-tabs';
 
 	type Props = {
-		data: MyDealsListQueryResult & {
-			route: MyDealsListRouteRef;
-			hero?: CanvasHeroData;
-		};
+		data: MyDealsListPageData;
 	};
 
 	const HEADER_SCOPE_ID = 'my-deals-list';

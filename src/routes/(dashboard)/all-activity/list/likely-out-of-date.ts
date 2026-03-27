@@ -1,9 +1,9 @@
 import type { DashboardHeaderUiScope } from '$lib/dashboard/shell/header/ui-controller';
-import type { AllActivityListQueryResult } from '../../../../convex/allActivity';
+import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
 
 export const LIKELY_OUT_OF_DATE_HEADER_SCOPE_ID = 'all-activity-likely-out-of-date';
 
-type AllActivityTableRow = AllActivityListQueryResult['rows'][number];
+type AllActivityTableRow = AllActivityListPageData['rows'][number];
 type LikelyOutOfDateRow = Pick<AllActivityTableRow, 'id'>;
 
 export function getLikelyOutOfDateHeaderUiScope(

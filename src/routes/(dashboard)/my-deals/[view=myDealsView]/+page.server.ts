@@ -1,25 +1,19 @@
-import { error } from '@sveltejs/kit';
-import { isNonDefaultMyDealsView } from '$lib/dashboard/routing/my-deals';
-import type { MyDealsListRouteRef } from '$lib/dashboard/routing';
+import { buildMyDealsListPageData } from '$lib/dashboard/page-models/myDeals';
+import {
+	requireDashboardRouteKind
+} from '$lib/dashboard/page-models/layout';
 import { api, createServerConvexClient } from '$lib/server/convex';
-import { resolveMyDealsActiveBrokerIdFromParent } from '../data/active-broker';
+import { resolveMyDealsActiveBrokerId } from '../data/active-broker';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params, parent }) => {
-	if (!isNonDefaultMyDealsView(params.view)) {
-		throw error(404, 'Not found');
-	}
-
-	const activeBrokerId = await resolveMyDealsActiveBrokerIdFromParent(parent);
-	const route = {
-		kind: 'my-deals-list',
-		view: params.view
-	} satisfies MyDealsListRouteRef;
-
-	return {
-		route,
-		...(await createServerConvexClient().query(api.myDeals.getMyDealsList, {
+export const load: PageServerLoad = async ({ parent }) => {
+	const layoutData = await parent();
+	const route = requireDashboardRouteKind(layoutData.route, 'my-deals-list');
+	const activeBrokerId = resolveMyDealsActiveBrokerId(layoutData.dashboardShell.people);
+	const readModel = await createServerConvexClient().query(api.myDeals.getMyDealsList, {
 		brokerId: activeBrokerId,
-			view: route.view
-		}))
-	};
+		view: route.view
+	});
+
+	return buildMyDealsListPageData({ route, readModel });
 };

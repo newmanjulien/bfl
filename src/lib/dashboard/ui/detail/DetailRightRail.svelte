@@ -6,6 +6,7 @@
 	import LinkedInGlyph from '$lib/dashboard/ui/icons/LinkedInGlyph.svelte';
 	import PersonInline from '$lib/dashboard/ui/people/PersonInline.svelte';
 	import ListCard from '$lib/dashboard/ui/shared/ListCard.svelte';
+	import { parseAbsoluteUrl } from '$lib/types/url';
 
 	type Props = {
 		data: DetailRightRailData;
@@ -53,14 +54,18 @@
 					<p class="text-[9px] uppercase tracking-[0.16em] text-zinc-400">{section.title}</p>
 					<ol class="space-y-2.5">
 						{#each section.contacts as contact (contact.id)}
+							{@const linkedInHref = parseAbsoluteUrl(contact.linkedInUrl)}
 							<li>
 								<ListCard
-									link={{
-										kind: 'external',
-										href: contact.linkedInUrl,
-										target: '_blank',
-										rel: 'noreferrer'
-									}}
+									link={linkedInHref
+										? {
+												kind: 'external',
+												href: linkedInHref,
+												target: '_blank'
+											}
+										: {
+												kind: 'none'
+											}}
 								>
 									{#snippet body()}
 										<div class="flex items-start gap-1.5">

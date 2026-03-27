@@ -13,7 +13,6 @@ import {
 	toDetailRightRailData,
 	toDetailRightRailOverviewSection
 } from '../lib/dashboard/detail/right-rail';
-import { createOpportunitiesDetailHeader, createOpportunitiesListHeader } from './headers';
 import {
 	type DealRecordData,
 	type InsightRecordData,
@@ -23,13 +22,18 @@ import {
 } from './readModels';
 import {
 	type DashboardPerson,
-	type OpportunityDetailQueryResult,
-	type OpportunitiesListQueryResult,
-	opportunityDetailResultValidator,
-	opportunitiesListResultValidator
+	type OpportunityDetailReadModel,
+	type OpportunitiesListReadModel,
+	opportunityDetailReadModelValidator,
+	opportunitiesListReadModelValidator
 } from './validators';
 
-export type { OpportunityDetailQueryResult, OpportunitiesListQueryResult } from './validators';
+export type {
+	DashboardShellReadModel,
+	OpportunityDetailReadModel,
+	OpportunityDetailRef,
+	OpportunitiesListReadModel
+} from './validators';
 
 type OpportunityTileAvatars = string[];
 
@@ -59,8 +63,7 @@ function toTile(
 ) {
 	return {
 		id: insight.id,
-		route: {
-			kind: 'opportunities-detail' as const,
+		detail: {
 			insightId: insight.id
 		},
 		title: insight.title,
@@ -85,8 +88,8 @@ function toRightRailData(
 
 export const getOpportunitiesList = query({
 	args: {},
-	returns: opportunitiesListResultValidator,
-	handler: async (ctx): Promise<OpportunitiesListQueryResult> => {
+	returns: opportunitiesListReadModelValidator,
+	handler: async (ctx): Promise<OpportunitiesListReadModel> => {
 		const [brokers, insights, deals] = await Promise.all([
 			ctx.db.query('brokers').collect(),
 			ctx.db.query('insights').collect(),
@@ -120,11 +123,6 @@ export const getOpportunitiesList = query({
 			});
 
 		return {
-			header: createOpportunitiesListHeader(),
-			hero: {
-				title: 'Opportunities & risks you might help with',
-				description: 'Help Julien take advantage of key opportunities and risks'
-			},
 			opportunityTiles,
 			riskTiles
 		};
@@ -135,8 +133,8 @@ export const getOpportunityDetail = query({
 	args: {
 		detailId: v.string()
 	},
-	returns: v.union(opportunityDetailResultValidator, v.null()),
-	handler: async (ctx, args): Promise<OpportunityDetailQueryResult | null> => {
+	returns: v.union(opportunityDetailReadModelValidator, v.null()),
+	handler: async (ctx, args): Promise<OpportunityDetailReadModel | null> => {
 		const normalizedInsightId = await ctx.db.normalizeId('insights', args.detailId);
 
 		if (!normalizedInsightId) {
@@ -164,7 +162,7 @@ export const getOpportunityDetail = query({
 		const insightRecord = toInsightRecord(insight);
 
 		return {
-			header: createOpportunitiesDetailHeader(insightRecord.title),
+			title: insightRecord.title,
 			hero: {
 				dealNumber: dealRecord.dealNumber,
 				title: insightRecord.title

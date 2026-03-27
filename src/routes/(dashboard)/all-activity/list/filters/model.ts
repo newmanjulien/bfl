@@ -1,8 +1,8 @@
 import { getActivityLevelLabel } from '$lib/dashboard/view-models/deal';
 import { ACTIVITY_LEVELS, DEAL_INDUSTRIES, type ActivityLevel, type DealIndustry } from '$lib/types/vocab';
-import type { AllActivityListQueryResult } from '../../../../../convex/allActivity';
+import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
 
-export type AllActivityFilterDrawerData = AllActivityListQueryResult['filterDrawerData'];
+export type AllActivityFilterDrawerData = AllActivityListPageData['filterDrawerData'];
 
 type BrokerOption = AllActivityFilterDrawerData['brokers'][number];
 

@@ -1,7 +1,6 @@
 <script lang="ts">
-	import type { MyDealsDetailQueryResult } from '../../../../convex/myDeals';
 	import { Rss } from 'lucide-svelte';
-	import type { MyDealsDetailRouteRef } from '$lib/dashboard/routing';
+	import type { MyDealsDetailPageData } from '$lib/dashboard/page-models/myDeals';
 	import DashboardDetailTabbedLayout from '$lib/dashboard/layout/DashboardDetailTabbedLayout.svelte';
 	import FileUploadField from '$lib/dashboard/ui/detail/FileUploadField.svelte';
 	import TimelineSection from '$lib/dashboard/ui/detail/TimelineSection.svelte';
@@ -9,9 +8,7 @@
 	import NewsList from '../list/NewsList.svelte';
 
 	type Props = {
-		data: MyDealsDetailQueryResult & {
-			route: MyDealsDetailRouteRef;
-		};
+		data: MyDealsDetailPageData;
 	};
 
 	let { data }: Props = $props();

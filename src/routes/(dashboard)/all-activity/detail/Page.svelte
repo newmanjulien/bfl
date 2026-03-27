@@ -1,17 +1,14 @@
 <script lang="ts">
-	import type { AllActivityDetailQueryResult } from '../../../../convex/allActivity';
 	import { List } from 'lucide-svelte';
+	import type { AllActivityDetailPageData } from '$lib/dashboard/page-models/allActivity';
 	import DashboardDetailTabbedLayout from '$lib/dashboard/layout/DashboardDetailTabbedLayout.svelte';
 	import FileUploadField from '$lib/dashboard/ui/detail/FileUploadField.svelte';
 	import OrgChartSection from '$lib/dashboard/ui/detail/OrgChartSection.svelte';
 	import TimelineSection from '$lib/dashboard/ui/detail/TimelineSection.svelte';
 	import SectionTabPanel from '$lib/dashboard/ui/tabs/SectionTabPanel.svelte';
-	import type { OrgChartNode } from '$lib/dashboard/view-models/deal-content';
 
 	type Props = {
-		data: Omit<AllActivityDetailQueryResult, 'header' | 'orgChartNodes'> & {
-			orgChartRoot: OrgChartNode;
-		};
+		data: AllActivityDetailPageData;
 	};
 
 	let { data }: Props = $props();

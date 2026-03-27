@@ -2,8 +2,7 @@ import { v } from 'convex/values';
 import { query } from './_generated/server';
 import { type BrokerId } from '../lib/types/ids';
 import {
-	DEFAULT_MY_DEALS_DETAIL_TAB_ID,
-	type MyDealsView
+	DEFAULT_MY_DEALS_DETAIL_TAB_ID
 } from '../lib/dashboard/routing/my-deals';
 import {
 	getLatestDealActivity,
@@ -26,10 +25,6 @@ import {
 	toDetailRightRailOverviewSection
 } from '../lib/dashboard/detail/right-rail';
 import {
-	createMyDealsDetailHeader,
-	createMyDealsListHeader
-} from './headers';
-import {
 	type ActivityRecordData,
 	type DealRecordData,
 	type NewsRecordData,
@@ -39,27 +34,26 @@ import {
 	toNewsRecord
 } from './readModels';
 import {
-	type MyDealsDetailQueryResult,
-	type MyDealsListQueryResult,
 	type DashboardPerson,
-	myDealsDetailResultValidator,
-	myDealsListResultValidator,
+	type MyDealsDetailReadModel,
+	type MyDealsListReadModel,
+	myDealsDetailReadModelValidator,
+	myDealsListReadModelValidator,
 	myDealsViewValidator
 } from './validators';
 
-export type { MyDealsDetailQueryResult, MyDealsListQueryResult } from './validators';
+export type {
+	MyDealsDetailReadModel,
+	MyDealsDetailRef,
+	MyDealsFeedItemReadModel,
+	MyDealsListReadModel
+} from './validators';
 
 type MyDealsEntryBundle = {
 	deal: DealRecordData;
 	newsItems: readonly NewsRecordData[];
 	activities: readonly ActivityRecordData[];
 };
-
-const MY_DEALS_NEWS_HERO = {
-	title: "This week's news",
-	description:
-		"Get a quick overview of this week's news across the deals you are working on."
-} as const;
 
 const NO_RECENT_NEWS_LABEL = 'No recent news';
 const NO_RECORDED_ACTIVITY_LABEL = 'No recorded activity';
@@ -107,31 +101,22 @@ function toMyDealsNewsItem(newsItem: NewsRecordData) {
 		id: newsItem.id,
 		title: newsItem.title,
 		kind: newsItem.source === 'linkedin' ? 'linkedin' : 'news',
-		dateIso: newsItem.publishedOnIso,
-		navigation: {
-			kind: 'none' as const
-		}
+		dateIso: newsItem.publishedOnIso
 	} as const;
 }
 
 function toMyDealsWatchlistItem(
 	entry: MyDealsEntryBundle,
-	activity: ActivityRecordData,
-	selectedView: MyDealsView
+	activity: ActivityRecordData
 ) {
 	return {
 		id: activity.id,
 		title: `${entry.deal.dealName}: ${activity.kind === 'headline' ? activity.title : activity.action}`,
 		kind: 'activity',
 		dateIso: activity.occurredOnIso,
-		navigation: {
-			kind: 'internal' as const,
-			route: {
-				kind: 'my-deals-detail' as const,
-				dealId: entry.deal.id,
-				view: selectedView,
-				tab: 'activity' as const
-			}
+		detail: {
+			dealId: entry.deal.id,
+			defaultTab: 'activity' as const
 		}
 	} as const;
 }
@@ -180,7 +165,6 @@ function getMyDealsRowDetailTabId(entry: Pick<MyDealsEntryBundle, 'newsItems' | 
 
 function toTableRow(
 	entry: MyDealsEntryBundle,
-	selectedView: MyDealsView,
 	peopleById: PersonSummaryMap<DashboardPerson>
 ) {
 	const newsItems = sortDealNewsDescending(entry.newsItems);
@@ -188,23 +172,16 @@ function toTableRow(
 	const latestNews = getLatestDealNews(newsItems);
 	const latestActivity = getLatestDealActivity(activityItems);
 
-	const navigation = isMyDealsDetailEligible(entry)
+	const detail = isMyDealsDetailEligible(entry)
 		? {
-				kind: 'internal' as const,
-				route: {
-					kind: 'my-deals-detail' as const,
-					dealId: entry.deal.id,
-					view: selectedView,
-					tab: getMyDealsRowDetailTabId(entry)
-				}
+				dealId: entry.deal.id,
+				defaultTab: getMyDealsRowDetailTabId(entry)
 			}
-		: {
-				kind: 'none' as const
-			};
+		: null;
 
 	return {
 		id: entry.deal.id,
-		navigation,
+		detail,
 		deal: entry.deal.dealName,
 		latestNewsSource: latestNews?.source ?? null,
 		latestNews: latestNews?.title ?? NO_RECENT_NEWS_LABEL,
@@ -231,15 +208,12 @@ function toMyDealsNewsItems(entries: readonly MyDealsEntryBundle[]) {
 
 function toMyDealsWatchlistItems(
 	entries: readonly MyDealsEntryBundle[],
-	activeBrokerId: BrokerId,
-	selectedView: MyDealsView
+	activeBrokerId: BrokerId
 ) {
 	const sortedActivities = sortFeedItemsDescending(
 		entries.flatMap((entry) =>
 			!isDealOwner(entry.deal, activeBrokerId) && isMyDealsDetailEligible(entry)
-				? entry.activities.map((activity) =>
-						toMyDealsWatchlistItem(entry, activity, selectedView)
-					)
+				? entry.activities.map((activity) => toMyDealsWatchlistItem(entry, activity))
 				: []
 		)
 	);
@@ -281,9 +255,8 @@ export const getMyDealsList = query({
 		brokerId: v.id('brokers'),
 		view: myDealsViewValidator
 	},
-	returns: myDealsListResultValidator,
-	handler: async (ctx, args): Promise<MyDealsListQueryResult> => {
-		const selectedView = args.view as MyDealsView;
+	returns: myDealsListReadModelValidator,
+	handler: async (ctx, args): Promise<MyDealsListReadModel> => {
 		const [brokers, deals, newsItems, activities] = await Promise.all([
 			ctx.db.query('brokers').collect(),
 			ctx.db.query('deals').collect(),
@@ -303,11 +276,9 @@ export const getMyDealsList = query({
 		});
 
 		return {
-			header: createMyDealsListHeader(selectedView),
-			hero: selectedView === 'news' ? MY_DEALS_NEWS_HERO : undefined,
-			rows: entries.map((entry) => toTableRow(entry, selectedView, peopleById)),
+			rows: entries.map((entry) => toTableRow(entry, peopleById)),
 			newsItems: toMyDealsNewsItems(entries),
-			watchlistItems: toMyDealsWatchlistItems(entries, args.brokerId, selectedView)
+			watchlistItems: toMyDealsWatchlistItems(entries, args.brokerId)
 		};
 	}
 });
@@ -318,9 +289,8 @@ export const getMyDealsDetail = query({
 		brokerId: v.id('brokers'),
 		view: myDealsViewValidator
 	},
-	returns: v.union(myDealsDetailResultValidator, v.null()),
-	handler: async (ctx, args): Promise<MyDealsDetailQueryResult | null> => {
-		const selectedView = args.view as MyDealsView;
+	returns: v.union(myDealsDetailReadModelValidator, v.null()),
+	handler: async (ctx, args): Promise<MyDealsDetailReadModel | null> => {
 		const normalizedDealId = await ctx.db.normalizeId('deals', args.detailId);
 
 		if (!normalizedDealId) {
@@ -367,7 +337,7 @@ export const getMyDealsDetail = query({
 		}
 
 		return {
-			header: createMyDealsDetailHeader(entry.deal.dealName, selectedView),
+			title: entry.deal.dealName,
 			hero: buildDealHero({
 				dealNumber: entry.deal.dealNumber,
 				dealName: entry.deal.dealName,

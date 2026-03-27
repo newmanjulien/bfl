@@ -124,7 +124,7 @@ export const DASHBOARD_NAV_SECTIONS: readonly DashboardNavSection[] = [
 	}
 ];
 
-export function getActiveDashboardNavRoute(currentRoute: DashboardRouteRef | null) {
+export function getActiveDashboardNavRoute(currentRoute: DashboardRouteRef) {
 	for (const section of DASHBOARD_NAV_SECTIONS) {
 		for (const item of section.items) {
 			if (item.kind === 'route' && isDashboardNavRouteActive(item.route, currentRoute)) {

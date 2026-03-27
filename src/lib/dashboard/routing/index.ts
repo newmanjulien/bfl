@@ -1,4 +1,4 @@
-import type { DealId, InsightId } from '$lib/types/ids';
+import type { AbsoluteUrl } from '$lib/types/url';
 import {
 	DEFAULT_ALL_ACTIVITY_VIEW,
 	isNonDefaultAllActivityView,
@@ -20,6 +20,24 @@ const ALL_ACTIVITY_BASE_PATH = '/all-activity';
 const OPPORTUNITIES_BASE_PATH = '/opportunities';
 const SINCE_LAST_MEETING_PATH = '/since-last-meeting';
 
+const DASHBOARD_ROUTE_IDS = {
+	myDealsList: ['/(dashboard)/my-deals', '/(dashboard)/my-deals/[view=myDealsView]'],
+	myDealsDetail: [
+		'/(dashboard)/my-deals/detail/[detailId]',
+		'/(dashboard)/my-deals/[view=myDealsView]/detail/[detailId]'
+	],
+	allActivityList: ['/(dashboard)/all-activity', '/(dashboard)/all-activity/[view=allActivityView]'],
+	allActivityDetail: [
+		'/(dashboard)/all-activity/detail/[detailId]',
+		'/(dashboard)/all-activity/[view=allActivityView]/detail/[detailId]'
+	],
+	opportunities: ['/(dashboard)/opportunities', '/(dashboard)/opportunities/detail/[detailId]'],
+	sinceLastMeeting: ['/(dashboard)/since-last-meeting']
+} as const;
+
+export type DashboardDealRouteParam = string;
+export type DashboardInsightRouteParam = string;
+
 export type MyDealsListRouteRef = {
 	kind: 'my-deals-list';
 	view: MyDealsView;
@@ -27,7 +45,7 @@ export type MyDealsListRouteRef = {
 
 export type MyDealsDetailRouteRef = {
 	kind: 'my-deals-detail';
-	dealId: DealId;
+	dealId: DashboardDealRouteParam;
 	view: MyDealsView;
 	tab: MyDealsDetailTabId;
 };
@@ -39,7 +57,7 @@ export type AllActivityListRouteRef = {
 
 export type AllActivityDetailRouteRef = {
 	kind: 'all-activity-detail';
-	dealId: DealId;
+	dealId: DashboardDealRouteParam;
 	view: AllActivityView;
 };
 
@@ -49,7 +67,7 @@ export type OpportunitiesListRouteRef = {
 
 export type OpportunitiesDetailRouteRef = {
 	kind: 'opportunities-detail';
-	insightId: InsightId;
+	insightId: DashboardInsightRouteParam;
 };
 
 export type SinceLastMeetingRouteRef = {
@@ -75,7 +93,7 @@ export type InternalLink<TRoute extends DashboardRouteRef = DashboardRouteRef> =
 
 export type ExternalLink = {
 	kind: 'external';
-	href: string;
+	href: AbsoluteUrl;
 	target?: string;
 	rel?: string;
 };
@@ -95,79 +113,68 @@ type NonDefaultMyDealsDetailTabId = Exclude<
 	typeof DEFAULT_MY_DEALS_DETAIL_TAB_ID
 >;
 
-export type DashboardPathname =
+type DashboardPathname =
 	| '/my-deals'
 	| `/my-deals/${NonDefaultMyDealsView}`
-	| `/my-deals/detail/${DealId}`
-	| `/my-deals/detail/${DealId}?tab=${NonDefaultMyDealsDetailTabId}`
-	| `/my-deals/${NonDefaultMyDealsView}/detail/${DealId}`
-	| `/my-deals/${NonDefaultMyDealsView}/detail/${DealId}?tab=${NonDefaultMyDealsDetailTabId}`
+	| `/my-deals/detail/${DashboardDealRouteParam}`
+	| `/my-deals/detail/${DashboardDealRouteParam}?tab=${NonDefaultMyDealsDetailTabId}`
+	| `/my-deals/${NonDefaultMyDealsView}/detail/${DashboardDealRouteParam}`
+	| `/my-deals/${NonDefaultMyDealsView}/detail/${DashboardDealRouteParam}?tab=${NonDefaultMyDealsDetailTabId}`
 	| '/all-activity'
 	| `/all-activity/${NonDefaultAllActivityView}`
-	| `/all-activity/detail/${DealId}`
-	| `/all-activity/${NonDefaultAllActivityView}/detail/${DealId}`
+	| `/all-activity/detail/${DashboardDealRouteParam}`
+	| `/all-activity/${NonDefaultAllActivityView}/detail/${DashboardDealRouteParam}`
 	| '/opportunities'
-	| `/opportunities/detail/${InsightId}`
+	| `/opportunities/detail/${DashboardInsightRouteParam}`
 	| '/since-last-meeting';
+
+type DashboardLayoutRouteParams = {
+	view?: string;
+	detailId?: string;
+};
+
+type DashboardLayoutRouteParseInput = {
+	routeId: string;
+	params: DashboardLayoutRouteParams;
+	searchParams: URLSearchParams;
+};
+
+type DashboardRouteDefinition<TRoute extends DashboardRouteRef> = {
+	routeIds: readonly string[];
+	parse: (input: DashboardLayoutRouteParseInput) => TRoute | null;
+	href: (route: TRoute) => string;
+};
+
+type DashboardRouteDefinitionMap = {
+	[K in DashboardRouteRef['kind']]: DashboardRouteDefinition<Extract<DashboardRouteRef, { kind: K }>>;
+};
 
 export const DEFAULT_DASHBOARD_ROUTE_REF: AllActivityListRouteRef = {
 	kind: 'all-activity-list',
 	view: DEFAULT_ALL_ACTIVITY_VIEW
 };
 
-function toPathname(pathname: string): DashboardPathname {
-	return pathname as DashboardPathname;
+function hasOnlyAllowedSearchParams(
+	searchParams: URLSearchParams,
+	allowedKeys: readonly string[]
+) {
+	const allowedKeySet = new Set(allowedKeys);
+
+	return [...searchParams.keys()].every((key) => allowedKeySet.has(key));
 }
 
-function normalizePathname(pathname: string) {
-	if (!pathname) {
-		return '/';
+function resolveMyDealsDetailTab(searchParams: URLSearchParams): MyDealsDetailTabId | null {
+	if (!hasOnlyAllowedSearchParams(searchParams, ['tab'])) {
+		return null;
 	}
 
-	if (pathname !== '/' && pathname.endsWith('/')) {
-		return pathname.slice(0, -1);
+	const tab = searchParams.get('tab');
+
+	if (tab === null) {
+		return DEFAULT_MY_DEALS_DETAIL_TAB_ID;
 	}
 
-	return pathname;
-}
-
-function toLocation(input: string | URL) {
-	if (input instanceof URL) {
-		return {
-			pathname: normalizePathname(input.pathname),
-			searchParams: input.searchParams
-		};
-	}
-
-	try {
-		const url = new URL(input);
-
-		return {
-			pathname: normalizePathname(url.pathname),
-			searchParams: url.searchParams
-		};
-	} catch {
-		let pathname = input;
-		let search = '';
-
-		const hashIndex = pathname.indexOf('#');
-
-		if (hashIndex >= 0) {
-			pathname = pathname.slice(0, hashIndex);
-		}
-
-		const searchIndex = pathname.indexOf('?');
-
-		if (searchIndex >= 0) {
-			search = pathname.slice(searchIndex + 1);
-			pathname = pathname.slice(0, searchIndex);
-		}
-
-		return {
-			pathname: normalizePathname(pathname),
-			searchParams: new URLSearchParams(search)
-		};
-	}
+	return isMyDealsDetailTabId(tab) ? tab : null;
 }
 
 function resolveMyDealsListPath(view: MyDealsView) {
@@ -186,167 +193,231 @@ function resolveAllActivityListPath(view: AllActivityView) {
 	return `${ALL_ACTIVITY_BASE_PATH}/${view}`;
 }
 
-function matchMyDealsRoute(pathname: string, searchParams: URLSearchParams): DashboardRouteRef | null {
-	if (pathname === MY_DEALS_BASE_PATH) {
-		return {
-			kind: 'my-deals-list',
-			view: DEFAULT_MY_DEALS_VIEW
-		};
-	}
-
-	if (!pathname.startsWith(`${MY_DEALS_BASE_PATH}/`)) {
-		return null;
-	}
-
-	const segments = pathname.slice(MY_DEALS_BASE_PATH.length + 1).split('/');
-
-	if (segments.length === 1 && isNonDefaultMyDealsView(segments[0])) {
-		return {
-			kind: 'my-deals-list',
-			view: segments[0]
-		};
-	}
-
-	if (segments.length === 2 && segments[0] === 'detail' && segments[1]) {
-		return {
-			kind: 'my-deals-detail',
-			dealId: segments[1] as DealId,
-			view: DEFAULT_MY_DEALS_VIEW,
-			tab: resolveMyDealsRouteTab(searchParams)
-		};
-	}
-
-	if (
-		segments.length === 3 &&
-		isNonDefaultMyDealsView(segments[0]) &&
-		segments[1] === 'detail' &&
-		segments[2]
-	) {
-		return {
-			kind: 'my-deals-detail',
-			dealId: segments[2] as DealId,
-			view: segments[0],
-			tab: resolveMyDealsRouteTab(searchParams)
-		};
-	}
-
-	return null;
+function resolveDetailIdParam(value: string | undefined) {
+	return value && value.length > 0 ? value : null;
 }
 
-function resolveMyDealsRouteTab(searchParams: URLSearchParams) {
-	const tab = searchParams.get('tab');
-
-	return tab && isMyDealsDetailTabId(tab) ? tab : DEFAULT_MY_DEALS_DETAIL_TAB_ID;
-}
-
-function matchAllActivityRoute(pathname: string): DashboardRouteRef | null {
-	if (pathname === ALL_ACTIVITY_BASE_PATH) {
-		return {
-			kind: 'all-activity-list',
-			view: DEFAULT_ALL_ACTIVITY_VIEW
-		};
-	}
-
-	if (!pathname.startsWith(`${ALL_ACTIVITY_BASE_PATH}/`)) {
-		return null;
-	}
-
-	const segments = pathname.slice(ALL_ACTIVITY_BASE_PATH.length + 1).split('/');
-
-	if (segments.length === 1 && isNonDefaultAllActivityView(segments[0])) {
-		return {
-			kind: 'all-activity-list',
-			view: segments[0]
-		};
-	}
-
-	if (segments.length === 2 && segments[0] === 'detail' && segments[1]) {
-		return {
-			kind: 'all-activity-detail',
-			dealId: segments[1] as DealId,
-			view: DEFAULT_ALL_ACTIVITY_VIEW
-		};
-	}
-
-	if (
-		segments.length === 3 &&
-		isNonDefaultAllActivityView(segments[0]) &&
-		segments[1] === 'detail' &&
-		segments[2]
-	) {
-		return {
-			kind: 'all-activity-detail',
-			dealId: segments[2] as DealId,
-			view: segments[0]
-		};
-	}
-
-	return null;
-}
-
-export function resolveDashboardRoute(route: DashboardRouteRef): DashboardPathname {
-	switch (route.kind) {
-		case 'my-deals-list':
-			return toPathname(resolveMyDealsListPath(route.view));
-		case 'my-deals-detail': {
-			const pathname = `${resolveMyDealsListPath(route.view)}/detail/${route.dealId}`;
-
-			if (route.tab === DEFAULT_MY_DEALS_DETAIL_TAB_ID) {
-				return toPathname(pathname);
+const dashboardRouteDefinitions = {
+	'my-deals-list': {
+		routeIds: DASHBOARD_ROUTE_IDS.myDealsList,
+		parse: ({ routeId, params, searchParams }) => {
+			if (searchParams.size > 0) {
+				return null;
 			}
 
-			return toPathname(`${pathname}?tab=${route.tab}`);
+			if (routeId === DASHBOARD_ROUTE_IDS.myDealsList[0]) {
+				return {
+					kind: 'my-deals-list',
+					view: DEFAULT_MY_DEALS_VIEW
+				};
+			}
+
+			if (!params.view || !isNonDefaultMyDealsView(params.view)) {
+				return null;
+			}
+
+			return {
+				kind: 'my-deals-list',
+				view: params.view
+			};
+		},
+		href: (route) => resolveMyDealsListPath(route.view)
+	},
+	'my-deals-detail': {
+		routeIds: DASHBOARD_ROUTE_IDS.myDealsDetail,
+		parse: ({ routeId, params, searchParams }) => {
+			const detailId = resolveDetailIdParam(params.detailId);
+
+			if (!detailId) {
+				return null;
+			}
+
+			const tab = resolveMyDealsDetailTab(searchParams);
+
+			if (!tab) {
+				return null;
+			}
+
+			if (routeId === DASHBOARD_ROUTE_IDS.myDealsDetail[0]) {
+				return {
+					kind: 'my-deals-detail',
+					dealId: detailId,
+					view: DEFAULT_MY_DEALS_VIEW,
+					tab
+				};
+			}
+
+			if (!params.view || !isNonDefaultMyDealsView(params.view)) {
+				return null;
+			}
+
+			return {
+				kind: 'my-deals-detail',
+				dealId: detailId,
+				view: params.view,
+				tab
+			};
+		},
+		href: (route) => {
+			if (route.view === DEFAULT_MY_DEALS_VIEW) {
+				if (route.tab === DEFAULT_MY_DEALS_DETAIL_TAB_ID) {
+					return `/my-deals/detail/${route.dealId}`;
+				}
+
+				return `/my-deals/detail/${route.dealId}?tab=${route.tab}`;
+			}
+
+			if (route.tab === DEFAULT_MY_DEALS_DETAIL_TAB_ID) {
+				return `/my-deals/${route.view}/detail/${route.dealId}`;
+			}
+
+			return `/my-deals/${route.view}/detail/${route.dealId}?tab=${route.tab}`;
 		}
-		case 'all-activity-list':
-			return toPathname(resolveAllActivityListPath(route.view));
-		case 'all-activity-detail':
-			return toPathname(
-				`${resolveAllActivityListPath(route.view)}/detail/${route.dealId}`
-			);
-		case 'opportunities-list':
-			return toPathname(OPPORTUNITIES_BASE_PATH);
-		case 'opportunities-detail':
-			return toPathname(`${OPPORTUNITIES_BASE_PATH}/detail/${route.insightId}`);
-		case 'since-last-meeting':
-			return toPathname(SINCE_LAST_MEETING_PATH);
+	},
+	'all-activity-list': {
+		routeIds: DASHBOARD_ROUTE_IDS.allActivityList,
+		parse: ({ routeId, params, searchParams }) => {
+			if (searchParams.size > 0) {
+				return null;
+			}
+
+			if (routeId === DASHBOARD_ROUTE_IDS.allActivityList[0]) {
+				return {
+					kind: 'all-activity-list',
+					view: DEFAULT_ALL_ACTIVITY_VIEW
+				};
+			}
+
+			if (!params.view || !isNonDefaultAllActivityView(params.view)) {
+				return null;
+			}
+
+			return {
+				kind: 'all-activity-list',
+				view: params.view
+			};
+		},
+		href: (route) => resolveAllActivityListPath(route.view)
+	},
+	'all-activity-detail': {
+		routeIds: DASHBOARD_ROUTE_IDS.allActivityDetail,
+		parse: ({ routeId, params, searchParams }) => {
+			if (searchParams.size > 0) {
+				return null;
+			}
+
+			const detailId = resolveDetailIdParam(params.detailId);
+
+			if (!detailId) {
+				return null;
+			}
+
+			if (routeId === DASHBOARD_ROUTE_IDS.allActivityDetail[0]) {
+				return {
+					kind: 'all-activity-detail',
+					dealId: detailId,
+					view: DEFAULT_ALL_ACTIVITY_VIEW
+				};
+			}
+
+			if (!params.view || !isNonDefaultAllActivityView(params.view)) {
+				return null;
+			}
+
+			return {
+				kind: 'all-activity-detail',
+				dealId: detailId,
+				view: params.view
+			};
+		},
+		href: (route) => `${resolveAllActivityListPath(route.view)}/detail/${route.dealId}`
+	},
+	'opportunities-list': {
+		routeIds: [DASHBOARD_ROUTE_IDS.opportunities[0]],
+		parse: ({ searchParams }) => {
+			if (searchParams.size > 0) {
+				return null;
+			}
+
+			return {
+				kind: 'opportunities-list'
+			};
+		},
+		href: () => OPPORTUNITIES_BASE_PATH
+	},
+	'opportunities-detail': {
+		routeIds: [DASHBOARD_ROUTE_IDS.opportunities[1]],
+		parse: ({ params, searchParams }) => {
+			if (searchParams.size > 0) {
+				return null;
+			}
+
+			const detailId = resolveDetailIdParam(params.detailId);
+
+			if (!detailId) {
+				return null;
+			}
+
+			return {
+				kind: 'opportunities-detail',
+				insightId: detailId
+			};
+		},
+		href: (route) => `${OPPORTUNITIES_BASE_PATH}/detail/${route.insightId}`
+	},
+	'since-last-meeting': {
+		routeIds: DASHBOARD_ROUTE_IDS.sinceLastMeeting,
+		parse: ({ searchParams }) => {
+			if (searchParams.size > 0) {
+				return null;
+			}
+
+			return {
+				kind: 'since-last-meeting'
+			};
+		},
+		href: () => SINCE_LAST_MEETING_PATH
 	}
+} satisfies DashboardRouteDefinitionMap;
+
+const dashboardRouteDefinitionEntries = Object.values(
+	dashboardRouteDefinitions
+) as DashboardRouteDefinition<DashboardRouteRef>[];
+
+export function resolveDashboardRoute(route: DashboardRouteRef): DashboardPathname {
+	return (dashboardRouteDefinitions[route.kind] as DashboardRouteDefinition<DashboardRouteRef>).href(
+		route
+	) as DashboardPathname;
 }
 
-export function matchDashboardRoute(pathnameOrUrl: string | URL): DashboardRouteRef | null {
-	const { pathname, searchParams } = toLocation(pathnameOrUrl);
+export function parseDashboardRouteFromLayout(input: {
+	routeId: string | null;
+	params: DashboardLayoutRouteParams;
+	searchParams: URLSearchParams;
+}): DashboardRouteRef | null {
+	if (!input.routeId) {
+		return null;
+	}
 
-	return (
-		matchMyDealsRoute(pathname, searchParams) ??
-		matchAllActivityRoute(pathname) ??
-		(pathname === OPPORTUNITIES_BASE_PATH
-			? { kind: 'opportunities-list' }
-			: pathname.startsWith(`${OPPORTUNITIES_BASE_PATH}/detail/`)
-				? (() => {
-						const segments = pathname.slice(OPPORTUNITIES_BASE_PATH.length + 1).split('/');
-
-						if (segments.length !== 2 || segments[0] !== 'detail' || !segments[1]) {
-							return null;
-						}
-
-						return {
-							kind: 'opportunities-detail',
-							insightId: segments[1] as InsightId
-						} satisfies OpportunitiesDetailRouteRef;
-					})()
-				: pathname === SINCE_LAST_MEETING_PATH
-					? { kind: 'since-last-meeting' }
-					: null)
+	const definition = dashboardRouteDefinitionEntries.find((entry) =>
+		entry.routeIds.includes(input.routeId as never)
 	);
+
+	if (!definition) {
+		return null;
+	}
+
+	return definition.parse({
+		routeId: input.routeId,
+		params: input.params,
+		searchParams: input.searchParams
+	});
 }
 
 export function isDashboardNavRouteActive(
 	itemRoute: DashboardNavRouteRef,
-	currentRoute: DashboardRouteRef | null
+	currentRoute: DashboardRouteRef
 ) {
-	if (!currentRoute) {
-		return false;
-	}
-
 	switch (itemRoute.kind) {
 		case 'my-deals-list':
 			return currentRoute.kind === 'my-deals-list' || currentRoute.kind === 'my-deals-detail';

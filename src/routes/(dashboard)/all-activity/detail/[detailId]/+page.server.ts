@@ -1,49 +1,29 @@
 import { error, type Actions } from '@sveltejs/kit';
 import { applyDealIndustryUpdate } from '$lib/dashboard/actions/update-industry';
-import { DEFAULT_ALL_ACTIVITY_VIEW } from '$lib/dashboard/routing/all-activity';
-import type { AllActivityDetailRouteRef } from '$lib/dashboard/routing';
+import { buildAllActivityDetailPageData } from '$lib/dashboard/page-models/allActivity';
+import { requireDashboardRouteKind } from '$lib/dashboard/page-models/layout';
 import { api, createServerConvexClient } from '$lib/server/convex';
-import {
-	createPersonSummaryMap,
-	toOrgChartRoot,
-	type OrgChartNode
-} from '$lib/dashboard/view-models/deal-content';
-import type { AllActivityDetailQueryResult } from '../../../../../convex/allActivity';
-import type { DealId } from '$lib/types/ids';
+import type { PageServerLoad } from './$types';
 
 export const prerender = false;
 
-type AllActivityDetailPageData = Omit<AllActivityDetailQueryResult, 'orgChartNodes'> & {
-	route: AllActivityDetailRouteRef;
-	orgChartRoot: OrgChartNode;
-};
+export const load: PageServerLoad = async ({ parent }) => {
+	const layoutData = await parent();
+	const route = requireDashboardRouteKind(layoutData.route, 'all-activity-detail');
+	const readModel = await createServerConvexClient().query(api.allActivity.getAllActivityDetail, {
+		detailId: route.dealId,
+		view: route.view
+	});
 
-export const load = async ({ params, parent }): Promise<AllActivityDetailPageData> => {
-	const route = {
-		kind: 'all-activity-detail',
-		dealId: params.detailId as DealId,
-		view: DEFAULT_ALL_ACTIVITY_VIEW
-	} satisfies AllActivityDetailRouteRef;
-	const [layoutData, detail] = await Promise.all([
-		parent(),
-		createServerConvexClient().query(api.allActivity.getAllActivityDetail, {
-			detailId: route.dealId,
-			view: route.view
-		})
-	]);
-
-	if (!detail) {
+	if (!readModel) {
 		throw error(404, 'Not found');
 	}
 
-	const peopleById = createPersonSummaryMap(layoutData.dashboardShell.people);
-	const { orgChartNodes, ...pageData } = detail;
-
-	return {
+	return buildAllActivityDetailPageData({
 		route,
-		...pageData,
-		orgChartRoot: toOrgChartRoot(orgChartNodes, peopleById)
-	};
+		readModel,
+		dashboardShell: layoutData.dashboardShell
+	});
 };
 
 export const actions = {

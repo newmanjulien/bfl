@@ -11,7 +11,7 @@
 
 	type Props = {
 		sections: readonly DashboardNavSection[];
-		currentRoute: DashboardRouteRef | null;
+		currentRoute: DashboardRouteRef;
 		expanded: boolean;
 		renderMode?: 'desktop' | 'mobile';
 		onHoverRoute?: (route: DashboardNavRouteRef | null, sectionId: DashboardNavSectionId) => void;

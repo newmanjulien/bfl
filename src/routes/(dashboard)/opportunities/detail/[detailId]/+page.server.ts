@@ -1,36 +1,28 @@
 import { error, type Actions } from '@sveltejs/kit';
 import { applyDealIndustryUpdate } from '$lib/dashboard/actions/update-industry';
-import type { OpportunitiesDetailRouteRef } from '$lib/dashboard/routing';
+import { buildOpportunityDetailPageData } from '$lib/dashboard/page-models/opportunities';
+import { requireDashboardRouteKind } from '$lib/dashboard/page-models/layout';
 import { api, createServerConvexClient } from '$lib/server/convex';
-import { createPersonSummaryMap, toOrgChartRoot } from '$lib/dashboard/view-models/deal-content';
-import type { InsightId } from '$lib/types/ids';
+import type { PageServerLoad } from './$types';
 
 export const prerender = false;
 
-export const load = async ({ params, parent }) => {
-	const route = {
-		kind: 'opportunities-detail',
-		insightId: params.detailId as InsightId
-	} satisfies OpportunitiesDetailRouteRef;
-	const [layoutData, detail] = await Promise.all([
-		parent(),
-		createServerConvexClient().query(api.opportunities.getOpportunityDetail, {
-			detailId: route.insightId
-		})
-	]);
+export const load: PageServerLoad = async ({ parent }) => {
+	const layoutData = await parent();
+	const route = requireDashboardRouteKind(layoutData.route, 'opportunities-detail');
+	const readModel = await createServerConvexClient().query(api.opportunities.getOpportunityDetail, {
+		detailId: route.insightId
+	});
 
-	if (!detail) {
+	if (!readModel) {
 		throw error(404, 'Not found');
 	}
 
-	const peopleById = createPersonSummaryMap(layoutData.dashboardShell.people);
-	const { orgChartNodes, ...pageData } = detail;
-
-	return {
+	return buildOpportunityDetailPageData({
 		route,
-		...pageData,
-		orgChartRoot: toOrgChartRoot(orgChartNodes, peopleById)
-	};
+		readModel,
+		dashboardShell: layoutData.dashboardShell
+	});
 };
 
 export const actions = {

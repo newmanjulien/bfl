@@ -234,7 +234,7 @@ describe('Convex feature contracts', () => {
 		expect(getIndustryRow(result!)).toMatchObject({ dealId: seed.dealId });
 	});
 
-	it('emits semantic route refs across dashboard navigation contracts', async () => {
+	it('returns dashboard read models without UI navigation contracts', async () => {
 		const t = createConvex();
 		const seed = await seedDashboardRecords(t);
 
@@ -259,128 +259,59 @@ describe('Convex feature contracts', () => {
 			detailId: seed.insightId
 		});
 
-		expect(myDealsList.header.leading).toMatchObject({
-			kind: 'title-menu',
-			menu: {
-				options: [
-					{
-						route: {
-							kind: 'my-deals-list',
-							view: 'news'
-						}
-					},
-					{
-						route: {
-							kind: 'my-deals-list',
-							view: 'deals'
-						}
-					}
-				]
-			}
-		});
+		expect(myDealsList).not.toHaveProperty('header');
 		expect(myDealsList.rows).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					id: seed.dealId,
-					navigation: {
-						kind: 'internal',
-						route: {
-							kind: 'my-deals-detail',
-							dealId: seed.dealId,
-							view: 'news',
-							tab: 'news'
-						}
+					detail: {
+						dealId: seed.dealId,
+						defaultTab: 'news'
 					}
 				})
 			])
 		);
-		expect(myDealsList.newsItems.every((item) => item.navigation.kind === 'none')).toBe(true);
+		expect(myDealsList.newsItems.every((item) => !('detail' in item))).toBe(true);
 		expect(myDealsList.watchlistItems).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					kind: 'activity',
-					navigation: {
-						kind: 'internal',
-						route: {
-							kind: 'my-deals-detail',
-							dealId: seed.dealId,
-							view: 'news',
-							tab: 'activity'
-						}
+					detail: {
+						dealId: seed.dealId,
+						defaultTab: 'activity'
 					}
 				})
 			])
 		);
-		expect(myDealsDetail?.header.leading).toMatchObject({
-			kind: 'control-title',
-			control: {
-				kind: 'back-link',
-				route: {
-					kind: 'my-deals-list',
-					view: 'news'
-				}
-			}
-		});
+		expect(myDealsDetail).not.toHaveProperty('header');
+		expect(myDealsDetail?.title).toBe('Acme Expansion');
 
-		expect(allActivityList.header.leading).toMatchObject({
-			kind: 'title-menu',
-			menu: {
-				options: expect.arrayContaining([
-					expect.objectContaining({
-						route: {
-							kind: 'all-activity-list',
-							view: 'deals'
-						}
-					})
-				])
-			}
-		});
+		expect(allActivityList).not.toHaveProperty('header');
 		expect(allActivityList.rows).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					id: seed.dealId,
-					navigation: {
-						kind: 'internal',
-						route: {
-							kind: 'all-activity-detail',
-							dealId: seed.dealId,
-							view: 'deals'
-						}
+					detail: {
+						dealId: seed.dealId
 					}
 				})
 			])
 		);
-		expect(allActivityDetail?.header.leading).toMatchObject({
-			kind: 'control-title',
-			control: {
-				kind: 'back-link',
-				route: {
-					kind: 'all-activity-list',
-					view: 'deals'
-				}
-			}
-		});
+		expect(allActivityDetail).not.toHaveProperty('header');
+		expect(allActivityDetail?.title).toBe('Acme Expansion');
 
 		expect(opportunitiesList.opportunityTiles).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					id: seed.insightId,
-					route: {
-						kind: 'opportunities-detail',
+					detail: {
 						insightId: seed.insightId
 					}
 				})
 			])
 		);
-		expect(opportunityDetail?.header.leading).toMatchObject({
-			kind: 'control-title',
-			control: {
-				kind: 'back-link',
-				route: {
-					kind: 'opportunities-list'
-				}
-			}
-		});
+		expect(opportunityDetail).not.toHaveProperty('header');
+		expect(opportunityDetail?.title).toBe('Expand into adjacent services');
 	});
 
 	it('returns null for an invalid my deals route param', async () => {

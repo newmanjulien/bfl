@@ -4,7 +4,6 @@
 	import {
 		resolveDashboardRoute,
 		type DashboardRouteRef,
-		type ExternalLink,
 		type LinkTarget
 	} from '$lib/dashboard/routing';
 	import { cn } from '$lib/support/cn';
@@ -25,10 +24,22 @@
 		cn('block rounded-md border border-zinc-100 px-3 py-3 transition-colors hover:bg-zinc-50', classProp)
 	);
 
-	function getExternalAnchorProps(link: ExternalLink) {
+	function getExternalAnchorProps(link: Extract<LinkTarget<DashboardRouteRef>, { kind: 'external' }>) {
+		const relTokens = link.rel?.split(/\s+/).filter(Boolean) ?? [];
+
+		if (link.target === '_blank') {
+			relTokens.push('noopener', 'noreferrer');
+		}
+
+		const normalizedRelTokens = relTokens.filter(
+			(token, index) => relTokens.indexOf(token) === index
+		);
+
 		return {
 			...(link.target ? { target: link.target } : {}),
-			...(link.rel ? { rel: link.rel } : {})
+			...(normalizedRelTokens.length > 0
+				? { rel: ['external', ...normalizedRelTokens].join(' ') }
+				: {})
 		};
 	}
 </script>

@@ -1,17 +1,14 @@
-import { DEFAULT_ALL_ACTIVITY_VIEW } from '$lib/dashboard/routing/all-activity';
-import type { AllActivityListRouteRef } from '$lib/dashboard/routing';
+import { buildAllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
+import { requireDashboardRouteKind } from '$lib/dashboard/page-models/layout';
 import { api, createServerConvexClient } from '$lib/server/convex';
+import type { PageServerLoad } from './$types';
 
-export const load = async () => {
-	const route = {
-		kind: 'all-activity-list',
-		view: DEFAULT_ALL_ACTIVITY_VIEW
-	} satisfies AllActivityListRouteRef;
+export const load: PageServerLoad = async ({ parent }) => {
+	const layoutData = await parent();
+	const route = requireDashboardRouteKind(layoutData.route, 'all-activity-list');
+	const readModel = await createServerConvexClient().query(api.allActivity.getAllActivityList, {
+		view: route.view
+	});
 
-	return {
-		route,
-		...(await createServerConvexClient().query(api.allActivity.getAllActivityList, {
-			view: route.view
-		}))
-	};
+	return buildAllActivityListPageData({ route, readModel });
 };

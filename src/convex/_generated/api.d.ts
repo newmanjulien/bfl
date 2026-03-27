@@ -9,7 +9,6 @@
  */
 
 import type * as allActivity from "../allActivity.js";
-import type * as headers from "../headers.js";
 import type * as industryInternal from "../industryInternal.js";
 import type * as mutations from "../mutations.js";
 import type * as myDeals from "../myDeals.js";
@@ -27,7 +26,6 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   allActivity: typeof allActivity;
-  headers: typeof headers;
   industryInternal: typeof industryInternal;
   mutations: typeof mutations;
   myDeals: typeof myDeals;

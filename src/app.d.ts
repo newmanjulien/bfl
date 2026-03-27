@@ -1,6 +1,4 @@
 import type { DashboardHeader } from '$lib/dashboard/shell/header/types';
-import type { DashboardRouteRef } from '$lib/dashboard/routing';
-import type { DashboardShellQueryResult } from './convex/validators';
 
 // See https://svelte.dev/docs/kit/types#app.d.ts
 	// for information about these interfaces
@@ -10,12 +8,10 @@ import type { DashboardShellQueryResult } from './convex/validators';
 				message: string;
 				code?: string;
 			}
-		// interface Locals {}
-		interface PageData {
-			header?: DashboardHeader;
-			route?: DashboardRouteRef;
-			dashboardShell?: DashboardShellQueryResult;
-		}
+			// interface Locals {}
+			interface PageData {
+				header?: DashboardHeader;
+			}
 		// interface PageState {}
 		// interface Platform {}
 	}
