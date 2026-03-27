@@ -33,17 +33,37 @@ describe('applyDealIndustryUpdate', () => {
 					method: 'POST',
 					body: new URLSearchParams({ dealId, industry: 'Hospitality' })
 				}),
-				url: new URL(`http://localhost/my-deals/detail/${dealId}?view=deals`)
+				url: new URL(`http://localhost/my-deals/detail/${dealId}?/updateIndustry`)
 			})
 		).rejects.toMatchObject({
 			status: 303,
-			location: `/my-deals/detail/${dealId}?view=deals`
+			location: `/my-deals/detail/${dealId}`
 		});
 
-			expect(mocks.action).toHaveBeenCalledWith('updateDealIndustry', {
-				dealId,
-				industry: 'Hospitality'
-			});
+		expect(mocks.action).toHaveBeenCalledWith('updateDealIndustry', {
+			dealId,
+			industry: 'Hospitality'
+		});
+	});
+
+	it('preserves valid route query params while removing the named action marker', async () => {
+		mocks.action.mockResolvedValue('updated');
+
+		await expect(
+			applyDealIndustryUpdate({
+				request: new Request(
+					`http://localhost/my-deals/detail/${dealId}?/updateIndustry&tab=activity`,
+					{
+						method: 'POST',
+						body: new URLSearchParams({ dealId, industry: 'Hospitality' })
+					}
+				),
+				url: new URL(`http://localhost/my-deals/detail/${dealId}?/updateIndustry&tab=activity`)
+			})
+		).rejects.toMatchObject({
+			status: 303,
+			location: `/my-deals/detail/${dealId}?tab=activity`
+		});
 	});
 
 	it('rejects invalid industry values', async () => {

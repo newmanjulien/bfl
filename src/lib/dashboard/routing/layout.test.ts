@@ -298,6 +298,18 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
+					pathname: `/my-deals/detail/${dealId}?%2FupdateIndustry`,
+					routeId: '/(dashboard)/my-deals/detail/[detailId]',
+					params: {
+						detailId: dealId
+					}
+				})
+			)
+		).toBeNull();
+
+		expect(
+			resolveDashboardLayoutRoute(
+				createInput({
 					pathname: `/my-deals/detail/${dealId}?tab=activity&foo=bar`,
 					routeId: '/(dashboard)/my-deals/detail/[detailId]',
 					params: {

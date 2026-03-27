@@ -6,6 +6,18 @@ function isDealIndustry(value: string): value is DealIndustry {
 	return DEAL_INDUSTRIES.includes(value as DealIndustry);
 }
 
+function resolvePostActionRedirectUrl(url: URL) {
+	const redirectUrl = new URL(url);
+
+	for (const key of [...redirectUrl.searchParams.keys()]) {
+		if (key.startsWith('/')) {
+			redirectUrl.searchParams.delete(key);
+		}
+	}
+
+	return `${redirectUrl.pathname}${redirectUrl.search}`;
+}
+
 export async function applyDealIndustryUpdate(params: {
 	request: Request;
 	url: URL;
@@ -31,5 +43,5 @@ export async function applyDealIndustryUpdate(params: {
 		throw error(404, 'Not found');
 	}
 
-	throw redirect(303, `${params.url.pathname}${params.url.search}`);
+	throw redirect(303, resolvePostActionRedirectUrl(params.url));
 }
