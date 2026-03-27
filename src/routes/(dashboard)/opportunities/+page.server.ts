@@ -1,12 +1,8 @@
-import { getOpportunityRiskTiles, getOpportunityTiles } from './projection';
+import { api, createServerConvexClient } from '$lib/server/convex';
 
-export const load = () => {
-	return {
-		hero: {
-			title: 'Opportunities & risks you might help with',
-			description: 'Help Julien take advantage of key opportunities and risks'
-		},
-		opportunityTiles: getOpportunityTiles(),
-		riskTiles: getOpportunityRiskTiles()
-	};
-};
+export const load = async () => ({
+	route: {
+		kind: 'opportunities-list'
+	} as const,
+	...(await createServerConvexClient().query(api.opportunities.getOpportunitiesList))
+});

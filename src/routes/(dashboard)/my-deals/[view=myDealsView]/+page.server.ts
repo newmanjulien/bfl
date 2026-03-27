@@ -1,9 +1,25 @@
-import {
-	MY_DEALS_NON_DEFAULT_VIEWS,
-	type NonDefaultMyDealsView
-} from '$lib/dashboard/my-deals-routes';
-import { loadMyDealsListData } from '../route-data';
+import { error } from '@sveltejs/kit';
+import { isNonDefaultMyDealsView } from '$lib/dashboard/routing/my-deals';
+import type { MyDealsListRouteRef } from '$lib/dashboard/routing';
+import { api, createServerConvexClient } from '$lib/server/convex';
+import { resolveMyDealsActiveBrokerIdFromParent } from '../data/active-broker';
 
-export const entries = () => MY_DEALS_NON_DEFAULT_VIEWS.map((view) => ({ view }));
+export const load = async ({ params, parent }) => {
+	if (!isNonDefaultMyDealsView(params.view)) {
+		throw error(404, 'Not found');
+	}
 
-export const load = ({ params }) => loadMyDealsListData(params.view as NonDefaultMyDealsView);
+	const activeBrokerId = await resolveMyDealsActiveBrokerIdFromParent(parent);
+	const route = {
+		kind: 'my-deals-list',
+		view: params.view
+	} satisfies MyDealsListRouteRef;
+
+	return {
+		route,
+		...(await createServerConvexClient().query(api.myDeals.getMyDealsList, {
+		brokerId: activeBrokerId,
+			view: route.view
+		}))
+	};
+};

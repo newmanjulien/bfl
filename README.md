@@ -1,42 +1,52 @@
-# sv
+# Overbase
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Overbase is a SvelteKit dashboard backed by Convex. The dashboard routes render data on the
+server, so the app requires a reachable Convex deployment in local development, CI, preview,
+and production.
 
-## Creating a project
+## Runtime contract
 
-If you're seeing this, you've probably already done this step. Congrats!
+- SvelteKit SSR and server actions talk to Convex over HTTP through Convex's SvelteKit default
+  `PUBLIC_CONVEX_URL` environment variable.
+- `CONVEX_DEPLOYMENT` is for the Convex CLI (`convex dev`, codegen, deploy) and is not read by
+  the SvelteKit server.
+- If Convex is unavailable, the app responds with `503 Service Unavailable` and setup guidance
+  instead of a raw `500 fetch failed`.
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## Local development
 
-To recreate this project with the same configuration:
+1. Install dependencies with `npm install`.
+2. Copy the required env vars from `.env.example` into `.env.local` if you have not already set
+   them up.
+3. Start the full app runtime with `npm run dev`.
 
-```sh
-# recreate this project
-npx sv@0.12.8 create --template minimal --types ts --add eslint vitest="usages:unit" tailwindcss="plugins:none" sveltekit-adapter="adapter:vercel" --no-download-check --install npm /Users/juliennewman/Documents/bfl
-```
+`npm run dev` is the expected entrypoint. It starts `convex dev`, waits for the first successful
+`Convex functions ready!` push, and only then launches Vite. Extra CLI args are forwarded to Vite,
+so commands like
+`npm run dev -- --open` still work.
 
-## Developing
+## Environment
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+- `CONVEX_DEPLOYMENT`: Convex CLI target for local development, codegen, and deploy commands.
+- `PUBLIC_CONVEX_URL`: Convex HTTP URL used by the app's server-rendered routes.
+- `PUBLIC_CONVEX_SITE_URL`: Convex HTTP actions URL managed by Convex for SvelteKit.
 
-```sh
-npm run dev
+For local development, `convex dev` manages these values in `.env.local`. If your local env file
+still contains an older `CONVEX_URL` entry, remove it so Convex can manage the SvelteKit defaults.
+Preview, CI, and production still need a reachable `PUBLIC_CONVEX_URL` in their own environment.
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Verification
 
-## Building
+- `npm run lint`
+- `npm run check`
+- `npm run test`
+- `npm run verify`
 
-To create a production version of your app:
+Any environment that exercises server-rendered routes must also have a reachable
+`PUBLIC_CONVEX_URL`.
 
-```sh
-npm run build
-```
+## Build and preview
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Use `npm run build` to create the SvelteKit build output and `npm run preview` to serve it
+locally. Both preview and production still depend on a reachable Convex backend via
+`PUBLIC_CONVEX_URL`.

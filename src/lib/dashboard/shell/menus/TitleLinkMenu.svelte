@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import type { DashboardHeaderTitleMenu } from '$lib/dashboard/shell/dashboard-header';
+	import { resolveDashboardRoute } from '$lib/dashboard/routing';
+	import type { DashboardHeaderTitleMenu } from '$lib/dashboard/shell/header/types';
 	import { cn } from '$lib/support/cn';
+	import DashboardMenuPanel from './DashboardMenuPanel.svelte';
 	import {
-		DASHBOARD_MENU_PANEL_CLASS,
-		DASHBOARD_MENU_PLACEMENT_CLASS,
 		type DashboardMenuPlacement,
 		dismissibleMenu
 	} from './menu-interactions';
+	import { useDashboardMenu } from './menu-state.svelte';
 
 	const BASE_TRIGGER_CLASS =
 		'inline-flex items-center text-xs font-medium tracking-wide transition-colors';
@@ -19,68 +20,63 @@
 	};
 
 	let { menu, placement = 'bottom-start', class: classProp = '' }: Props = $props();
-	let isOpen = $state(false);
-	let triggerElement = $state<HTMLButtonElement | null>(null);
-
-	const panelId = $derived(`dashboard-menu-${menu.menuId}`);
-	const menuPanelClass = $derived(
-		cn(DASHBOARD_MENU_PANEL_CLASS, DASHBOARD_MENU_PLACEMENT_CLASS[placement])
+	const menuState = useDashboardMenu(
+		() => menu.menuId,
+		() => placement
 	);
 	const triggerClass = $derived(
 		classProp ? `${BASE_TRIGGER_CLASS} ${classProp}` : BASE_TRIGGER_CLASS
 	);
-
-	function closeMenu() {
-		isOpen = false;
-	}
-
-	function toggleMenu() {
-		isOpen = !isOpen;
-	}
 </script>
 
 <div
-	use:dismissibleMenu={{ open: isOpen, close: closeMenu, trigger: triggerElement }}
+	use:dismissibleMenu={{
+		open: menuState.isOpen,
+		close: menuState.close,
+		trigger: menuState.triggerElement
+	}}
 	class="relative inline-flex shrink-0"
 >
 	<button
-		bind:this={triggerElement}
+		bind:this={menuState.triggerElement}
 		type="button"
 		aria-haspopup="menu"
-		aria-expanded={isOpen}
-		aria-controls={isOpen ? panelId : undefined}
+		aria-expanded={menuState.isOpen}
+		aria-controls={menuState.isOpen ? menuState.panelId : undefined}
 		aria-label={menu.ariaLabel}
 		class={triggerClass}
-		onclick={toggleMenu}
+		onclick={menuState.toggle}
 	>
 		<span>{menu.activeLabel}</span>
 	</button>
 
-	{#if isOpen}
-		<div id={panelId} role="menu" aria-orientation="vertical" class={menuPanelClass}>
-			<p class="px-3 pt-3 pb-1 text-xs font-medium tracking-wide text-zinc-500">
-				{menu.sectionLabel}
-			</p>
-
-			<ul class="mt-1 space-y-1">
-				{#each menu.options as option (option.id)}
-					<li>
-						<a
-							href={resolve(option.href)}
-							role="menuitemradio"
-							aria-checked={option.current}
-							aria-current={option.current ? 'page' : undefined}
-							class={cn(
-								'flex w-full items-center rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
-								option.current ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
-							)}
-							onclick={closeMenu}
-						>
-							<span>{option.label}</span>
-						</a>
-					</li>
-				{/each}
-			</ul>
-		</div>
+	{#if menuState.isOpen}
+		<DashboardMenuPanel
+			panelId={menuState.panelId}
+			class={menuState.menuPanelClass}
+			title={menu.sectionLabel}
+		>
+			{#snippet body()}
+				<ul class="mt-1 space-y-1">
+					{#each menu.options as option (option.id)}
+						<li>
+							<a
+								href={resolve(resolveDashboardRoute(option.route))}
+								role="menuitemradio"
+								aria-checked={option.current}
+								aria-current={option.current ? 'page' : undefined}
+								class={cn(
+									'flex w-full items-center rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
+									option.current ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
+								)}
+								onclick={menuState.close}
+							>
+								<span>{option.label}</span>
+							</a>
+						</li>
+					{/each}
+				</ul>
+			{/snippet}
+		</DashboardMenuPanel>
 	{/if}
 </div>

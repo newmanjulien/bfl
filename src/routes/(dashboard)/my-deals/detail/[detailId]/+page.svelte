@@ -1,7 +1,8 @@
 <script lang="ts">
-	import MyDealsDetailPage from '../../MyDealsDetailPage.svelte';
+	import Page from '../Page.svelte';
+	import type { PageProps } from './$types';
 
-	let { data } = $props();
+	let { data }: PageProps = $props();
 </script>
 
-<MyDealsDetailPage {data} />
+<Page {data} />

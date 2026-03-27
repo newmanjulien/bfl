@@ -1,0 +1,392 @@
+import { v } from 'convex/values';
+import { query } from './_generated/server';
+import { type BrokerId } from '../lib/types/ids';
+import {
+	DEFAULT_MY_DEALS_DETAIL_TAB_ID,
+	type MyDealsView
+} from '../lib/dashboard/routing/my-deals';
+import {
+	getLatestDealActivity,
+	getLatestDealNews,
+	sortDealActivitiesAscending,
+	sortDealNewsDescending
+} from '../lib/dashboard/view-models/deal';
+import {
+	createPersonSummaryMap,
+	type PersonSummaryMap,
+	resolveOptionalBrokerPerson,
+	toTimelineItem
+} from '../lib/dashboard/view-models/deal-content';
+import {
+	buildDealHero,
+	buildDealUploadFieldData
+} from '../lib/dashboard/view-models/detail-builders';
+import {
+	toDetailRightRailData,
+	toDetailRightRailOverviewSection
+} from '../lib/dashboard/detail/right-rail';
+import {
+	createMyDealsDetailHeader,
+	createMyDealsListHeader
+} from './headers';
+import {
+	type ActivityRecordData,
+	type DealRecordData,
+	type NewsRecordData,
+	toActivityRecord,
+	toDashboardPerson,
+	toDealRecord,
+	toNewsRecord
+} from './readModels';
+import {
+	type MyDealsDetailQueryResult,
+	type MyDealsListQueryResult,
+	type DashboardPerson,
+	myDealsDetailResultValidator,
+	myDealsListResultValidator,
+	myDealsViewValidator
+} from './validators';
+
+export type { MyDealsDetailQueryResult, MyDealsListQueryResult } from './validators';
+
+type MyDealsEntryBundle = {
+	deal: DealRecordData;
+	newsItems: readonly NewsRecordData[];
+	activities: readonly ActivityRecordData[];
+};
+
+const MY_DEALS_NEWS_HERO = {
+	title: "This week's news",
+	description:
+		"Get a quick overview of this week's news across the deals you are working on."
+} as const;
+
+const NO_RECENT_NEWS_LABEL = 'No recent news';
+const NO_RECORDED_ACTIVITY_LABEL = 'No recorded activity';
+
+function groupByDealId<T extends { dealId: string }>(
+	records: readonly T[]
+): ReadonlyMap<string, readonly T[]> {
+	const recordsByDealId = new Map<string, T[]>();
+
+	for (const record of records) {
+		const existingRecords = recordsByDealId.get(record.dealId);
+
+		if (existingRecords) {
+			existingRecords.push(record);
+			continue;
+		}
+
+		recordsByDealId.set(record.dealId, [record]);
+	}
+
+	return recordsByDealId;
+}
+
+function isDealOwner(deal: Pick<DealRecordData, 'ownerBrokerId'>, brokerId: BrokerId) {
+	return deal.ownerBrokerId === brokerId;
+}
+
+function isDealParticipant(
+	deal: Pick<DealRecordData, 'ownerBrokerId' | 'collaboratorBrokerIds'>,
+	brokerId: BrokerId
+) {
+	return deal.ownerBrokerId === brokerId || deal.collaboratorBrokerIds.includes(brokerId);
+}
+
+function hasMyDealsDetailContent(input: Pick<MyDealsEntryBundle, 'newsItems' | 'activities'>) {
+	return input.newsItems.length > 0 || input.activities.length > 0;
+}
+
+function isMyDealsDetailEligible(input: MyDealsEntryBundle) {
+	return Boolean(input.deal.context) && hasMyDealsDetailContent(input);
+}
+
+function toMyDealsNewsItem(newsItem: NewsRecordData) {
+	return {
+		id: newsItem.id,
+		title: newsItem.title,
+		kind: newsItem.source === 'linkedin' ? 'linkedin' : 'news',
+		dateIso: newsItem.publishedOnIso,
+		navigation: {
+			kind: 'none' as const
+		}
+	} as const;
+}
+
+function toMyDealsWatchlistItem(
+	entry: MyDealsEntryBundle,
+	activity: ActivityRecordData,
+	selectedView: MyDealsView
+) {
+	return {
+		id: activity.id,
+		title: `${entry.deal.dealName}: ${activity.kind === 'headline' ? activity.title : activity.action}`,
+		kind: 'activity',
+		dateIso: activity.occurredOnIso,
+		navigation: {
+			kind: 'internal' as const,
+			route: {
+				kind: 'my-deals-detail' as const,
+				dealId: entry.deal.id,
+				view: selectedView,
+				tab: 'activity' as const
+			}
+		}
+	} as const;
+}
+
+function toUtcIsoDate(date: Date) {
+	return date.toISOString().slice(0, 10);
+}
+
+function getWeekStartIso(isoDate: string) {
+	const date = new Date(`${isoDate}T00:00:00Z`);
+	const day = date.getUTCDay();
+	const daysSinceMonday = day === 0 ? 6 : day - 1;
+
+	date.setUTCDate(date.getUTCDate() - daysSinceMonday);
+
+	return toUtcIsoDate(date);
+}
+
+function isInSameWeek(leftIso: string, rightIso: string) {
+	return getWeekStartIso(leftIso) === getWeekStartIso(rightIso);
+}
+
+function sortFeedItemsDescending<T extends { id: string; dateIso: string }>(items: readonly T[]) {
+	return [...items].sort((left, right) => {
+		const dateComparison = right.dateIso.localeCompare(left.dateIso);
+
+		if (dateComparison !== 0) {
+			return dateComparison;
+		}
+
+		return left.id.localeCompare(right.id);
+	});
+}
+
+function getMyDealsRowDetailTabId(entry: Pick<MyDealsEntryBundle, 'newsItems' | 'activities'>) {
+	if (entry.newsItems.length > 0) {
+		return DEFAULT_MY_DEALS_DETAIL_TAB_ID;
+	}
+
+	if (entry.activities.length > 0) {
+		return 'activity' as const;
+	}
+
+	return DEFAULT_MY_DEALS_DETAIL_TAB_ID;
+}
+
+function toTableRow(
+	entry: MyDealsEntryBundle,
+	selectedView: MyDealsView,
+	peopleById: PersonSummaryMap<DashboardPerson>
+) {
+	const newsItems = sortDealNewsDescending(entry.newsItems);
+	const activityItems = sortDealActivitiesAscending(entry.activities);
+	const latestNews = getLatestDealNews(newsItems);
+	const latestActivity = getLatestDealActivity(activityItems);
+
+	const navigation = isMyDealsDetailEligible(entry)
+		? {
+				kind: 'internal' as const,
+				route: {
+					kind: 'my-deals-detail' as const,
+					dealId: entry.deal.id,
+					view: selectedView,
+					tab: getMyDealsRowDetailTabId(entry)
+				}
+			}
+		: {
+				kind: 'none' as const
+			};
+
+	return {
+		id: entry.deal.id,
+		navigation,
+		deal: entry.deal.dealName,
+		latestNewsSource: latestNews?.source ?? null,
+		latestNews: latestNews?.title ?? NO_RECENT_NEWS_LABEL,
+		lastActivityDescription: latestActivity?.body ?? NO_RECORDED_ACTIVITY_LABEL,
+		owner: resolveOptionalBrokerPerson(peopleById, entry.deal.ownerBrokerId),
+		isReservedInEpic: entry.deal.isReservedInEpic
+	};
+}
+
+function toMyDealsNewsItems(entries: readonly MyDealsEntryBundle[]) {
+	const sortedNews = sortDealNewsDescending(
+		entries.flatMap((entry) => (entry.deal.context ? [...entry.newsItems] : []))
+	);
+	const referencePublishedOnIso = sortedNews[0]?.publishedOnIso;
+
+	if (!referencePublishedOnIso) {
+		return [];
+	}
+
+	return sortedNews
+		.filter((newsItem) => isInSameWeek(newsItem.publishedOnIso, referencePublishedOnIso))
+		.map((newsItem) => toMyDealsNewsItem(newsItem));
+}
+
+function toMyDealsWatchlistItems(
+	entries: readonly MyDealsEntryBundle[],
+	activeBrokerId: BrokerId,
+	selectedView: MyDealsView
+) {
+	const sortedActivities = sortFeedItemsDescending(
+		entries.flatMap((entry) =>
+			!isDealOwner(entry.deal, activeBrokerId) && isMyDealsDetailEligible(entry)
+				? entry.activities.map((activity) =>
+						toMyDealsWatchlistItem(entry, activity, selectedView)
+					)
+				: []
+		)
+	);
+	const referenceDateIso = sortedActivities[0]?.dateIso;
+
+	if (!referenceDateIso) {
+		return [];
+	}
+
+	return sortedActivities.filter((item) => isInSameWeek(item.dateIso, referenceDateIso));
+}
+
+function buildEntries(input: {
+	activeBrokerId: BrokerId;
+	deals: readonly DealRecordData[];
+	newsItems: readonly NewsRecordData[];
+	activities: readonly ActivityRecordData[];
+}) {
+	const newsByDealId = groupByDealId(input.newsItems);
+	const activitiesByDealId = groupByDealId(input.activities);
+
+	return input.deals.flatMap<MyDealsEntryBundle>((deal) => {
+		if (!isDealParticipant(deal, input.activeBrokerId)) {
+			return [];
+		}
+
+		return [
+			{
+				deal,
+				newsItems: newsByDealId.get(deal.id) ?? [],
+				activities: activitiesByDealId.get(deal.id) ?? []
+			}
+		];
+	});
+}
+
+export const getMyDealsList = query({
+	args: {
+		brokerId: v.id('brokers'),
+		view: myDealsViewValidator
+	},
+	returns: myDealsListResultValidator,
+	handler: async (ctx, args): Promise<MyDealsListQueryResult> => {
+		const selectedView = args.view as MyDealsView;
+		const [brokers, deals, newsItems, activities] = await Promise.all([
+			ctx.db.query('brokers').collect(),
+			ctx.db.query('deals').collect(),
+			ctx.db.query('news').collect(),
+			ctx.db
+				.query('activities')
+				.withIndex('by_stream_occurred_on_iso', (query) => query.eq('stream', 'deal-detail'))
+				.collect()
+		]);
+		const people = brokers.map((broker) => toDashboardPerson(broker));
+		const peopleById = createPersonSummaryMap(people);
+		const entries = buildEntries({
+			activeBrokerId: args.brokerId,
+			deals: deals.map((deal) => toDealRecord(deal)),
+			newsItems: newsItems.map((newsItem) => toNewsRecord(newsItem)),
+			activities: activities.map((activity) => toActivityRecord(activity))
+		});
+
+		return {
+			header: createMyDealsListHeader(selectedView),
+			hero: selectedView === 'news' ? MY_DEALS_NEWS_HERO : undefined,
+			rows: entries.map((entry) => toTableRow(entry, selectedView, peopleById)),
+			newsItems: toMyDealsNewsItems(entries),
+			watchlistItems: toMyDealsWatchlistItems(entries, args.brokerId, selectedView)
+		};
+	}
+});
+
+export const getMyDealsDetail = query({
+	args: {
+		detailId: v.string(),
+		brokerId: v.id('brokers'),
+		view: myDealsViewValidator
+	},
+	returns: v.union(myDealsDetailResultValidator, v.null()),
+	handler: async (ctx, args): Promise<MyDealsDetailQueryResult | null> => {
+		const selectedView = args.view as MyDealsView;
+		const normalizedDealId = await ctx.db.normalizeId('deals', args.detailId);
+
+		if (!normalizedDealId) {
+			return null;
+		}
+
+		const [deal, newsItems, activities, brokers] = await Promise.all([
+			ctx.db.get(normalizedDealId),
+			ctx.db
+				.query('news')
+				.withIndex('by_deal_id_published_on_iso', (query) =>
+					query.eq('dealId', normalizedDealId)
+				)
+				.collect(),
+			ctx.db
+				.query('activities')
+				.withIndex('by_deal_id_stream_occurred_on_iso', (query) =>
+					query.eq('dealId', normalizedDealId).eq('stream', 'deal-detail')
+				)
+				.collect(),
+			ctx.db.query('brokers').collect()
+		]);
+
+		if (!deal) {
+			return null;
+		}
+
+		const people = brokers.map((broker) => toDashboardPerson(broker));
+		const peopleById = createPersonSummaryMap(people);
+		const entry = {
+			deal: toDealRecord(deal),
+			newsItems: newsItems.map((newsItem) => toNewsRecord(newsItem)),
+			activities: activities.map((activity) => toActivityRecord(activity))
+		} satisfies MyDealsEntryBundle;
+
+		if (!isDealParticipant(entry.deal, args.brokerId) || !isMyDealsDetailEligible(entry)) {
+			return null;
+		}
+
+		const context = entry.deal.context;
+
+		if (!context) {
+			return null;
+		}
+
+		return {
+			header: createMyDealsDetailHeader(entry.deal.dealName, selectedView),
+			hero: buildDealHero({
+				dealNumber: entry.deal.dealNumber,
+				dealName: entry.deal.dealName,
+				stage: entry.deal.stage,
+				probability: entry.deal.probability,
+				activityLevel: entry.deal.activityLevel,
+				context
+			}),
+			newsItems: sortDealNewsDescending(entry.newsItems).map((newsItem) => toMyDealsNewsItem(newsItem)),
+			activityItems: sortDealActivitiesAscending(entry.activities).map((activity) =>
+				toTimelineItem(activity, peopleById)
+			),
+			update: buildDealUploadFieldData(entry.deal.dealName),
+			rightRail: toDetailRightRailData([
+				toDetailRightRailOverviewSection(
+					entry.deal,
+					resolveOptionalBrokerPerson(peopleById, entry.deal.ownerBrokerId)
+				)
+			])
+		};
+	}
+});

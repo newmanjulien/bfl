@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import type { DetailRightRailData } from '$lib/dashboard/detail-rail-model';
-	import type { CanvasHeroData, CanvasHeroIcon } from '$lib/ui/custom/canvas-hero';
-	import CanvasHero from '$lib/ui/custom/CanvasHero.svelte';
-	import DetailRightRail from '$lib/ui/custom/DetailRightRail.svelte';
+	import type { DetailRightRailData } from '$lib/dashboard/detail/right-rail';
+	import type { CanvasHeroData, CanvasHeroIcon } from '$lib/dashboard/ui/detail/CanvasHero.types';
+	import CanvasHero from '$lib/dashboard/ui/detail/CanvasHero.svelte';
+	import DetailRightRail from '$lib/dashboard/ui/detail/DetailRightRail.svelte';
 	import {
 		getDashboardDetailRailWidth,
 		getDashboardLayoutMaxWidth,

@@ -1,22 +1,14 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import { X } from 'lucide-svelte';
 	import { page } from '$app/state';
-	import { useDashboardShellState } from '$lib/dashboard/state.svelte';
-	import { cn } from '$lib/support/cn';
-	import { DASHBOARD_NAV_SECTIONS, getActiveDashboardNavHref } from './dashboard-nav';
+	import { matchDashboardRoute } from '$lib/dashboard/routing';
+	import { useDashboardShellState } from '$lib/dashboard/shell/state.svelte';
 	import HomeLink from './HomeLink.svelte';
+	import NavList from './nav/NavList.svelte';
+	import { DASHBOARD_NAV_SECTIONS } from './nav/model';
 
-	const activeRoute = $derived(getActiveDashboardNavHref(page.url.pathname));
+	const currentRoute = $derived(page.data.route ?? matchDashboardRoute(page.url));
 	const shellState = useDashboardShellState();
-
-	function getItemClassName(isActive: boolean, disabled = false) {
-		return cn(
-			'inline-flex h-10 w-full items-center justify-start gap-2.5 rounded-md px-2 text-xs tracking-wide text-zinc-600 transition-colors hover:bg-zinc-100/70 hover:text-zinc-900',
-			disabled && 'pointer-events-none opacity-40',
-			isActive && 'bg-zinc-100/70 text-zinc-900'
-		);
-	}
 </script>
 
 {#if shellState.isMobileDrawerOpen}
@@ -42,48 +34,15 @@
 
 			<div class="flex-1 overflow-y-auto px-(--shell-gutter-mobile) py-4">
 				<nav aria-label="Dashboard navigation" class="relative mt-2 flex min-h-full flex-col">
-					{#each DASHBOARD_NAV_SECTIONS as section (section.id)}
-						<div
-							class={cn(
-								'flex flex-col',
-								section.mobileSectionClass,
-								section.id === 'bottom' && 'mt-auto'
-							)}
-						>
-							{#if section.heading}
-								<p class="px-2 pb-2 text-[11px] uppercase tracking-wide text-zinc-400">
-									{section.heading}
-								</p>
-							{/if}
-
-							<ul class="flex flex-col gap-1.5">
-								{#each section.items as item (item.kind === 'route' ? item.href : `${section.id}:${item.label}`)}
-									{@const Icon = item.icon}
-									<li>
-										<span class="inline-flex w-full">
-											{#if item.kind === 'disabled'}
-												<span class={getItemClassName(false, true)}>
-													<Icon class="size-3.5 shrink-0" />
-													<span class="min-w-0 truncate">{item.label}</span>
-												</span>
-											{:else}
-												<a
-													href={resolve(item.href)}
-													class={getItemClassName(activeRoute === item.href)}
-													onclick={() => {
-														shellState.isMobileDrawerOpen = false;
-													}}
-												>
-													<Icon class="size-3.5 shrink-0" />
-													<span class="min-w-0 truncate">{item.label}</span>
-												</a>
-											{/if}
-										</span>
-									</li>
-								{/each}
-							</ul>
-						</div>
-					{/each}
+					<NavList
+						sections={DASHBOARD_NAV_SECTIONS}
+						{currentRoute}
+						expanded={true}
+						renderMode="mobile"
+						onSelectRoute={() => {
+							shellState.isMobileDrawerOpen = false;
+						}}
+					/>
 				</nav>
 			</div>
 		</aside>

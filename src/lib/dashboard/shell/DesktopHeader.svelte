@@ -1,28 +1,32 @@
 <script lang="ts">
 	import { Ellipsis, PanelLeft } from 'lucide-svelte';
-	import type { PersonSummary } from '$lib/domain/people';
-	import type { DashboardHeader } from '$lib/dashboard/shell/dashboard-header';
 	import {
 		useDashboardHeaderUiController,
 		type DashboardHeaderButtonId
-	} from '$lib/dashboard/shell/dashboard-header-ui';
-	import { useDashboardShellState } from '$lib/dashboard/state.svelte';
-	import { mockDb } from '$lib/mock-db';
+	} from '$lib/dashboard/shell/header/ui-controller';
+	import { useDashboardShellState } from '$lib/dashboard/shell/state.svelte';
+	import type { DashboardHeader } from '$lib/dashboard/shell/header/types';
+	import type { IsoDate } from '$lib/types/dates';
 	import BrokerSwitchMenu from '$lib/dashboard/shell/menus/BrokerSwitchMenu.svelte';
 	import ShareMenu from '$lib/dashboard/shell/menus/ShareMenu.svelte';
-	import DesktopHeaderLeading from './DesktopHeaderLeading.svelte';
+	import DesktopHeaderLeading from './header/DesktopHeaderLeading.svelte';
+
+	type HeaderPerson = {
+		id: string;
+		name: string;
+		avatar: string;
+	};
 
 	type Props = {
 		header: DashboardHeader | null | undefined;
+		people: readonly HeaderPerson[];
+		meetingDateIsos: readonly IsoDate[];
+		activeMeetingDateIso?: IsoDate | null;
 	};
 
-	let { header }: Props = $props();
+	let { header, people, meetingDateIsos, activeMeetingDateIso = null }: Props = $props();
 	const shellState = useDashboardShellState();
 	const headerUiController = useDashboardHeaderUiController();
-
-	const people: PersonSummary[] = mockDb.brokers
-		.list()
-		.map(({ id, name, avatar }) => ({ id, name, avatar }));
 	const overlayState = $derived(headerUiController.getState());
 	const actionButtonClass =
 		'flex h-7 items-center justify-center rounded-sm border border-zinc-100 px-2 text-xs font-medium tracking-wide text-zinc-500 transition-colors hover:bg-zinc-100';
@@ -42,12 +46,16 @@
 				onclick={() => {
 					shellState.isSidebarExpanded = !shellState.isSidebarExpanded;
 				}}
-			>
-				<PanelLeft class="h-3.5 w-3.5" />
-			</button>
+				>
+					<PanelLeft class="h-3.5 w-3.5" />
+				</button>
 
-			<DesktopHeaderLeading leading={header.leading} />
-		</div>
+				<DesktopHeaderLeading
+					leading={header.leading}
+					{meetingDateIsos}
+					{activeMeetingDateIso}
+				/>
+			</div>
 
 		<div class="flex items-center gap-2">
 			{#if header.actions}

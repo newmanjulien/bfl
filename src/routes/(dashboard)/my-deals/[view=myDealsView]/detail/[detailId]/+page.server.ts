@@ -1,14 +1,49 @@
+import { error, type Actions } from '@sveltejs/kit';
+import { applyDealIndustryUpdate } from '$lib/dashboard/actions/update-industry';
 import {
-	MY_DEALS_NON_DEFAULT_VIEWS,
-	type NonDefaultMyDealsView
-} from '$lib/dashboard/my-deals-routes';
-import { getMyDealsDetailEntries } from '../../../projection';
-import { loadMyDealsDetailData } from '../../../route-data';
+	isNonDefaultMyDealsView,
+	resolveMyDealsDetailTabId
+} from '$lib/dashboard/routing/my-deals';
+import type { MyDealsDetailRouteRef } from '$lib/dashboard/routing';
+import { api, createServerConvexClient } from '$lib/server/convex';
+import type { MyDealsDetailQueryResult } from '../../../../../../convex/myDeals';
+import type { DealId } from '$lib/types/ids';
+import { resolveMyDealsActiveBrokerIdFromParent } from '../../../data/active-broker';
 
-export const entries = () =>
-	getMyDealsDetailEntries().flatMap(({ detailId }) =>
-		MY_DEALS_NON_DEFAULT_VIEWS.map((view) => ({ view, detailId }))
-	);
+export const prerender = false;
 
-export const load = ({ params }) =>
-	loadMyDealsDetailData(params.detailId, params.view as NonDefaultMyDealsView);
+type MyDealsDetailPageData = MyDealsDetailQueryResult & {
+	route: MyDealsDetailRouteRef;
+};
+
+export const load = async ({ params, parent, url }): Promise<MyDealsDetailPageData> => {
+	if (!isNonDefaultMyDealsView(params.view)) {
+		throw error(404, 'Not found');
+	}
+
+	const activeBrokerId = await resolveMyDealsActiveBrokerIdFromParent(parent);
+	const route = {
+		kind: 'my-deals-detail',
+		dealId: params.detailId as DealId,
+		view: params.view,
+		tab: resolveMyDealsDetailTabId(url.searchParams.get('tab'))
+	} satisfies MyDealsDetailRouteRef;
+	const detail = await createServerConvexClient().query(api.myDeals.getMyDealsDetail, {
+		detailId: route.dealId,
+		brokerId: activeBrokerId,
+		view: route.view
+	});
+
+	if (!detail) {
+		throw error(404, 'Not found');
+	}
+
+	return {
+		route,
+		...detail
+	};
+};
+
+export const actions = {
+	updateIndustry: ({ request, url }) => applyDealIndustryUpdate({ request, url })
+} satisfies Actions;

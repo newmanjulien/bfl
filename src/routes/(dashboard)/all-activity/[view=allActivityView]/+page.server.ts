@@ -1,10 +1,22 @@
-import {
-	ALL_ACTIVITY_NON_DEFAULT_VIEWS,
-	type NonDefaultAllActivityView
-} from '$lib/dashboard/all-activity-routes';
-import { loadAllActivityListData } from '../route-data';
+import { error } from '@sveltejs/kit';
+import { isNonDefaultAllActivityView } from '$lib/dashboard/routing/all-activity';
+import type { AllActivityListRouteRef } from '$lib/dashboard/routing';
+import { api, createServerConvexClient } from '$lib/server/convex';
 
-export const entries = () => ALL_ACTIVITY_NON_DEFAULT_VIEWS.map((view) => ({ view }));
+export const load = async ({ params }) => {
+	if (!isNonDefaultAllActivityView(params.view)) {
+		throw error(404, 'Not found');
+	}
 
-export const load = ({ params }) =>
-	loadAllActivityListData(params.view as NonDefaultAllActivityView);
+	const route = {
+		kind: 'all-activity-list',
+		view: params.view
+	} satisfies AllActivityListRouteRef;
+
+	return {
+		route,
+		...(await createServerConvexClient().query(api.allActivity.getAllActivityList, {
+			view: route.view
+		}))
+	};
+};

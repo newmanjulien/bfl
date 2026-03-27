@@ -1,26 +1,27 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { MediaQuery } from 'svelte/reactivity';
-	import { getDashboardHeader } from '$lib/dashboard/shell/dashboard-header';
 	import DesktopHeader from '$lib/dashboard/shell/DesktopHeader.svelte';
 	import MobileDrawer from '$lib/dashboard/shell/MobileDrawer.svelte';
 	import MobileHeader from '$lib/dashboard/shell/MobileHeader.svelte';
 	import {
 		createDashboardHeaderUiController,
 		provideDashboardHeaderUiController
-	} from '$lib/dashboard/shell/dashboard-header-ui';
+	} from '$lib/dashboard/shell/header/ui-controller';
 	import Sidebar from '$lib/dashboard/shell/Sidebar.svelte';
 	import {
 		provideDashboardShellState,
 		type DashboardShellState
-	} from '$lib/dashboard/state.svelte';
+	} from '$lib/dashboard/shell/state.svelte';
+	import type { LayoutProps } from './$types';
 
-	let { children } = $props();
+	let { data, children }: LayoutProps = $props();
 
-	const header = $derived(getDashboardHeader(page.url.pathname, page.data));
+	const header = $derived(page.data.header ?? null);
+	const dashboardShell = $derived(data.dashboardShell);
 	const desktopViewport = new MediaQuery('(min-width: 768px)', true);
 	const shellState = $state<DashboardShellState>({
-		isSidebarExpanded: true,
+		isSidebarExpanded: false,
 		isMobileDrawerOpen: false
 	});
 	const headerUiController = createDashboardHeaderUiController();
@@ -43,9 +44,18 @@
 		<Sidebar class="hidden md:flex" />
 		<main class="min-w-0 flex min-h-0 flex-1 flex-col overflow-hidden bg-white md:rounded-sm md:border md:border-zinc-100">
 			<MobileDrawer />
-			<MobileHeader {header} />
+			<MobileHeader
+				{header}
+				meetingDateIsos={dashboardShell.meetingDateIsos}
+				activeMeetingDateIso={dashboardShell.activeMeetingDateIso}
+			/>
 			<div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-				<DesktopHeader {header} />
+				<DesktopHeader
+					{header}
+					people={dashboardShell.people}
+					meetingDateIsos={dashboardShell.meetingDateIsos}
+					activeMeetingDateIso={dashboardShell.activeMeetingDateIso}
+				/>
 				<div class="dashboard-main-viewport min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
 					<div class="min-h-full min-w-0">
 						{@render children()}

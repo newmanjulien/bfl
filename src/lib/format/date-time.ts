@@ -1,4 +1,4 @@
-import type { IsoDateString, IsoDateTimeString } from '$lib/domain/date-time';
+import type { IsoDate, IsoDateTime } from '$lib/types/dates';
 
 const MONTH_DAY_FORMATTER = new Intl.DateTimeFormat('en-US', {
 	month: 'short',
@@ -29,7 +29,7 @@ function getValidDate(value: string): Date | null {
 	return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function formatUtcIsoDate(isoDate: IsoDateString, formatter: Intl.DateTimeFormat): string {
+function formatUtcIsoDate(isoDate: IsoDate, formatter: Intl.DateTimeFormat): string {
 	const date = getValidDate(`${isoDate}T00:00:00Z`);
 
 	return date ? formatter.format(date) : isoDate;
@@ -55,19 +55,19 @@ function capitalizeFirstLetter(value: string): string {
 	return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
 }
 
-export function formatIsoDate(isoDate: IsoDateString): string {
+export function formatIsoDate(isoDate: IsoDate): string {
 	return formatUtcIsoDate(isoDate, MONTH_DAY_FORMATTER);
 }
 
-export function formatIsoDateMonthDayLong(isoDate: IsoDateString): string {
+export function formatIsoDateMonthDayLong(isoDate: IsoDate): string {
 	return formatUtcIsoDate(isoDate, LONG_MONTH_DAY_FORMATTER);
 }
 
-export function formatIsoDateLong(isoDate: IsoDateString): string {
+export function formatIsoDateLong(isoDate: IsoDate): string {
 	return formatUtcIsoDate(isoDate, LONG_MONTH_DAY_YEAR_FORMATTER);
 }
 
-export function formatIsoDateTimeRelative(isoDateTime: IsoDateTimeString, now: Date = new Date()): string {
+export function formatIsoDateTimeRelative(isoDateTime: IsoDateTime, now: Date = new Date()): string {
 	const date = getValidDate(isoDateTime);
 
 	if (!date) {
@@ -105,7 +105,7 @@ export function formatIsoDateTimeRelative(isoDateTime: IsoDateTimeString, now: D
 }
 
 export function formatIsoDateTimeRelativeMonths(
-	isoDateTime: IsoDateTimeString,
+	isoDateTime: IsoDateTime,
 	now: Date = new Date()
 ): string {
 	const date = getValidDate(isoDateTime);

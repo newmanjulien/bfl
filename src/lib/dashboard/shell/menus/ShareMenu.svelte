@@ -1,28 +1,27 @@
 <script lang="ts">
-	import { Check, Plus } from 'lucide-svelte';
-	import type { PersonSummary } from '$lib/domain/people';
-	import { cn } from '$lib/support/cn';
-	import {
-		DASHBOARD_MENU_PANEL_CLASS,
-		DASHBOARD_MENU_PLACEMENT_CLASS,
-		dismissibleMenu
-	} from './menu-interactions';
+	import { Plus } from 'lucide-svelte';
+	import AvatarStack from '$lib/dashboard/ui/people/AvatarStack.svelte';
+	import SelectableAvatarRow from '$lib/dashboard/ui/shared/SelectableAvatarRow.svelte';
+	import DashboardMenuPanel from './DashboardMenuPanel.svelte';
+	import { dismissibleMenu } from './menu-interactions';
+	import { useDashboardMenu } from './menu-state.svelte';
+
+	type ShareMenuPerson = {
+		id: string;
+		name: string;
+		avatar: string;
+	};
 
 	type Props = {
 		menuId: string;
-		people: PersonSummary[];
+		people: readonly ShareMenuPerson[];
 	};
 
 	let { menuId, people }: Props = $props();
-	let isOpen = $state(false);
-	let triggerElement = $state<HTMLButtonElement | null>(null);
+	const menu = useDashboardMenu(() => menuId);
 
 	const allPersonIds = $derived(people.map((person) => person.id));
 	let selectedIds = $state<string[]>([]);
-	const panelId = $derived(`dashboard-menu-${menuId}`);
-	const menuPanelClass = $derived(
-		cn(DASHBOARD_MENU_PANEL_CLASS, DASHBOARD_MENU_PLACEMENT_CLASS['bottom-end'])
-	);
 
 	$effect(() => {
 		if (selectedIds.length === 0) {
@@ -48,76 +47,57 @@
 	function isSelected(personId: string) {
 		return selectedIds.includes(personId);
 	}
-
-	function closeMenu() {
-		isOpen = false;
-	}
-
-	function toggleMenu() {
-		isOpen = !isOpen;
-	}
 </script>
 
 <div class="mr-2 flex items-center">
-	<div class="flex items-center -space-x-1">
-		{#each selectedPeople as person (person.id)}
-			<span class="inline-flex h-7 w-7 shrink-0 overflow-hidden rounded-full border-2 border-white">
-				<img src={person.avatar} alt={person.name} class="h-full w-full object-cover" />
-			</span>
-		{/each}
+	<div class="flex items-center">
+		<AvatarStack
+			avatars={selectedPeople.map((person) => person.avatar)}
+			altBase="Selected teammate"
+			size={28}
+			avatarClass="border-2 border-white"
+		/>
 
 		<div
-			use:dismissibleMenu={{ open: isOpen, close: closeMenu, trigger: triggerElement }}
+			use:dismissibleMenu={{ open: menu.isOpen, close: menu.close, trigger: menu.triggerElement }}
 			class="relative inline-flex shrink-0"
 		>
 			<button
-				bind:this={triggerElement}
+				bind:this={menu.triggerElement}
 				type="button"
 				aria-haspopup="menu"
-				aria-expanded={isOpen}
-				aria-controls={isOpen ? panelId : undefined}
+				aria-expanded={menu.isOpen}
+				aria-controls={menu.isOpen ? menu.panelId : undefined}
 				class="relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-[1.5px] border-dotted border-zinc-300 bg-white text-zinc-400 ring-1 ring-white transition-colors hover:bg-zinc-100"
-				onclick={toggleMenu}
+				onclick={menu.toggle}
 			>
 				<Plus class="h-3 w-3" />
 			</button>
 
-			{#if isOpen}
-				<div id={panelId} role="menu" aria-orientation="vertical" class={menuPanelClass}>
-					<p class="px-3 pt-3 pb-1 text-xs font-medium tracking-wide text-zinc-500">
-						Share with team members
-					</p>
-
-					<ul class="mt-1 space-y-1">
-						{#each people as person (person.id)}
-							{@const selected = isSelected(person.id)}
-							<li>
-								<button
-									type="button"
-									role="menuitemcheckbox"
-									aria-checked={selected}
-									class={cn(
-										'flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
-										selected ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
-									)}
-									onclick={() => toggleSelectedId(person.id, !selected)}
-								>
-									<div class="flex min-w-0 items-center gap-2">
-										<span class="inline-flex h-7 w-7 shrink-0 overflow-hidden rounded-full border border-zinc-200">
-											<img
-												src={person.avatar}
-												alt={`${person.name} avatar`}
-												class="h-full w-full object-cover"
-											/>
-										</span>
-										<span class="truncate">{person.name}</span>
-									</div>
-									<Check class={cn('ml-3 size-3.5 shrink-0 text-zinc-400', selected ? 'opacity-100' : 'opacity-0')} />
-								</button>
-							</li>
-						{/each}
-					</ul>
-				</div>
+			{#if menu.isOpen}
+				<DashboardMenuPanel
+					panelId={menu.panelId}
+					class={menu.menuPanelClass}
+					title="Share with team members"
+				>
+					{#snippet body()}
+						<ul class="mt-1 space-y-1">
+							{#each people as person (person.id)}
+								{@const selected = isSelected(person.id)}
+								<li>
+									<SelectableAvatarRow
+										label={person.name}
+										avatar={person.avatar}
+										selected={selected}
+										role="menuitemcheckbox"
+										ariaChecked={selected}
+										onClick={() => toggleSelectedId(person.id, !selected)}
+									/>
+								</li>
+							{/each}
+						</ul>
+					{/snippet}
+				</DashboardMenuPanel>
 			{/if}
 		</div>
 	</div>

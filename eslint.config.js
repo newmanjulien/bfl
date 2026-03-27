@@ -4,7 +4,6 @@ import js from '@eslint/js';
 import svelte from 'eslint-plugin-svelte';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
-import mockDbBoundary from './eslint/rules/mock-db-boundary.js';
 import ts from 'typescript-eslint';
 import noRawZIndex from './eslint/rules/no-raw-z-index.js';
 import svelteConfig from './svelte.config.js';
@@ -13,6 +12,9 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
+	{
+		ignores: ['src/convex/_generated/**']
+	},
 	js.configs.recommended,
 	ts.configs.recommended,
 	svelte.configs.recommended,
@@ -29,13 +31,11 @@ export default defineConfig(
 		plugins: {
 			architecture: {
 				rules: {
-					'mock-db-boundary': mockDbBoundary,
 					'no-raw-z-index': noRawZIndex
 				}
 			}
 		},
 		rules: {
-			'architecture/mock-db-boundary': 'error',
 			'architecture/no-raw-z-index': 'error'
 		}
 	},

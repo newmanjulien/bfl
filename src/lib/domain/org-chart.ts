@@ -1,10 +1,11 @@
-import type { IsoDateString } from '$lib/domain/date-time';
+import type { IsoDate } from '$lib/types/dates';
+import type { BrokerId } from '$lib/types/ids';
 
-export type OrgChartContactNode<ContactById extends string = string> = {
+export type OrgChartNodeRecord<ContactById extends string = BrokerId> = {
 	id: string;
 	name: string;
 	role: string;
-	lastContactedById: ContactById;
-	lastContactedOnIso: IsoDateString;
-	directReports?: OrgChartContactNode<ContactById>[];
+	lastContactedByBrokerId: ContactById;
+	lastContactedOnIso: IsoDate;
+	parentId?: string;
 };

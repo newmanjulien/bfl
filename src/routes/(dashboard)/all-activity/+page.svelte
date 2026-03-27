@@ -1,7 +1,8 @@
 <script lang="ts">
-	import AllActivityPage from './AllActivityPage.svelte';
+	import Page from './list/Page.svelte';
+	import type { PageProps } from './$types';
 
-	let { data } = $props();
+	let { data }: PageProps = $props();
 </script>
 
-<AllActivityPage {data} />
+<Page {data} />
