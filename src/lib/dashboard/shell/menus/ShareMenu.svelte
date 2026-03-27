@@ -50,7 +50,7 @@
 </script>
 
 <div class="mr-2 flex items-center">
-	<div class="flex items-center">
+	<div class="flex items-center -space-x-1">
 		<AvatarStack
 			avatars={selectedPeople.map((person) => person.avatar)}
 			altBase="Selected teammate"
