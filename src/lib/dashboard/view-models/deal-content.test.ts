@@ -9,13 +9,11 @@ const minaBrokerId = 'broker-mina' as BrokerId;
 const peopleById = createPersonSummaryMap([
 	{
 		id: julienBrokerId,
-		legacyId: 'broker-julien',
 		name: 'Julien Newman',
 		avatar: '/avatars/julien.png'
 	},
 	{
 		id: minaBrokerId,
-		legacyId: 'broker-mina',
 		name: 'Mina Chen',
 		avatar: '/avatars/mina.png'
 	}

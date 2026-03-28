@@ -1,6 +1,7 @@
-import { action } from './_generated/server';
+import { action, mutation } from './_generated/server';
 import { v } from 'convex/values';
 import { makeFunctionReference, type FunctionReference } from 'convex/server';
+import type { Id } from './_generated/dataModel';
 import type { DealId } from '../lib/types/ids';
 import type { DealIndustry } from '../lib/types/vocab';
 import { dealIndustryValidator } from './validators';
@@ -8,6 +9,11 @@ import {
 	type UpdateDealIndustryResult,
 	updateDealIndustryResultValidator
 } from './industryInternal';
+
+const brokerAvatarUpdateValidator = v.object({
+	name: v.string(),
+	avatar: v.id('_storage')
+});
 
 const normalizeDealIdForUpdateReference = makeFunctionReference<
 	'query',
@@ -53,5 +59,33 @@ export const updateDealIndustry = action({
 			dealId: normalizedDealId,
 			industry: args.industry
 		});
+	}
+});
+
+export const setBrokerAvatarStorageIds = mutation({
+	args: {
+		updates: v.array(brokerAvatarUpdateValidator)
+	},
+	returns: v.object({
+		updatedCount: v.number()
+	}),
+	handler: async (ctx, args) => {
+		const brokers = await ctx.db.query('brokers').collect();
+		let updatedCount = 0;
+
+		for (const update of args.updates) {
+			const broker = brokers.find((candidate) => candidate.name === update.name);
+
+			if (!broker) {
+				throw new Error(`Unknown broker "${update.name}".`);
+			}
+
+			await ctx.db.patch(broker._id, {
+				avatar: update.avatar
+			});
+			updatedCount += 1;
+		}
+
+		return { updatedCount };
 	}
 });

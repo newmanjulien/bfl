@@ -1,5 +1,5 @@
 import type { QueryCtx } from './_generated/server';
-import type { Doc } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
 import type { OrgChartNodeRecord } from '../lib/domain/org-chart';
 import {
 	parseIsoDate,
@@ -36,7 +36,6 @@ export type DealContextRecordData = {
 export type DealRecordData = {
 	id: DealId;
 	dealNumber: number;
-	accountName: string;
 	industry: DealIndustry;
 	dealName: string;
 	isReservedInEpic: boolean;
@@ -138,13 +137,31 @@ export async function requireMeetingScheduleDocument(
 	};
 }
 
-export function toDashboardPerson(broker: Doc<'brokers'>): DashboardPerson {
+async function resolveBrokerAvatar(
+	ctx: QueryCtx,
+	broker: Doc<'brokers'>
+): Promise<DashboardPerson['avatar']> {
+	const avatarUrl = await ctx.storage.getUrl(broker.avatar as Id<'_storage'>);
+
+	return avatarUrl ?? broker.avatar;
+}
+
+export async function toDashboardPerson(
+	ctx: QueryCtx,
+	broker: Doc<'brokers'>
+): Promise<DashboardPerson> {
 	return {
 		id: broker._id,
-		legacyId: broker.legacyId,
 		name: broker.name,
-		avatar: broker.avatar
+		avatar: await resolveBrokerAvatar(ctx, broker)
 	};
+}
+
+export function toDashboardPeople(
+	ctx: QueryCtx,
+	brokers: readonly Doc<'brokers'>[]
+): Promise<DashboardPerson[]> {
+	return Promise.all(brokers.map((broker) => toDashboardPerson(ctx, broker)));
 }
 
 function requireString(value: unknown, path: string) {
@@ -239,7 +256,6 @@ export function toDealRecord(deal: Doc<'deals'>): DealRecordData {
 	return {
 		id: deal._id,
 		dealNumber: deal.dealNumber,
-		accountName: deal.accountName,
 		industry: deal.industry as DealIndustry,
 		dealName: deal.dealName,
 		isReservedInEpic: deal.isReservedInEpic,

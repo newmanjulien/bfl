@@ -7,7 +7,7 @@ import {
 import {
 	requireMeetingScheduleDocument,
 	toActivityRecord,
-	toDashboardPerson,
+	toDashboardPeople,
 	toDealRecord
 } from './readModels';
 import {
@@ -65,7 +65,7 @@ export const getSinceLastMeeting = query({
 				.collect(),
 			ctx.db.query('deals').collect()
 		]);
-		const people = brokers.map((broker) => toDashboardPerson(broker));
+		const people = await toDashboardPeople(ctx, brokers);
 		const peopleById = createPersonSummaryMap(people);
 		const meetingUpdateActivities = sortDealActivitiesAscending(
 			activities

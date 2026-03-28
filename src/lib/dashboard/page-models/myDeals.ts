@@ -12,6 +12,7 @@ import type {
 	MyDealsFeedItemReadModel,
 	MyDealsListReadModel
 } from '$lib/dashboard/read-models';
+import type { BrokerId } from '$lib/types/ids';
 import { createMyDealsDetailHeader, createMyDealsListHeader } from './headers';
 
 const MY_DEALS_NEWS_HERO = {
@@ -78,6 +79,7 @@ export type MyDealsListPageData = {
 	route: MyDealsListRouteRef;
 	header: DashboardHeader;
 	hero?: CanvasHeroData;
+	activeBrokerId: BrokerId;
 	rows: MyDealsTableRowPageData[];
 	newsItems: MyDealsFeedItemPageData[];
 	watchlistItems: MyDealsFeedItemPageData[];
@@ -96,13 +98,15 @@ export type MyDealsDetailPageData = {
 export function buildMyDealsListPageData(params: {
 	route: MyDealsListRouteRef;
 	readModel: MyDealsListReadModel;
+	activeBrokerId: BrokerId;
 }): MyDealsListPageData {
-	const { route, readModel } = params;
+	const { route, readModel, activeBrokerId } = params;
 
 	return {
 		route,
 		header: createMyDealsListHeader(route.view),
 		hero: route.view === 'news' ? MY_DEALS_NEWS_HERO : undefined,
+		activeBrokerId,
 		rows: readModel.rows.map((row) => ({
 			...row,
 			navigation: toDetailNavigation(route, row.detail)

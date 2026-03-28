@@ -8,18 +8,19 @@ describe('resolveMyDealsActiveBrokerId', () => {
 	it('resolves the fixed broker from dashboard shell people', () => {
 		const julienId = 'j57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId;
 		const people = [
-			{ id: julienId, legacyId: 'broker-julien' },
-			{ id: 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId, legacyId: 'broker-amy' }
+			{ id: julienId },
+			{ id: 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId }
 		];
 
-		expect(resolveMyDealsActiveBrokerId(people)).toBe(julienId);
+		expect(resolveMyDealsActiveBrokerId(people, julienId)).toBe(julienId);
 	});
 
 	it('throws when the fixed broker is unavailable', () => {
-		const people = [{ id: 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId, legacyId: 'broker-amy' }];
+		const julienId = 'j57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId;
+		const people = [{ id: 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId }];
 
-		expect(() => resolveMyDealsActiveBrokerId(people)).toThrow(
-			'Missing default my-deals broker "broker-julien".'
+		expect(() => resolveMyDealsActiveBrokerId(people, julienId)).toThrow(
+			`Missing default my-deals broker "${julienId}".`
 		);
 	});
 });

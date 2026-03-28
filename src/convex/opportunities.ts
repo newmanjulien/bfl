@@ -16,7 +16,7 @@ import {
 import {
 	type DealRecordData,
 	type InsightRecordData,
-	toDashboardPerson,
+	toDashboardPeople,
 	toDealRecord,
 	toInsightRecord
 } from './readModels';
@@ -68,7 +68,7 @@ function toTile(
 		},
 		title: insight.title,
 		dealNumber: deal.dealNumber,
-		dealLabel: deal.accountName,
+		dealLabel: deal.dealName,
 		avatars: getOwnerAvatars(insight, peopleById),
 		activityLevel: deal.activityLevel
 	};
@@ -95,7 +95,7 @@ export const getOpportunitiesList = query({
 			ctx.db.query('insights').collect(),
 			ctx.db.query('deals').collect()
 		]);
-		const peopleById = createPersonSummaryMap(brokers.map((broker) => toDashboardPerson(broker)));
+		const peopleById = createPersonSummaryMap(await toDashboardPeople(ctx, brokers));
 		const dealsById = new Map(deals.map((deal) => [deal._id, toDealRecord(deal)] as const));
 		const insightRecords = insights.map((insight) => toInsightRecord(insight));
 
@@ -160,7 +160,7 @@ export const getOpportunityDetail = query({
 			throw new Error(`Unknown deal "${insight.dealId}" for insight "${insight._id}".`);
 		}
 
-		const people = brokers.map((broker) => toDashboardPerson(broker));
+		const people = await toDashboardPeople(ctx, brokers);
 		const peopleById = createPersonSummaryMap(people);
 		const dealRecord = toDealRecord(deal);
 		const insightRecord = toInsightRecord(insight);

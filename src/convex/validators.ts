@@ -63,14 +63,12 @@ export type MyDealsDetailTabIdValue = MyDealsDetailTabId;
 
 export const dashboardPersonValidator = v.object({
 	id: v.id('brokers'),
-	legacyId: v.string(),
 	name: v.string(),
 	avatar: v.string()
 });
 
 export type DashboardPerson = {
 	id: BrokerId;
-	legacyId: string;
 	name: string;
 	avatar: string;
 };

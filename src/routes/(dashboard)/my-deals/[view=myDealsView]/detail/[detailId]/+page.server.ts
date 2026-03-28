@@ -2,6 +2,7 @@ import { error, type Actions } from '@sveltejs/kit';
 import { applyDealIndustryUpdate } from '$lib/dashboard/actions/update-industry';
 import { buildMyDealsDetailPageData } from '$lib/dashboard/page-models/myDeals';
 import { requireDashboardRouteKind } from '$lib/dashboard/page-models/layout';
+import { resolveDefaultBrokerId } from '$lib/server/brokers';
 import { api, createServerConvexClient } from '$lib/server/convex';
 import { resolveMyDealsActiveBrokerId } from '../../../data/active-broker';
 import type { PageServerLoad } from './$types';
@@ -11,7 +12,10 @@ export const prerender = false;
 export const load: PageServerLoad = async ({ parent }) => {
 	const layoutData = await parent();
 	const route = requireDashboardRouteKind(layoutData.route, 'my-deals-detail');
-	const activeBrokerId = resolveMyDealsActiveBrokerId(layoutData.dashboardShell.people);
+	const activeBrokerId = resolveMyDealsActiveBrokerId(
+		layoutData.dashboardShell.people,
+		resolveDefaultBrokerId()
+	);
 	const readModel = await createServerConvexClient().query(api.myDeals.getMyDealsDetail, {
 		detailId: route.dealId,
 		brokerId: activeBrokerId,

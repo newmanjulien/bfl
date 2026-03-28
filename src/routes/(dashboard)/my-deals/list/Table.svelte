@@ -2,19 +2,20 @@
 	import { resolve } from '$app/paths';
 	import { resolveDashboardRoute } from '$lib/dashboard/routing';
 	import type { MyDealsListPageData } from '$lib/dashboard/page-models/myDeals';
+	import type { BrokerId } from '$lib/types/ids';
 	import { Check } from 'lucide-svelte';
 	import NewsSourceInline from '$lib/dashboard/ui/detail/NewsSourceInline.svelte';
 	import PersonInline from '$lib/dashboard/ui/people/PersonInline.svelte';
 	import DashboardTableShell from '$lib/dashboard/ui/shared/DashboardTableShell.svelte';
 	import { cn } from '$lib/support/cn';
-	import { DEFAULT_MY_DEALS_ACTIVE_BROKER_LEGACY_ID } from '../data/active-broker';
 	type MyDealsTableRow = MyDealsListPageData['rows'][number];
 
 	type Props = {
 		rows: readonly MyDealsTableRow[];
+		activeBrokerId: BrokerId;
 	};
 
-	let { rows }: Props = $props();
+	let { rows, activeBrokerId }: Props = $props();
 
 	const headers = ['Deal', 'Latest news', 'Last activity', 'Owner', 'Reserved in Epic'] as const;
 	const columnClass =
@@ -24,7 +25,7 @@
 
 	{#snippet rowCells(row: MyDealsTableRow, isLinked: boolean)}
 		{@const showReservedInEpic =
-			row.owner?.legacyId === DEFAULT_MY_DEALS_ACTIVE_BROKER_LEGACY_ID && row.isReservedInEpic}
+			row.owner?.id === activeBrokerId && row.isReservedInEpic}
 		<span
 			data-table-cell
 			class={`overflow-hidden font-medium text-zinc-600${

@@ -12,12 +12,10 @@ function createConvex() {
 async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 	return t.run(async (ctx) => {
 		const ownerBrokerId = await ctx.db.insert('brokers', {
-			legacyId: 'broker-owner',
 			name: 'Julien Newman',
 			avatar: '/avatars/julien.png'
 		});
 		const collaboratorBrokerId = await ctx.db.insert('brokers', {
-			legacyId: 'broker-collab',
 			name: 'Mina Chen',
 			avatar: '/avatars/mina.png'
 		});
@@ -89,7 +87,6 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 
 		const dealId = await ctx.db.insert('deals', {
 			dealNumber: 42,
-			accountName: 'Acme Foods',
 			industry: 'Hospitality',
 			dealName: 'Acme Expansion',
 			isReservedInEpic: false,
@@ -373,7 +370,6 @@ describe('Convex feature contracts', () => {
 				'deals',
 				{
 					dealNumber: 404,
-					accountName: 'Legacy Co',
 					industry: 'Industrials',
 					dealName: 'Legacy Org Chart',
 					isReservedInEpic: false,
@@ -579,7 +575,6 @@ describe('Convex feature contracts', () => {
 		await expect(
 			t.run(async (ctx) => {
 				const brokerId = await ctx.db.insert('brokers', {
-					legacyId: 'broker-invalid-shape',
 					name: 'Invalid Shape',
 					avatar: '/avatars/invalid.png'
 				});
@@ -588,7 +583,6 @@ describe('Convex feature contracts', () => {
 					'deals',
 					{
 						dealNumber: 777,
-						accountName: 'Broken Co',
 						industry: 'Industrials',
 						dealName: 'Broken Shape',
 						isReservedInEpic: false,

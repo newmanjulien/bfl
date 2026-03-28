@@ -22,7 +22,7 @@ import { DEAL_INDUSTRIES, type ActivityLevel, type DealIndustry } from '../lib/t
 import {
 	type DealRecordData,
 	toActivityRecord,
-	toDashboardPerson,
+	toDashboardPeople,
 	toDealRecord
 } from './readModels';
 import {
@@ -193,7 +193,7 @@ function resolveRowsForView(view: AllActivityView, collections: RowCollections) 
 					: collections.allActivityTableRows;
 }
 
-function createFilterDrawerData(people: ReturnType<typeof toDashboardPerson>[], deals: readonly DealRecordData[]) {
+function createFilterDrawerData(people: DashboardPerson[], deals: readonly DealRecordData[]) {
 	const industries = new Set(deals.map((deal) => deal.industry));
 
 	return {
@@ -221,7 +221,7 @@ export const getAllActivityList = query({
 			ctx.db.query('brokers').collect(),
 			ctx.db.query('deals').collect()
 		]);
-		const people = brokers.map((broker) => toDashboardPerson(broker));
+		const people = await toDashboardPeople(ctx, brokers);
 		const peopleById = createPersonSummaryMap(people);
 		const dealRecords = deals.map((deal) => toDealRecord(deal));
 		const collections = buildRowCollections(dealRecords, selectedView, peopleById);
@@ -268,7 +268,7 @@ export const getAllActivityDetail = query({
 			return null;
 		}
 
-		const people = brokers.map((broker) => toDashboardPerson(broker));
+		const people = await toDashboardPeople(ctx, brokers);
 		const peopleById = createPersonSummaryMap(people);
 
 		return {

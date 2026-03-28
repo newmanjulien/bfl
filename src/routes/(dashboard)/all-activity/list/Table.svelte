@@ -25,10 +25,10 @@
 	const headers = ['Deal', 'Probability', 'Activity level', 'Owner', 'Stage', 'Last activity'] as const;
 	let columnClass = $derived(
 		selection
-			? 'grid-cols-[4rem_minmax(9rem,1.2fr)_minmax(9rem,1fr)_minmax(8.5rem,0.95fr)_minmax(9.5rem,1fr)_minmax(8rem,0.85fr)_minmax(8rem,0.85fr)] md:grid-cols-[4rem_repeat(6,minmax(0,1fr))]'
-			: 'grid-cols-[minmax(9rem,1.2fr)_minmax(9rem,1fr)_minmax(8.5rem,0.95fr)_minmax(9.5rem,1fr)_minmax(8rem,0.85fr)_minmax(8rem,0.85fr)] md:grid-cols-6'
+			? 'grid-cols-[4rem_minmax(10rem,1.35fr)_minmax(9rem,1fr)_minmax(7.5rem,0.75fr)_minmax(9rem,0.95fr)_minmax(6.5rem,0.65fr)_minmax(7rem,0.7fr)] md:grid-cols-[4rem_minmax(10rem,1.40fr)_minmax(10rem,1fr)_minmax(8rem,0.75fr)_minmax(10rem,1fr)_minmax(7rem,0.65fr)_minmax(7.5rem,0.7fr)]'
+			: 'grid-cols-[minmax(10rem,1.35fr)_minmax(9rem,1fr)_minmax(7.5rem,0.75fr)_minmax(9rem,0.95fr)_minmax(6.5rem,0.65fr)_minmax(7rem,0.7fr)] md:grid-cols-[minmax(10rem,1.40fr)_minmax(10rem,1fr)_minmax(8rem,0.75fr)_minmax(10rem,1fr)_minmax(7rem,0.65fr)_minmax(7.5rem,0.7fr)]'
 	);
-	let minWidthClass = $derived(selection ? 'min-w-[62rem] md:min-w-full' : 'min-w-[58rem] md:min-w-full');
+	let minWidthClass = $derived(selection ? 'min-w-[59rem] md:min-w-full' : 'min-w-[55rem] md:min-w-full');
 </script>
 
 {#snippet rowCells(row: AllActivityTableRow, isLinked: boolean)}

@@ -29,7 +29,7 @@ import {
 	type DealRecordData,
 	type NewsRecordData,
 	toActivityRecord,
-	toDashboardPerson,
+	toDashboardPeople,
 	toDealRecord,
 	toNewsRecord
 } from './readModels';
@@ -266,7 +266,7 @@ export const getMyDealsList = query({
 				.withIndex('by_stream_occurred_on_iso', (query) => query.eq('stream', 'deal-detail'))
 				.collect()
 		]);
-		const people = brokers.map((broker) => toDashboardPerson(broker));
+		const people = await toDashboardPeople(ctx, brokers);
 		const peopleById = createPersonSummaryMap(people);
 		const entries = buildEntries({
 			activeBrokerId: args.brokerId,
@@ -318,7 +318,7 @@ export const getMyDealsDetail = query({
 			return null;
 		}
 
-		const people = brokers.map((broker) => toDashboardPerson(broker));
+		const people = await toDashboardPeople(ctx, brokers);
 		const peopleById = createPersonSummaryMap(people);
 		const entry = {
 			deal: toDealRecord(deal),

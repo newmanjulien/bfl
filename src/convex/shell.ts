@@ -1,5 +1,5 @@
 import { query } from './_generated/server';
-import { requireMeetingScheduleDocument, toDashboardPerson } from './readModels';
+import { requireMeetingScheduleDocument, toDashboardPeople } from './readModels';
 import {
 	dashboardShellResultValidator,
 	type DashboardShellReadModel
@@ -17,7 +17,7 @@ export const getDashboardShell = query({
 		]);
 
 		return {
-			people: brokers.map((broker) => toDashboardPerson(broker)),
+			people: await toDashboardPeople(ctx, brokers),
 			meetingDateIsos: meetingSchedule.meetingDateIsos,
 			activeMeetingDateIso: meetingSchedule.activeMeetingDateIso
 		};

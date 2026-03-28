@@ -121,14 +121,12 @@ export default defineSchema({
 	}).index('by_key', ['key']),
 
 	brokers: defineTable({
-		legacyId: v.string(),
 		name: v.string(),
 		avatar: v.string()
-	}).index('by_legacy_id', ['legacyId']),
+	}),
 
 	deals: defineTable({
 		dealNumber: v.number(),
-		accountName: v.string(),
 		industry: dealIndustryValidator,
 		dealName: v.string(),
 		isReservedInEpic: v.boolean(),

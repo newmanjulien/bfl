@@ -5,7 +5,6 @@ import { formatIsoDateLong } from '$lib/format/date-time';
 
 type PersonSummaryLike = {
 	id: BrokerId;
-	legacyId: string;
 	name: string;
 	avatar: string;
 };

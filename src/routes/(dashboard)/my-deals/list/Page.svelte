@@ -73,7 +73,7 @@
 {:else}
 	<DashboardPageLayout width="wide">
 		{#snippet body()}
-			<Table rows={data.rows} />
+			<Table rows={data.rows} activeBrokerId={data.activeBrokerId} />
 			{#if data.rows.length > 0}
 				<InlineInfoBar
 					dataAttribute="data-my-deals-deals-info-bar"

@@ -8,7 +8,6 @@ import {
 
 type PersonSummaryLike = {
 	id: BrokerId;
-	legacyId: string;
 	name: string;
 	avatar: string;
 };
