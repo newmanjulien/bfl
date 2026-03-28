@@ -2,6 +2,7 @@
 	import { ChevronsUpDown } from 'lucide-svelte';
 	import type { DashboardRouteRef } from '$lib/dashboard/routing';
 	import { useDashboardShellState } from '$lib/dashboard/shell/state.svelte';
+	import PersonAvatar from '$lib/dashboard/ui/people/PersonAvatar.svelte';
 	import { cn } from '$lib/support/cn';
 	import { sidebarIndicator } from './sidebar-indicator';
 	import HomeLink from './HomeLink.svelte';
@@ -14,10 +15,14 @@
 
 	type Props = {
 		route: DashboardRouteRef;
+		defaultBroker: {
+			name: string;
+			avatar: string;
+		};
 		class?: string;
 	};
 
-	let { route, class: className = '' }: Props = $props();
+	let { route, defaultBroker, class: className = '' }: Props = $props();
 
 	const shellState = useDashboardShellState();
 	const currentRoute = $derived(route);
@@ -59,18 +64,12 @@
 					? 'max-w-24 translate-x-0 opacity-100'
 					: 'pointer-events-none max-w-0 translate-x-1 opacity-0'
 			)}
-		>
-			<div class="inline-flex h-6 origin-center scale-110 items-center gap-1 rounded-full border border-zinc-100 bg-zinc-50 px-1 text-zinc-100">
-				<span class="inline-flex size-5 shrink-0 overflow-hidden rounded-full border border-zinc-100 bg-white">
-					<img
-						src="/avatars/yash.webp"
-						alt="User profile avatar"
-						class="h-full w-full object-cover"
-					/>
-				</span>
-				<ChevronsUpDown aria-hidden="true" class="h-3 w-3 text-zinc-400" />
+			>
+				<div class="inline-flex h-6 origin-center scale-110 items-center gap-1 rounded-full border border-zinc-100 bg-zinc-50 px-1 text-zinc-100">
+					<PersonAvatar person={defaultBroker} size={20} class="border border-zinc-100 bg-white" />
+					<ChevronsUpDown aria-hidden="true" class="h-3 w-3 text-zinc-400" />
+				</div>
 			</div>
-		</div>
 	</div>
 
 	<nav
