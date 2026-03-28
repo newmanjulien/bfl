@@ -3,34 +3,20 @@ import { query } from './_generated/server';
 import type { BrokerId } from '../lib/types/ids';
 import type { DealKey } from '../lib/types/keys';
 import { type NewBusinessView } from '../lib/dashboard/routing/new-business';
-import { getActivityLevelLabel, sortDealActivitiesAscending } from '../lib/dashboard/view-models/deal';
+import { getActivityLevelLabel } from '../lib/dashboard/view-models/deal';
 import {
 	type PersonSummaryMap,
-	resolveOptionalBrokerPerson,
-	toTimelineItem
+	resolveOptionalBrokerPerson
 } from '../lib/dashboard/view-models/deal-content';
-import {
-	buildDealHero,
-	buildDealUploadFieldData
-} from '../lib/dashboard/view-models/detail-builders';
-import {
-	toDetailRightRailData,
-	toDetailRightRailHelpfulContactsSection,
-	toDetailRightRailOverviewSection,
-	toDetailRightRailTimingSection
-} from '../lib/dashboard/detail/right-rail';
 import { DEAL_INDUSTRIES, type ActivityLevel, type DealIndustry } from '../lib/types/vocab';
 import {
 	type DealRecordData,
-	createBrokerKeyByIdMap,
 	createDashboardPersonByBrokerIdMap,
-	findDealDocumentByKey,
-	toActivityRecord,
 	toBrokerRecord,
-	toDashboardOrgChartNodes,
 	toDashboardPeople,
 	toDealRecord
 } from './readModels';
+import { getDealDetailReadModel } from './dealDetail';
 import {
 	type DashboardPerson,
 	type NewBusinessDetailReadModel,
@@ -43,7 +29,6 @@ import {
 export type {
 	DashboardShellReadModel,
 	NewBusinessDetailReadModel,
-	NewBusinessDetailRef,
 	NewBusinessListReadModel
 } from './validators';
 
@@ -65,14 +50,6 @@ function hasListActivityData(
 	return Boolean(deal.lastActivityAtIso);
 }
 
-function toNewBusinessRowNavigation(deal: DealRecordData) {
-	return deal.context
-		? {
-				dealKey: deal.key
-			}
-		: null;
-}
-
 function toNewBusinessTableRow(
 	deal: DealRecordData,
 	lastActivity:
@@ -88,7 +65,7 @@ function toNewBusinessTableRow(
 ) {
 	return {
 		key: deal.key,
-		detail: toNewBusinessRowNavigation(deal),
+		hasDetail: Boolean(deal.context),
 		probability: deal.probability,
 		activityLevel: deal.activityLevel,
 		deal: deal.dealName,
@@ -129,13 +106,13 @@ function toNoActivityRow(
 }
 
 function toNonNavigableRow(row: ReturnType<typeof toNewBusinessTableRow>) {
-	if (!row.detail) {
+	if (!row.hasDetail) {
 		return row;
 	}
 
 	return {
 		...row,
-		detail: null
+		hasDetail: false
 	};
 }
 
@@ -233,61 +210,9 @@ export const getNewBusinessList = query({
 
 export const getNewBusinessDetail = query({
 	args: {
-		dealKey: v.string(),
-		view: newBusinessViewValidator
+		dealKey: v.string()
 	},
 	returns: v.union(newBusinessDetailReadModelValidator, v.null()),
-	handler: async (ctx, args): Promise<NewBusinessDetailReadModel | null> => {
-		const [deal, brokers] = await Promise.all([
-			findDealDocumentByKey(ctx, args.dealKey as DealKey),
-			ctx.db.query('brokers').collect()
-		]);
-
-		if (!deal) {
-			return null;
-		}
-
-		const activities = await ctx.db
-			.query('activities')
-			.withIndex('by_deal_id_stream_occurred_on_iso', (query) =>
-				query.eq('dealId', deal._id).eq('stream', 'deal-detail')
-			)
-			.collect();
-
-		const dealRecord = toDealRecord(deal);
-		const context = dealRecord.context;
-
-		if (!context) {
-			return null;
-		}
-
-		const brokerRecords = await Promise.all(brokers.map((broker) => toBrokerRecord(ctx, broker)));
-		const peopleByBrokerId = createDashboardPersonByBrokerIdMap(brokerRecords);
-		const brokerKeyById = createBrokerKeyByIdMap(brokerRecords);
-
-		return {
-			title: dealRecord.dealName,
-			hero: buildDealHero({
-				dealNumber: dealRecord.dealNumber,
-				dealName: dealRecord.dealName,
-				stage: dealRecord.stage,
-				probability: dealRecord.probability,
-				activityLevel: dealRecord.activityLevel,
-				context
-			}),
-			activityItems: sortDealActivitiesAscending(
-				activities.map((activity) => toActivityRecord(activity))
-			).map((activity) => toTimelineItem(activity, peopleByBrokerId)),
-			orgChartNodes: toDashboardOrgChartNodes(context.orgChartNodes, brokerKeyById),
-			update: buildDealUploadFieldData(dealRecord.dealName),
-			rightRail: toDetailRightRailData([
-				toDetailRightRailOverviewSection(
-					dealRecord,
-					resolveOptionalBrokerPerson(peopleByBrokerId, dealRecord.ownerBrokerId)
-				),
-				toDetailRightRailTimingSection(dealRecord, context),
-				toDetailRightRailHelpfulContactsSection(context)
-			])
-		};
-	}
+	handler: async (ctx, args): Promise<NewBusinessDetailReadModel | null> =>
+		getDealDetailReadModel(ctx, args.dealKey as DealKey)
 });

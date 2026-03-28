@@ -88,14 +88,6 @@ export const myDealsDetailRefValidator = v.object({
 	defaultTab: myDealsDetailTabIdValidator
 });
 
-export const newBusinessDetailRefValidator = v.object({
-	dealKey: v.string()
-});
-
-export const opportunityDetailRefValidator = v.object({
-	insightKey: v.string()
-});
-
 export const canvasHeroValidator = v.object({
 	title: v.string(),
 	description: v.optional(v.string()),
@@ -141,14 +133,6 @@ export const timelineItemValidator = v.union(
 );
 
 export type TimelineItemData = TimelineItem;
-
-export const dealSummaryRowValidator = v.object({
-	key: v.string(),
-	deal: v.string(),
-	probability: v.number(),
-	activityLevel: activityLevelValidator,
-	stage: v.string()
-});
 
 export const orgChartNodeRecordValidator = v.object({
 	id: v.string(),
@@ -268,7 +252,7 @@ export const newBusinessRowLastActivityValidator = v.union(
 
 export const newBusinessTableRowReadModelValidator = v.object({
 	key: v.string(),
-	detail: v.union(newBusinessDetailRefValidator, v.null()),
+	hasDetail: v.boolean(),
 	probability: v.number(),
 	activityLevel: activityLevelValidator,
 	deal: v.string(),
@@ -295,12 +279,20 @@ export const newBusinessFilterDrawerDataValidator = v.object({
 
 export const opportunityTileReadModelValidator = v.object({
 	key: v.string(),
-	detail: opportunityDetailRefValidator,
 	title: v.string(),
 	dealNumber: v.number(),
 	dealLabel: v.optional(v.string()),
 	avatars: v.optional(v.array(v.string())),
 	activityLevel: activityLevelValidator
+});
+
+export const sinceLastMeetingDealReadModelValidator = v.object({
+	key: v.string(),
+	deal: v.string(),
+	probability: v.number(),
+	activityLevel: activityLevelValidator,
+	stage: v.string(),
+	hasDetail: v.boolean()
 });
 
 export const dashboardShellResultValidator = v.object({
@@ -357,21 +349,15 @@ export const opportunityDetailReadModelValidator = v.object({
 export const sinceLastMeetingReadModelValidator = v.object({
 	referenceMeetingDateIso: v.string(),
 	timelineItems: v.array(timelineItemValidator),
-	deals: v.array(dealSummaryRowValidator),
+	deals: v.array(sinceLastMeetingDealReadModelValidator),
 	update: fileUploadFieldValidator
 });
+
+export const sinceLastMeetingDetailReadModelValidator = newBusinessDetailReadModelValidator;
 
 export type MyDealsDetailRef = {
 	dealKey: DealKey;
 	defaultTab: MyDealsDetailTabId;
-};
-
-export type NewBusinessDetailRef = {
-	dealKey: DealKey;
-};
-
-export type OpportunityDetailRef = {
-	insightKey: InsightKey;
 };
 
 export type MyDealsFeedItemReadModel =
@@ -408,7 +394,7 @@ export type MyDealsTableRowReadModel = {
 
 export type NewBusinessTableRowReadModel = {
 	key: DealKey;
-	detail: NewBusinessDetailRef | null;
+	hasDetail: boolean;
 	probability: number;
 	activityLevel: ActivityLevel;
 	deal: string;
@@ -439,12 +425,15 @@ export type NewBusinessFilterDrawerData = {
 
 export type OpportunityTileReadModel = {
 	key: InsightKey;
-	detail: OpportunityDetailRef;
 	title: string;
 	dealNumber: number;
 	dealLabel?: string;
 	avatars?: string[];
 	activityLevel: ActivityLevel;
+};
+
+export type SinceLastMeetingDealReadModel = DealSummaryRow & {
+	hasDetail: boolean;
 };
 
 export type DashboardShellReadModel = {
@@ -501,6 +490,8 @@ export type OpportunityDetailReadModel = {
 export type SinceLastMeetingReadModel = {
 	referenceMeetingDateIso: IsoDate;
 	timelineItems: TimelineItem[];
-	deals: DealSummaryRow[];
+	deals: SinceLastMeetingDealReadModel[];
 	update: FileUploadFieldData;
 };
+
+export type SinceLastMeetingDetailReadModel = NewBusinessDetailReadModel;

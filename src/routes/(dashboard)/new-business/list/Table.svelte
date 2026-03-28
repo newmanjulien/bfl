@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { formatIsoDateTimeRelative } from '$lib/format/date-time';
-	import { resolveDashboardRoute } from '$lib/dashboard/routing';
 	import type { NewBusinessListPageData } from '$lib/dashboard/page-models/newBusiness';
 	import ActivityLevelLabel from '$lib/dashboard/ui/activity-level/ActivityLevelLabel.svelte';
 	import PersonInline from '$lib/dashboard/ui/people/PersonInline.svelte';
@@ -105,9 +104,9 @@
 	{#snippet body()}
 		<div class="divide-y divide-zinc-100">
 			{#each rows as row (row.key)}
-				{#if !selection && row.navigation.kind === 'internal'}
+				{#if !selection && row.href}
 					<a
-						href={resolve(resolveDashboardRoute(row.navigation.route))}
+						href={resolve(row.href)}
 						data-table-row
 						class={cn(columnClass, 'group no-underline')}
 					>

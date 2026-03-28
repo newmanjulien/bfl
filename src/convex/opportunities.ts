@@ -37,7 +37,6 @@ import {
 export type {
 	DashboardShellReadModel,
 	OpportunityDetailReadModel,
-	OpportunityDetailRef,
 	OpportunitiesListReadModel
 } from './validators';
 
@@ -69,9 +68,6 @@ function toTile(
 ) {
 	return {
 		key: insight.key,
-		detail: {
-			insightKey: insight.key
-		},
 		title: insight.title,
 		dealNumber: deal.dealNumber,
 		dealLabel: deal.dealName,

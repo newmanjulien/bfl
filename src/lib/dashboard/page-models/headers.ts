@@ -1,69 +1,60 @@
-import type {
-	MyDealsListRouteRef,
-	NewBusinessListRouteRef,
-	OpportunitiesListRouteRef,
-	SinceLastMeetingRouteRef
-} from '$lib/dashboard/routing';
 import type { DashboardHeader } from '$lib/dashboard/shell/header/types';
-import {
-	NEW_BUSINESS_VIEW_OPTIONS,
-	getNewBusinessViewLabel,
-	type NewBusinessView
-} from '$lib/dashboard/routing/new-business';
+import { buildHeaderTitleMenuOptions } from '$lib/dashboard/shell/header/title-menu';
+import type { MeetingKey } from '$lib/types/keys';
 import {
 	MY_DEALS_VIEW_OPTIONS,
 	getMyDealsViewLabel,
 	type MyDealsView
 } from '$lib/dashboard/routing/my-deals';
+import {
+	NEW_BUSINESS_VIEW_OPTIONS,
+	getNewBusinessViewLabel,
+	type NewBusinessView
+} from '$lib/dashboard/routing/new-business';
 
-type HeaderMenuOption<TId extends string> = {
-	id: TId;
-	label: string;
-};
-
-function buildHeaderTitleMenu<TId extends string>(params: {
-	menuId: string;
-	ariaLabel: string;
-	sectionLabel: string;
-	activeLabel: string;
-	selectedId: TId;
-	options: readonly HeaderMenuOption<TId>[];
-	buildRoute: (id: TId) => MyDealsListRouteRef | NewBusinessListRouteRef;
-}) {
-	const { menuId, ariaLabel, sectionLabel, activeLabel, selectedId, options, buildRoute } = params;
-
-	return {
-		kind: 'link-menu' as const,
-		menuId,
-		ariaLabel,
-		sectionLabel,
-		activeLabel,
-		options: options.map((option) => ({
-			id: option.id,
-			label: option.label,
-			route: buildRoute(option.id),
-			current: option.id === selectedId
-		}))
-	};
-}
-
-export function createSinceLastMeetingHeader(route: SinceLastMeetingRouteRef): DashboardHeader {
+export function createSinceLastMeetingHeader(meetingKey: MeetingKey | null): DashboardHeader {
 	return {
 		leading: {
 			kind: 'control-title',
 			title: 'Since last meeting',
-			control: { kind: 'meeting-date', route }
+			control: {
+				kind: 'meeting-date',
+				pageKind: 'since-last-meeting',
+				meetingKey
+			}
 		},
 		actions: ['share', 'broker-switch']
 	};
 }
 
-export function createOpportunitiesListHeader(route: OpportunitiesListRouteRef): DashboardHeader {
+export function createSinceLastMeetingDetailHeader(
+	title: string,
+	meetingKey: MeetingKey | null
+): DashboardHeader {
+	return {
+		leading: {
+			kind: 'control-title',
+			title,
+			control: {
+				kind: 'since-last-meeting-back-link',
+				meetingKey,
+				label: 'Since last meeting'
+			}
+		},
+		actions: ['share', 'broker-switch']
+	};
+}
+
+export function createOpportunitiesListHeader(meetingKey: MeetingKey | null): DashboardHeader {
 	return {
 		leading: {
 			kind: 'control-title',
 			title: 'Opportunities & risks',
-			control: { kind: 'meeting-date', route }
+			control: {
+				kind: 'meeting-date',
+				pageKind: 'opportunities',
+				meetingKey
+			}
 		},
 		actions: ['share', 'broker-switch']
 	};
@@ -71,15 +62,15 @@ export function createOpportunitiesListHeader(route: OpportunitiesListRouteRef):
 
 export function createOpportunitiesDetailHeader(
 	title: string,
-	backRoute: OpportunitiesListRouteRef
+	meetingKey: MeetingKey | null
 ): DashboardHeader {
 	return {
 		leading: {
 			kind: 'control-title',
 			title,
 			control: {
-				kind: 'back-link',
-				route: backRoute,
+				kind: 'opportunities-back-link',
+				meetingKey,
 				label: 'Opportunities & risks'
 			}
 		},
@@ -92,18 +83,18 @@ export function createMyDealsListHeader(selectedView: MyDealsView): DashboardHea
 		leading: {
 			kind: 'title-menu',
 			title: 'My deals',
-			menu: buildHeaderTitleMenu({
+			menu: {
+				kind: 'link-menu',
+				pageKind: 'my-deals',
 				menuId: 'desktop-my-deals-view',
 				ariaLabel: 'Change my deals view',
 				sectionLabel: 'Select view',
 				activeLabel: getMyDealsViewLabel(selectedView),
-				selectedId: selectedView,
-				options: MY_DEALS_VIEW_OPTIONS,
-				buildRoute: (view) => ({
-					kind: 'my-deals-list',
-					view
+				options: buildHeaderTitleMenuOptions({
+					selectedId: selectedView,
+					options: MY_DEALS_VIEW_OPTIONS
 				})
-			})
+			}
 		},
 		actions: ['share']
 	};
@@ -118,11 +109,8 @@ export function createMyDealsDetailHeader(
 			kind: 'control-title',
 			title,
 			control: {
-				kind: 'back-link',
-				route: {
-					kind: 'my-deals-list',
-					view: selectedView
-				},
+				kind: 'my-deals-back-link',
+				view: selectedView,
 				label: getMyDealsViewLabel(selectedView)
 			}
 		},
@@ -135,18 +123,18 @@ export function createNewBusinessListHeader(selectedView: NewBusinessView): Dash
 		leading: {
 			kind: 'title-menu',
 			title: 'New business',
-			menu: buildHeaderTitleMenu({
+			menu: {
+				kind: 'link-menu',
+				pageKind: 'new-business',
 				menuId: 'desktop-new-business-view',
 				ariaLabel: 'Change new business view',
 				sectionLabel: 'Select new business view',
 				activeLabel: getNewBusinessViewLabel(selectedView),
-				selectedId: selectedView,
-				options: NEW_BUSINESS_VIEW_OPTIONS,
-				buildRoute: (view) => ({
-					kind: 'new-business-list',
-					view
+				options: buildHeaderTitleMenuOptions({
+					selectedId: selectedView,
+					options: NEW_BUSINESS_VIEW_OPTIONS
 				})
-			})
+			}
 		},
 		actions: ['share']
 	};
@@ -161,11 +149,8 @@ export function createNewBusinessDetailHeader(
 			kind: 'control-title',
 			title,
 			control: {
-				kind: 'back-link',
-				route: {
-					kind: 'new-business-list',
-					view: selectedView
-				},
+				kind: 'new-business-back-link',
+				view: selectedView,
 				label: getNewBusinessViewLabel(selectedView)
 			}
 		},

@@ -1,10 +1,6 @@
 import type { DashboardHeader } from '$lib/dashboard/shell/header/types';
-import type {
-	InternalLink,
-	MyDealsDetailRouteRef,
-	MyDealsListRouteRef,
-	Navigation
-} from '$lib/dashboard/routing';
+import type { MyDealsDetailRouteRef, MyDealsListRouteRef } from '$lib/dashboard/routing';
+import { resolveMyDealsDetailPath } from '$lib/dashboard/routing/my-deals';
 import type { CanvasHeroData } from '$lib/dashboard/ui/detail/CanvasHero.types';
 import type {
 	MyDealsDetailReadModel,
@@ -21,10 +17,19 @@ const MY_DEALS_NEWS_HERO = {
 		"Get a quick overview of this week's news across the deals you are working on."
 } as const satisfies CanvasHeroData;
 
+type MyDealsNavigation =
+	| {
+			kind: 'internal';
+			href: ReturnType<typeof resolveMyDealsDetailPath>;
+	  }
+	| {
+			kind: 'none';
+	  };
+
 function toDetailNavigation(
 	route: MyDealsListRouteRef,
 	detail: MyDealsDetailRef | null
-): Navigation<MyDealsDetailRouteRef> {
+): MyDealsNavigation {
 	if (!detail) {
 		return {
 			kind: 'none'
@@ -33,19 +38,18 @@ function toDetailNavigation(
 
 	return {
 		kind: 'internal',
-		route: {
-			kind: 'my-deals-detail',
+		href: resolveMyDealsDetailPath({
 			dealKey: detail.dealKey,
 			view: route.view,
 			tab: detail.defaultTab
-		}
+		})
 	};
 }
 
 function toFeedItemNavigation(
 	route: MyDealsListRouteRef,
 	item: MyDealsFeedItemReadModel
-): InternalLink<MyDealsDetailRouteRef> | { kind: 'none' } {
+): MyDealsNavigation {
 	if (item.kind !== 'activity') {
 		return {
 			kind: 'none'
@@ -54,12 +58,11 @@ function toFeedItemNavigation(
 
 	return {
 		kind: 'internal',
-		route: {
-			kind: 'my-deals-detail',
+		href: resolveMyDealsDetailPath({
 			dealKey: item.detail.dealKey,
 			view: route.view,
 			tab: item.detail.defaultTab
-		}
+		})
 	};
 }
 
@@ -68,11 +71,11 @@ export type MyDealsFeedItemPageData = {
 	title: string;
 	kind: MyDealsFeedItemReadModel['kind'];
 	dateIso: MyDealsFeedItemReadModel['dateIso'];
-	navigation: InternalLink<MyDealsDetailRouteRef> | { kind: 'none' };
+	navigation: MyDealsNavigation;
 };
 
 export type MyDealsTableRowPageData = Omit<MyDealsListReadModel['rows'][number], 'detail'> & {
-	navigation: Navigation<MyDealsDetailRouteRef>;
+	navigation: MyDealsNavigation;
 };
 
 export type MyDealsListPageData = {
@@ -107,10 +110,14 @@ export function buildMyDealsListPageData(params: {
 		header: createMyDealsListHeader(route.view),
 		hero: route.view === 'news' ? MY_DEALS_NEWS_HERO : undefined,
 		activeBrokerKey,
-		rows: readModel.rows.map((row) => ({
-			...row,
-			navigation: toDetailNavigation(route, row.detail)
-		})),
+		rows: readModel.rows.map((row) => {
+			const { detail, ...rest } = row;
+
+			return {
+				...rest,
+				navigation: toDetailNavigation(route, detail)
+			};
+		}),
 		newsItems: readModel.newsItems.map((item) => ({
 			id: item.id,
 			title: item.title,

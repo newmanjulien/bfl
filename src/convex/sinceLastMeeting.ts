@@ -1,21 +1,30 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
 import { sortDealActivitiesAscending } from '../lib/dashboard/view-models/deal';
-import type { MeetingKey } from '../lib/types/keys';
+import type { DealKey, MeetingKey } from '../lib/types/keys';
 import { toTimelineItem } from '../lib/dashboard/view-models/deal-content';
 import {
 	createDashboardPersonByBrokerIdMap,
+	findDealDocumentByKey,
 	requireMeetingRecordByKey,
 	toActivityRecord,
 	toBrokerRecord,
 	toDealRecord
 } from './readModels';
+import { getDealDetailReadModel } from './dealDetail';
 import {
+	type SinceLastMeetingDetailReadModel,
+	type SinceLastMeetingDealReadModel,
 	type SinceLastMeetingReadModel,
+	sinceLastMeetingDetailReadModelValidator,
 	sinceLastMeetingReadModelValidator
 } from './validators';
 
-export type { SinceLastMeetingReadModel } from './validators';
+export type {
+	SinceLastMeetingDetailReadModel,
+	SinceLastMeetingDealReadModel,
+	SinceLastMeetingReadModel
+} from './validators';
 
 function createDealByIdMap(deals: readonly ReturnType<typeof toDealRecord>[]) {
 	return new Map(deals.map((deal) => [deal.id, deal] as const));
@@ -24,7 +33,7 @@ function createDealByIdMap(deals: readonly ReturnType<typeof toDealRecord>[]) {
 function toSinceLastMeetingDeals(
 	meetingUpdateActivities: readonly ReturnType<typeof toActivityRecord>[],
 	dealsById: ReadonlyMap<string, ReturnType<typeof toDealRecord>>
-) {
+): SinceLastMeetingDealReadModel[] {
 	const seenDealIds = new Set<string>();
 
 	return meetingUpdateActivities.flatMap((activity) => {
@@ -46,7 +55,8 @@ function toSinceLastMeetingDeals(
 				deal: deal.dealName,
 				probability: deal.probability,
 				activityLevel: deal.activityLevel,
-				stage: deal.stage
+				stage: deal.stage,
+				hasDetail: Boolean(deal.context)
 			}
 		];
 	});
@@ -86,5 +96,36 @@ export const getSinceLastMeeting = query({
 				uploadDescription: "Upload screenshots or any docs with the information we're missing"
 			}
 		};
+	}
+});
+
+export const getSinceLastMeetingDetail = query({
+	args: {
+		meetingKey: v.string(),
+		dealKey: v.string()
+	},
+	returns: v.union(sinceLastMeetingDetailReadModelValidator, v.null()),
+	handler: async (ctx, args): Promise<SinceLastMeetingDetailReadModel | null> => {
+		const [meeting, deal] = await Promise.all([
+			requireMeetingRecordByKey(ctx, args.meetingKey as MeetingKey),
+			findDealDocumentByKey(ctx, args.dealKey as DealKey)
+		]);
+
+		if (!deal) {
+			return null;
+		}
+
+		const meetingActivities = await ctx.db
+			.query('activities')
+			.withIndex('by_meeting_id_deal_id_stream_occurred_on_iso', (query) =>
+				query.eq('meetingId', meeting.id).eq('dealId', deal._id).eq('stream', 'meeting-update')
+			)
+			.collect();
+
+		if (meetingActivities.length === 0) {
+			return null;
+		}
+
+		return getDealDetailReadModel(ctx, args.dealKey as DealKey);
 	}
 });

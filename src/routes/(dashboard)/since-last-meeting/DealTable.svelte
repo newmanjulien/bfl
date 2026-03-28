@@ -1,10 +1,14 @@
 <script lang="ts">
-	import type { DealSummaryRow } from '$lib/dashboard/view-models/deal';
+	import { resolve } from '$app/paths';
+	import type { SinceLastMeetingPageData } from '$lib/dashboard/page-models/sinceLastMeeting';
 	import ActivityLevelLabel from '$lib/dashboard/ui/activity-level/ActivityLevelLabel.svelte';
 	import DashboardTableShell from '$lib/dashboard/ui/shared/DashboardTableShell.svelte';
+	import { cn } from '$lib/support/cn';
+
+	type DealRow = SinceLastMeetingPageData['deals'][number];
 
 	type Props = {
-		rows: readonly DealSummaryRow[];
+		rows: readonly DealRow[];
 	};
 
 	let { rows }: Props = $props();
@@ -15,8 +19,11 @@
 	const minWidthClass = 'min-w-[40rem] md:min-w-full';
 </script>
 
-{#snippet rowCells(row: DealSummaryRow)}
-	<span data-table-cell class="font-medium text-zinc-600">
+{#snippet rowCells(row: DealRow, isLinked: boolean)}
+	<span
+		data-table-cell
+		class={`font-medium text-zinc-600${isLinked ? ' transition-colors group-hover:text-zinc-900' : ''}`}
+	>
 		{row.deal}
 	</span>
 	<span data-table-cell class="whitespace-nowrap text-zinc-900">
@@ -37,13 +44,24 @@
 		{minWidthClass}
 		ariaLabel="Deal summary table"
 		rowsLength={rows.length}
+		interactiveRows={rows.some((row) => Boolean(row.href))}
 	>
 		{#snippet body()}
 			<div class="divide-y divide-zinc-100">
 				{#each rows as row (row.key)}
-					<div data-table-row class={columnClass}>
-						{@render rowCells(row)}
-					</div>
+					{#if row.href}
+						<a
+							href={resolve(row.href)}
+							data-table-row
+							class={cn(columnClass, 'group no-underline')}
+						>
+							{@render rowCells(row, true)}
+						</a>
+					{:else}
+						<div data-table-row class={columnClass}>
+							{@render rowCells(row, false)}
+						</div>
+					{/if}
 				{/each}
 			</div>
 		{/snippet}

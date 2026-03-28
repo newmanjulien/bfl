@@ -7,10 +7,10 @@ export type {
 	MyDealsFeedItemReadModel,
 	MyDealsListReadModel,
 	NewBusinessDetailReadModel,
-	NewBusinessDetailRef,
 	NewBusinessListReadModel,
 	OpportunityDetailReadModel,
-	OpportunityDetailRef,
 	OpportunitiesListReadModel,
+	SinceLastMeetingDetailReadModel,
+	SinceLastMeetingDealReadModel,
 	SinceLastMeetingReadModel
 } from '../../convex/validators';

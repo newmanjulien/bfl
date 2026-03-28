@@ -1,44 +1,19 @@
 import type { DashboardHeader } from '$lib/dashboard/shell/header/types';
-import type {
-	Navigation,
-	NewBusinessDetailRouteRef,
-	NewBusinessListRouteRef
-} from '$lib/dashboard/routing';
-import {
-	createPersonSummaryMap,
-	toOrgChartRoot,
-	type OrgChartNode
-} from '$lib/dashboard/view-models/deal-content';
+import type { NewBusinessDetailRouteRef, NewBusinessListRouteRef } from '$lib/dashboard/routing';
+import { resolveNewBusinessDetailPath } from '$lib/dashboard/routing/new-business';
 import type {
 	DashboardShellReadModel,
 	NewBusinessDetailReadModel,
-	NewBusinessDetailRef,
 	NewBusinessListReadModel
 } from '$lib/dashboard/read-models';
+import {
+	buildDealDetailContentPageData,
+	type DealDetailContentPageData
+} from './dealDetail';
 import { createNewBusinessDetailHeader, createNewBusinessListHeader } from './headers';
 
-function toDetailNavigation(
-	route: NewBusinessListRouteRef,
-	detail: NewBusinessDetailRef | null
-): Navigation<NewBusinessDetailRouteRef> {
-	if (!detail) {
-		return {
-			kind: 'none'
-		};
-	}
-
-	return {
-		kind: 'internal',
-		route: {
-			kind: 'new-business-detail',
-			dealKey: detail.dealKey,
-			view: route.view
-		}
-	};
-}
-
-export type NewBusinessTableRowPageData = Omit<NewBusinessListReadModel['rows'][number], 'detail'> & {
-	navigation: Navigation<NewBusinessDetailRouteRef>;
+export type NewBusinessTableRowPageData = Omit<NewBusinessListReadModel['rows'][number], 'hasDetail'> & {
+	href: ReturnType<typeof resolveNewBusinessDetailPath> | null;
 };
 
 export type NewBusinessListPageData = {
@@ -51,12 +26,7 @@ export type NewBusinessListPageData = {
 export type NewBusinessDetailPageData = {
 	route: NewBusinessDetailRouteRef;
 	header: DashboardHeader;
-	hero: NewBusinessDetailReadModel['hero'];
-	activityItems: NewBusinessDetailReadModel['activityItems'];
-	orgChartRoot: OrgChartNode;
-	update: NewBusinessDetailReadModel['update'];
-	rightRail: NewBusinessDetailReadModel['rightRail'];
-};
+} & DealDetailContentPageData;
 
 export function buildNewBusinessListPageData(params: {
 	route: NewBusinessListRouteRef;
@@ -67,10 +37,19 @@ export function buildNewBusinessListPageData(params: {
 	return {
 		route,
 		header: createNewBusinessListHeader(route.view),
-		rows: readModel.rows.map((row) => ({
-			...row,
-			navigation: toDetailNavigation(route, row.detail)
-		})),
+		rows: readModel.rows.map((row) => {
+			const { hasDetail, ...rest } = row;
+
+			return {
+				...rest,
+				href: hasDetail
+					? resolveNewBusinessDetailPath({
+							dealKey: row.key,
+							view: route.view
+						})
+					: null
+			};
+		}),
 		filterDrawerData: readModel.filterDrawerData
 	};
 }
@@ -81,15 +60,13 @@ export function buildNewBusinessDetailPageData(params: {
 	dashboardShell: DashboardShellReadModel;
 }): NewBusinessDetailPageData {
 	const { route, readModel, dashboardShell } = params;
-	const peopleById = createPersonSummaryMap(dashboardShell.people);
 
 	return {
 		route,
 		header: createNewBusinessDetailHeader(readModel.title, route.view),
-		hero: readModel.hero,
-		activityItems: readModel.activityItems,
-		orgChartRoot: toOrgChartRoot(readModel.orgChartNodes, peopleById),
-		update: readModel.update,
-		rightRail: readModel.rightRail
+		...buildDealDetailContentPageData({
+			readModel,
+			dashboardShell
+		})
 	};
 }

@@ -152,6 +152,12 @@ export default defineSchema({
 	activities: defineTable(activityDocumentValidator)
 		.index('by_stream_occurred_on_iso', ['stream', 'occurredOnIso'])
 		.index('by_meeting_id_stream_occurred_on_iso', ['meetingId', 'stream', 'occurredOnIso'])
+		.index('by_meeting_id_deal_id_stream_occurred_on_iso', [
+			'meetingId',
+			'dealId',
+			'stream',
+			'occurredOnIso'
+		])
 		.index('by_deal_id_stream_occurred_on_iso', ['dealId', 'stream', 'occurredOnIso']),
 
 	news: defineTable({

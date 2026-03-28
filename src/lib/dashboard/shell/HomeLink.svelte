@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { DEFAULT_DASHBOARD_ROUTE_REF, resolveDashboardRoute } from '$lib/dashboard/routing';
+	import {
+		DEFAULT_NEW_BUSINESS_VIEW,
+		resolveNewBusinessListPath
+	} from '$lib/dashboard/routing/new-business';
 
 	type Props = {
 		onclick?: (event: MouseEvent) => void;
@@ -11,7 +14,7 @@
 </script>
 
 <a
-	href={resolve(resolveDashboardRoute(DEFAULT_DASHBOARD_ROUTE_REF))}
+	href={resolve(resolveNewBusinessListPath(DEFAULT_NEW_BUSINESS_VIEW))}
 	aria-label="Go to new business"
 	class={`overflow-hidden rounded-sm ${className}`}
 	{onclick}

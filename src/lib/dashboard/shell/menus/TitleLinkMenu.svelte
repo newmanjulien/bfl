@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { resolveDashboardRoute } from '$lib/dashboard/routing';
+	import { resolveMyDealsListPath } from '$lib/dashboard/routing/my-deals';
+	import { resolveNewBusinessListPath } from '$lib/dashboard/routing/new-business';
 	import type { DashboardHeaderTitleMenu } from '$lib/dashboard/shell/header/types';
 	import { cn } from '$lib/support/cn';
 	import DashboardMenuPanel from './DashboardMenuPanel.svelte';
@@ -58,23 +59,43 @@
 		>
 			{#snippet body()}
 				<ul class="mt-1 space-y-1">
-					{#each menu.options as option (option.id)}
-						<li>
-							<a
-								href={resolve(resolveDashboardRoute(option.route))}
-								role="menuitemradio"
-								aria-checked={option.current}
-								aria-current={option.current ? 'page' : undefined}
-								class={cn(
-									'flex w-full items-center rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
-									option.current ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
-								)}
-								onclick={menuState.close}
-							>
-								<span>{option.label}</span>
-							</a>
-						</li>
-					{/each}
+					{#if menu.pageKind === 'my-deals'}
+						{#each menu.options as option (option.id)}
+							<li>
+								<a
+									href={resolve(resolveMyDealsListPath(option.id))}
+									role="menuitemradio"
+									aria-checked={option.current}
+									aria-current={option.current ? 'page' : undefined}
+									class={cn(
+										'flex w-full items-center rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
+										option.current ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
+									)}
+									onclick={menuState.close}
+								>
+									<span>{option.label}</span>
+								</a>
+							</li>
+						{/each}
+					{:else}
+						{#each menu.options as option (option.id)}
+							<li>
+								<a
+									href={resolve(resolveNewBusinessListPath(option.id))}
+									role="menuitemradio"
+									aria-checked={option.current}
+									aria-current={option.current ? 'page' : undefined}
+									class={cn(
+										'flex w-full items-center rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
+										option.current ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
+									)}
+									onclick={menuState.close}
+								>
+									<span>{option.label}</span>
+								</a>
+							</li>
+						{/each}
+					{/if}
 				</ul>
 			{/snippet}
 		</DashboardMenuPanel>

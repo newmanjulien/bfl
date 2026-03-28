@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { cn } from '$lib/support/cn';
-	import { formatIsoDateMonthDayLong } from '$lib/format/date-time';
 	import type { DashboardMeeting } from '$lib/dashboard/read-models';
-	import type { OpportunitiesListRouteRef, SinceLastMeetingRouteRef } from '$lib/dashboard/routing';
-	import { resolveDashboardRoute } from '$lib/dashboard/routing';
+	import { formatIsoDateMonthDayLong } from '$lib/format/date-time';
+	import type { DashboardHeaderMeetingDateControl } from '$lib/dashboard/shell/header/types';
+	import { cn } from '$lib/support/cn';
+	import { resolveOpportunitiesListPath } from '$lib/dashboard/routing/opportunities';
+	import { resolveSinceLastMeetingPath } from '$lib/dashboard/routing/since-last-meeting';
 	import DashboardMenuPanel from './DashboardMenuPanel.svelte';
 	import {
 		type DashboardMenuPlacement,
@@ -14,7 +15,7 @@
 
 	type Props = {
 		menuId: string;
-		route: OpportunitiesListRouteRef | SinceLastMeetingRouteRef;
+		control: DashboardHeaderMeetingDateControl;
 		meetings: readonly DashboardMeeting[];
 		placement?: DashboardMenuPlacement;
 		class?: string;
@@ -22,7 +23,7 @@
 
 	let {
 		menuId,
-		route,
+		control,
 		meetings: unsortedMeetings,
 		placement = 'bottom-start',
 		class: classProp = ''
@@ -37,22 +38,16 @@
 	);
 	const meetingDateLabels = $derived(meetings.map((meeting) => formatIsoDateMonthDayLong(meeting.dateIso)));
 	const triggerMeeting = $derived(
-		meetings.find((meeting) => meeting.key === route.meetingKey) ?? meetings[0] ?? null
+		meetings.find((meeting) => meeting.key === control.meetingKey) ?? meetings[0] ?? null
 	);
 	const triggerDateLabel = $derived(
 		triggerMeeting ? formatIsoDateMonthDayLong(triggerMeeting.dateIso) : 'Select meeting date'
 	);
 
-	function toMeetingRoute(meetingKey: DashboardMeeting['key']) {
-		return route.kind === 'opportunities-list'
-			? {
-					kind: 'opportunities-list' as const,
-					meetingKey
-				}
-			: {
-					kind: 'since-last-meeting' as const,
-					meetingKey
-				};
+	function resolveMeetingHref(meetingKey: DashboardMeeting['key']) {
+		return control.pageKind === 'opportunities'
+			? resolveOpportunitiesListPath(meetingKey)
+			: resolveSinceLastMeetingPath(meetingKey);
 	}
 </script>
 
@@ -81,7 +76,7 @@
 							<a
 								role="menuitemradio"
 								aria-checked={meeting.key === triggerMeeting?.key}
-								href={resolve(resolveDashboardRoute(toMeetingRoute(meeting.key)))}
+								href={resolve(resolveMeetingHref(meeting.key))}
 								class={cn(
 									'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
 									meeting.key === triggerMeeting?.key ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'

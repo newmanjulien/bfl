@@ -3,6 +3,7 @@ import type {
 	OpportunitiesDetailRouteRef,
 	OpportunitiesListRouteRef
 } from '$lib/dashboard/routing';
+import { resolveOpportunitiesDetailPath } from '$lib/dashboard/routing/opportunities';
 import {
 	createPersonSummaryMap,
 	toOrgChartRoot,
@@ -11,7 +12,6 @@ import {
 import type {
 	DashboardShellReadModel,
 	OpportunityDetailReadModel,
-	OpportunityDetailRef,
 	OpportunitiesListReadModel
 } from '$lib/dashboard/read-models';
 import { createOpportunitiesDetailHeader, createOpportunitiesListHeader } from './headers';
@@ -21,16 +21,8 @@ const OPPORTUNITIES_HERO = {
 	description: 'Help Julien take advantage of key opportunities and risks'
 } as const;
 
-function toDetailRoute(detail: OpportunityDetailRef): OpportunitiesDetailRouteRef {
-	return {
-		kind: 'opportunities-detail',
-		insightKey: detail.insightKey,
-		meetingKey: null
-	};
-}
-
-export type OpportunityTilePageData = Omit<OpportunitiesListReadModel['opportunityTiles'][number], 'detail'> & {
-	route: OpportunitiesDetailRouteRef;
+export type OpportunityTilePageData = OpportunitiesListReadModel['opportunityTiles'][number] & {
+	href: ReturnType<typeof resolveOpportunitiesDetailPath>;
 };
 
 export type OpportunitiesListPageData = {
@@ -61,21 +53,21 @@ export function buildOpportunitiesListPageData(params: {
 
 	return {
 		route,
-		header: createOpportunitiesListHeader(route),
+		header: createOpportunitiesListHeader(route.meetingKey),
 		hero: OPPORTUNITIES_HERO,
 		opportunityTiles: readModel.opportunityTiles.map((tile) => ({
 			...tile,
-			route: {
-				...toDetailRoute(tile.detail),
+			href: resolveOpportunitiesDetailPath({
+				insightKey: tile.key,
 				meetingKey: route.meetingKey
-			}
+			})
 		})),
 		riskTiles: readModel.riskTiles.map((tile) => ({
 			...tile,
-			route: {
-				...toDetailRoute(tile.detail),
+			href: resolveOpportunitiesDetailPath({
+				insightKey: tile.key,
 				meetingKey: route.meetingKey
-			}
+			})
 		})),
 		update: readModel.update
 	};
@@ -91,10 +83,7 @@ export function buildOpportunityDetailPageData(params: {
 
 	return {
 		route,
-		header: createOpportunitiesDetailHeader(readModel.title, {
-			kind: 'opportunities-list',
-			meetingKey: route.meetingKey
-		}),
+		header: createOpportunitiesDetailHeader(readModel.title, route.meetingKey),
 		hero: readModel.hero,
 		kind: readModel.kind,
 		activityItems: readModel.activityItems,

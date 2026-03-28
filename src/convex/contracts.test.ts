@@ -275,8 +275,14 @@ describe('Convex feature contracts', () => {
 			view: 'deals'
 		});
 		const newBusinessDetail = await t.query(api.newBusiness.getNewBusinessDetail, {
-			dealKey: seed.dealKey,
-			view: 'deals'
+			dealKey: seed.dealKey
+		});
+		const sinceLastMeeting = await t.query(api.sinceLastMeeting.getSinceLastMeeting, {
+			meetingKey: seed.march20MeetingKey
+		});
+		const sinceLastMeetingDetail = await t.query(api.sinceLastMeeting.getSinceLastMeetingDetail, {
+			meetingKey: seed.march20MeetingKey,
+			dealKey: seed.dealKey
 		});
 		const opportunitiesList = await t.query(api.opportunities.getOpportunitiesList, {
 			meetingKey: seed.march20MeetingKey
@@ -306,9 +312,7 @@ describe('Convex feature contracts', () => {
 			expect.arrayContaining([
 				expect.objectContaining({
 					key: seed.dealKey,
-					detail: {
-						dealKey: seed.dealKey
-					}
+					hasDetail: true
 				})
 			])
 		);
@@ -317,16 +321,27 @@ describe('Convex feature contracts', () => {
 			toExpectedDashboardOrgChartNodes(seed.dealOrgChartNodes, seed)
 		);
 
-		expect(opportunitiesList.opportunityTiles).toEqual(
+		expect(sinceLastMeeting.deals).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
-					key: seed.insightKey,
-					detail: {
-						insightKey: seed.insightKey
-					}
+					key: seed.dealKey,
+					hasDetail: true
 				})
 			])
 		);
+		expect(sinceLastMeetingDetail?.title).toBe('Acme Expansion');
+		expect(sinceLastMeetingDetail?.orgChartNodes).toEqual(
+			toExpectedDashboardOrgChartNodes(seed.dealOrgChartNodes, seed)
+		);
+
+		expect(opportunitiesList.opportunityTiles).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					key: seed.insightKey
+				})
+			])
+		);
+		expect(opportunitiesList.opportunityTiles[0]).not.toHaveProperty('detail');
 		expect(opportunityDetail?.title).toBe('Expand into adjacent services');
 		expect(opportunityDetail?.orgChartNodes).toEqual(
 			toExpectedDashboardOrgChartNodes(seed.insightOrgChartNodes, seed)
@@ -346,8 +361,13 @@ describe('Convex feature contracts', () => {
 		).resolves.toBeNull();
 		await expect(
 			t.query(api.newBusiness.getNewBusinessDetail, {
-				dealKey: 'bad-deal-key',
-				view: 'deals'
+				dealKey: 'bad-deal-key'
+			})
+		).resolves.toBeNull();
+		await expect(
+			t.query(api.sinceLastMeeting.getSinceLastMeetingDetail, {
+				meetingKey: seed.march20MeetingKey,
+				dealKey: 'bad-deal-key'
 			})
 		).resolves.toBeNull();
 		await expect(
@@ -449,8 +469,7 @@ describe('Convex feature contracts', () => {
 		});
 
 		const newBusinessDetail = await t.query(api.newBusiness.getNewBusinessDetail, {
-			dealKey: legacyDealKey,
-			view: 'deals'
+			dealKey: legacyDealKey
 		});
 		const opportunityDetail = await t.query(api.opportunities.getOpportunityDetail, {
 			insightKey: legacyInsightKey,

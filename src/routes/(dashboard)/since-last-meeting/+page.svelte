@@ -2,8 +2,8 @@
 	import DashboardTabbedPage from '$lib/dashboard/layout/DashboardTabbedPage.svelte';
 	import FileUploadField from '$lib/dashboard/ui/detail/FileUploadField.svelte';
 	import TimelineSection from '$lib/dashboard/ui/detail/TimelineSection.svelte';
-	import DealSummaryTableSection from '$lib/dashboard/ui/summary/DealSummaryTableSection.svelte';
 	import SectionTabPanel from '$lib/dashboard/ui/tabs/SectionTabPanel.svelte';
+	import DealTable from './DealTable.svelte';
 
 	let { data } = $props();
 
@@ -20,7 +20,7 @@
 			<TimelineSection items={data.timelineItems} />
 		</SectionTabPanel>
 		<SectionTabPanel tabId="deals">
-			<DealSummaryTableSection rows={data.deals} />
+			<DealTable rows={data.deals} />
 		</SectionTabPanel>
 		<SectionTabPanel tabId="update">
 			<FileUploadField data={data.update} />

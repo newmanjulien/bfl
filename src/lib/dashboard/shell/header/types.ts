@@ -1,47 +1,72 @@
-import type {
-	MyDealsListRouteRef,
-	NewBusinessListRouteRef,
-	OpportunitiesListRouteRef,
-	SinceLastMeetingRouteRef
-} from '$lib/dashboard/routing';
+import type { MeetingKey } from '$lib/types/keys';
+import type { MyDealsView } from '$lib/dashboard/routing/my-deals';
+import type { NewBusinessView } from '$lib/dashboard/routing/new-business';
 
-export type DashboardHeaderBackLinkRouteRef =
-	| MyDealsListRouteRef
-	| NewBusinessListRouteRef
-	| OpportunitiesListRouteRef;
+export type DashboardHeaderMeetingDateControl = {
+	kind: 'meeting-date';
+	pageKind: 'opportunities' | 'since-last-meeting';
+	meetingKey: MeetingKey | null;
+};
 
-export type DashboardHeaderTitleMenuRouteRef =
-	| MyDealsListRouteRef
-	| NewBusinessListRouteRef;
-
-export type DashboardHeaderControl =
+export type DashboardHeaderBackLinkControl =
 	| {
-			kind: 'meeting-date';
-			route: OpportunitiesListRouteRef | SinceLastMeetingRouteRef;
+			kind: 'my-deals-back-link';
+			view: MyDealsView;
+			label: string;
 	  }
 	| {
-			kind: 'back-link';
-			route: DashboardHeaderBackLinkRouteRef;
+			kind: 'new-business-back-link';
+			view: NewBusinessView;
+			label: string;
+	  }
+	| {
+			kind: 'opportunities-back-link';
+			meetingKey: MeetingKey | null;
+			label: string;
+	  }
+	| {
+			kind: 'since-last-meeting-back-link';
+			meetingKey: MeetingKey | null;
 			label: string;
 	  };
 
+export type DashboardHeaderControl =
+	| DashboardHeaderMeetingDateControl
+	| DashboardHeaderBackLinkControl;
+
 export type DashboardHeaderAction = 'share' | 'broker-switch';
 
-export type DashboardHeaderTitleMenuOption = {
-	id: string;
-	label: string;
-	route: DashboardHeaderTitleMenuRouteRef;
-	current: boolean;
-};
-
-export type DashboardHeaderTitleMenu = {
+export type MyDealsHeaderTitleMenu = {
 	kind: 'link-menu';
+	pageKind: 'my-deals';
 	menuId: string;
 	ariaLabel: string;
 	sectionLabel: string;
 	activeLabel: string;
-	options: DashboardHeaderTitleMenuOption[];
+	options: {
+		id: MyDealsView;
+		label: string;
+		current: boolean;
+	}[];
 };
+
+export type NewBusinessHeaderTitleMenu = {
+	kind: 'link-menu';
+	pageKind: 'new-business';
+	menuId: string;
+	ariaLabel: string;
+	sectionLabel: string;
+	activeLabel: string;
+	options: {
+		id: NewBusinessView;
+		label: string;
+		current: boolean;
+	}[];
+};
+
+export type DashboardHeaderTitleMenu =
+	| MyDealsHeaderTitleMenu
+	| NewBusinessHeaderTitleMenu;
 
 export type DashboardHeaderLeading =
 	| {

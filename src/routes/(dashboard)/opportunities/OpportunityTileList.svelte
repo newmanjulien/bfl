@@ -21,7 +21,7 @@
 	{#each tiles as tile (tile.key)}
 		{@const hasBottomMeta = Boolean(tile.dealLabel || tile.activityLevel)}
 		<li>
-			<ListCard link={{ kind: 'internal', route: tile.route }}>
+			<ListCard link={{ kind: 'opportunities', href: tile.href }}>
 				{#snippet body()}
 					<div class="flex items-start justify-between gap-3">
 						<p class="text-[10px] tracking-wide text-zinc-500">

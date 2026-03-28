@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { fly } from 'svelte/transition';
-	import {
-		resolveDashboardRoute,
-		isDashboardNavRouteActive,
-		type DashboardRouteRef
-	} from '$lib/dashboard/routing';
+	import { isDashboardNavRouteActive, type DashboardRouteRef } from '$lib/dashboard/routing';
+	import { resolveMyDealsListPath } from '$lib/dashboard/routing/my-deals';
+	import { resolveNewBusinessListPath } from '$lib/dashboard/routing/new-business';
+	import { resolveOpportunitiesListPath } from '$lib/dashboard/routing/opportunities';
+	import { resolveSinceLastMeetingPath } from '$lib/dashboard/routing/since-last-meeting';
 	import { cn } from '$lib/support/cn';
 	import type { DashboardNavRouteRef, DashboardNavSection, DashboardNavSectionId } from './model';
 
@@ -126,33 +126,119 @@
 								{/if}
 							</span>
 						{:else}
-							<a
-								href={resolve(resolveDashboardRoute(item.route))}
-								data-sidebar-indicator-key={renderMode === 'desktop' ? item.route.kind : undefined}
-								class={getItemClassName({
-									sectionId: section.id,
-									isActive: isDashboardNavRouteActive(item.route, currentRoute)
-								})}
-								onmouseenter={() => {
-									onHoverRoute?.(item.route, section.id);
-								}}
-								onclick={() => {
-									onSelectRoute?.(item.route);
-								}}
-							>
-								<Icon class="size-3.5 shrink-0" />
-								{#if renderMode === 'mobile' || expanded}
-									<span class={renderMode === 'mobile' ? 'min-w-0 truncate' : 'min-w-0 overflow-hidden'} in:fly={renderMode === 'mobile' ? undefined : { x: -4, duration: 200 }}>
-										{#if renderMode === 'mobile'}
-											{item.label}
-										{:else}
-											<span class="block truncate text-left">{item.label}</span>
-										{/if}
-									</span>
-								{:else}
-									<span class="sr-only">{item.label}</span>
-								{/if}
-							</a>
+							{#if item.route.kind === 'my-deals-list'}
+								<a
+									href={resolve(resolveMyDealsListPath(item.route.view))}
+									data-sidebar-indicator-key={renderMode === 'desktop' ? item.route.kind : undefined}
+									class={getItemClassName({
+										sectionId: section.id,
+										isActive: isDashboardNavRouteActive(item.route, currentRoute)
+									})}
+									onmouseenter={() => {
+										onHoverRoute?.(item.route, section.id);
+									}}
+									onclick={() => {
+										onSelectRoute?.(item.route);
+									}}
+								>
+									<Icon class="size-3.5 shrink-0" />
+									{#if renderMode === 'mobile' || expanded}
+										<span class={renderMode === 'mobile' ? 'min-w-0 truncate' : 'min-w-0 overflow-hidden'} in:fly={renderMode === 'mobile' ? undefined : { x: -4, duration: 200 }}>
+											{#if renderMode === 'mobile'}
+												{item.label}
+											{:else}
+												<span class="block truncate text-left">{item.label}</span>
+											{/if}
+										</span>
+									{:else}
+										<span class="sr-only">{item.label}</span>
+									{/if}
+								</a>
+							{:else if item.route.kind === 'new-business-list'}
+								<a
+									href={resolve(resolveNewBusinessListPath(item.route.view))}
+									data-sidebar-indicator-key={renderMode === 'desktop' ? item.route.kind : undefined}
+									class={getItemClassName({
+										sectionId: section.id,
+										isActive: isDashboardNavRouteActive(item.route, currentRoute)
+									})}
+									onmouseenter={() => {
+										onHoverRoute?.(item.route, section.id);
+									}}
+									onclick={() => {
+										onSelectRoute?.(item.route);
+									}}
+								>
+									<Icon class="size-3.5 shrink-0" />
+									{#if renderMode === 'mobile' || expanded}
+										<span class={renderMode === 'mobile' ? 'min-w-0 truncate' : 'min-w-0 overflow-hidden'} in:fly={renderMode === 'mobile' ? undefined : { x: -4, duration: 200 }}>
+											{#if renderMode === 'mobile'}
+												{item.label}
+											{:else}
+												<span class="block truncate text-left">{item.label}</span>
+											{/if}
+										</span>
+									{:else}
+										<span class="sr-only">{item.label}</span>
+									{/if}
+								</a>
+							{:else if item.route.kind === 'opportunities-list'}
+								<a
+									href={resolve(resolveOpportunitiesListPath(item.route.meetingKey))}
+									data-sidebar-indicator-key={renderMode === 'desktop' ? item.route.kind : undefined}
+									class={getItemClassName({
+										sectionId: section.id,
+										isActive: isDashboardNavRouteActive(item.route, currentRoute)
+									})}
+									onmouseenter={() => {
+										onHoverRoute?.(item.route, section.id);
+									}}
+									onclick={() => {
+										onSelectRoute?.(item.route);
+									}}
+								>
+									<Icon class="size-3.5 shrink-0" />
+									{#if renderMode === 'mobile' || expanded}
+										<span class={renderMode === 'mobile' ? 'min-w-0 truncate' : 'min-w-0 overflow-hidden'} in:fly={renderMode === 'mobile' ? undefined : { x: -4, duration: 200 }}>
+											{#if renderMode === 'mobile'}
+												{item.label}
+											{:else}
+												<span class="block truncate text-left">{item.label}</span>
+											{/if}
+										</span>
+									{:else}
+										<span class="sr-only">{item.label}</span>
+									{/if}
+								</a>
+							{:else}
+								<a
+									href={resolve(resolveSinceLastMeetingPath(item.route.meetingKey))}
+									data-sidebar-indicator-key={renderMode === 'desktop' ? item.route.kind : undefined}
+									class={getItemClassName({
+										sectionId: section.id,
+										isActive: isDashboardNavRouteActive(item.route, currentRoute)
+									})}
+									onmouseenter={() => {
+										onHoverRoute?.(item.route, section.id);
+									}}
+									onclick={() => {
+										onSelectRoute?.(item.route);
+									}}
+								>
+									<Icon class="size-3.5 shrink-0" />
+									{#if renderMode === 'mobile' || expanded}
+										<span class={renderMode === 'mobile' ? 'min-w-0 truncate' : 'min-w-0 overflow-hidden'} in:fly={renderMode === 'mobile' ? undefined : { x: -4, duration: 200 }}>
+											{#if renderMode === 'mobile'}
+												{item.label}
+											{:else}
+												<span class="block truncate text-left">{item.label}</span>
+											{/if}
+										</span>
+									{:else}
+										<span class="sr-only">{item.label}</span>
+									{/if}
+								</a>
+							{/if}
 						{/if}
 					</span>
 				</li>

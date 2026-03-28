@@ -26,7 +26,16 @@
 		<ol class="space-y-2.5">
 			{#each items as item (item.id)}
 				<li>
-					<ListCard link={item.navigation}>
+					<ListCard
+						link={item.navigation.kind === 'internal'
+							? {
+									kind: 'my-deals',
+									href: item.navigation.href
+								}
+							: {
+									kind: 'none'
+								}}
+					>
 						{#snippet body()}
 							<div class="flex items-start justify-between gap-3">
 								<div class="flex min-w-0 items-start gap-1.5">
