@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
+	import type { NewBusinessListPageData } from '$lib/dashboard/page-models/newBusiness';
 	import DashboardHeaderScope from '$lib/dashboard/shell/header/DashboardHeaderScope.svelte';
 	import InlineInfoBar from '$lib/dashboard/ui/shared/InlineInfoBar.svelte';
 	import Table from './Table.svelte';
@@ -10,14 +10,14 @@
 	} from './likely-out-of-date';
 	import { getStaleLikelyOutOfDateSelectionRowKeys } from './likely-out-of-date';
 
-	type AllActivityTableRow = AllActivityListPageData['rows'][number];
+	type NewBusinessTableRow = NewBusinessListPageData['rows'][number];
 
 	type Props = {
-		rows: readonly AllActivityTableRow[];
+		rows: readonly NewBusinessTableRow[];
 	};
 
 	let { rows }: Props = $props();
-	let selectedRowKeys = new SvelteSet<AllActivityTableRow['key']>();
+	let selectedRowKeys = new SvelteSet<NewBusinessTableRow['key']>();
 	const selection = {
 		headerLabel: 'Select' as const,
 		selectedRowKeys,
@@ -32,7 +32,7 @@
 		}
 	});
 
-	function toggleSelectedRow(rowKey: AllActivityTableRow['key'], checked: boolean) {
+	function toggleSelectedRow(rowKey: NewBusinessTableRow['key'], checked: boolean) {
 		if (checked) {
 			selectedRowKeys.add(rowKey);
 		} else {

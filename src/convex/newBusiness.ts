@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 import { query } from './_generated/server';
 import type { BrokerId } from '../lib/types/ids';
 import type { DealKey } from '../lib/types/keys';
-import { type AllActivityView } from '../lib/dashboard/routing/all-activity';
+import { type NewBusinessView } from '../lib/dashboard/routing/new-business';
 import { getActivityLevelLabel, sortDealActivitiesAscending } from '../lib/dashboard/view-models/deal';
 import {
 	type PersonSummaryMap,
@@ -32,29 +32,29 @@ import {
 	toDealRecord
 } from './readModels';
 import {
-	type AllActivityDetailReadModel,
-	type AllActivityListReadModel,
 	type DashboardPerson,
-	allActivityDetailReadModelValidator,
-	allActivityListReadModelValidator,
-	allActivityViewValidator
+	type NewBusinessDetailReadModel,
+	type NewBusinessListReadModel,
+	newBusinessDetailReadModelValidator,
+	newBusinessListReadModelValidator,
+	newBusinessViewValidator
 } from './validators';
 
 export type {
-	AllActivityDetailReadModel,
-	AllActivityDetailRef,
-	AllActivityListReadModel,
-	DashboardShellReadModel
+	DashboardShellReadModel,
+	NewBusinessDetailReadModel,
+	NewBusinessDetailRef,
+	NewBusinessListReadModel
 } from './validators';
 
 const NO_ACTIVITY_LABEL = 'No recorded activity';
 
 type RowCollections = {
-	allActivityTableRows: ReturnType<typeof toAllActivityTableRow>[];
-	needSupportRows: ReturnType<typeof toAllActivityTableRow>[];
-	duplicatedWorkRows: ReturnType<typeof toAllActivityTableRow>[];
-	noActivityTableRows: ReturnType<typeof toAllActivityTableRow>[];
-	likelyOutOfDateViewRows: ReturnType<typeof toAllActivityTableRow>[];
+	newBusinessTableRows: ReturnType<typeof toNewBusinessTableRow>[];
+	needSupportRows: ReturnType<typeof toNewBusinessTableRow>[];
+	duplicatedWorkRows: ReturnType<typeof toNewBusinessTableRow>[];
+	noActivityTableRows: ReturnType<typeof toNewBusinessTableRow>[];
+	likelyOutOfDateViewRows: ReturnType<typeof toNewBusinessTableRow>[];
 };
 
 function hasListActivityData(
@@ -65,9 +65,7 @@ function hasListActivityData(
 	return Boolean(deal.lastActivityAtIso);
 }
 
-function toAllActivityRowNavigation(
-	deal: DealRecordData
-) {
+function toNewBusinessRowNavigation(deal: DealRecordData) {
 	return deal.context
 		? {
 				dealKey: deal.key
@@ -75,7 +73,7 @@ function toAllActivityRowNavigation(
 		: null;
 }
 
-function toAllActivityTableRow(
+function toNewBusinessTableRow(
 	deal: DealRecordData,
 	lastActivity:
 		| {
@@ -90,7 +88,7 @@ function toAllActivityTableRow(
 ) {
 	return {
 		key: deal.key,
-		detail: toAllActivityRowNavigation(deal),
+		detail: toNewBusinessRowNavigation(deal),
 		probability: deal.probability,
 		activityLevel: deal.activityLevel,
 		deal: deal.dealName,
@@ -106,7 +104,7 @@ function toRelativeLastActivityRow(
 	},
 	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ) {
-	return toAllActivityTableRow(
+	return toNewBusinessTableRow(
 		deal,
 		{
 			kind: 'relative',
@@ -120,7 +118,7 @@ function toNoActivityRow(
 	deal: DealRecordData,
 	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ) {
-	return toAllActivityTableRow(
+	return toNewBusinessTableRow(
 		deal,
 		{
 			kind: 'text',
@@ -130,7 +128,7 @@ function toNoActivityRow(
 	);
 }
 
-function toNonNavigableRow(row: ReturnType<typeof toAllActivityTableRow>) {
+function toNonNavigableRow(row: ReturnType<typeof toNewBusinessTableRow>) {
 	if (!row.detail) {
 		return row;
 	}
@@ -159,12 +157,14 @@ function buildRowCollections(
 	deals: readonly DealRecordData[],
 	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ): RowCollections {
-	const allActivityRows = deals.filter(hasListActivityData);
+	const newBusinessRows = deals.filter(hasListActivityData);
 	const noActivityRows = deals.filter((deal) => !hasListActivityData(deal));
 	const likelyOutOfDateRows = deals.filter((deal) => deal.isLikelyOutOfDate);
 
 	return {
-		allActivityTableRows: allActivityRows.map((deal) => toRelativeLastActivityRow(deal, peopleByBrokerId)),
+		newBusinessTableRows: newBusinessRows.map((deal) =>
+			toRelativeLastActivityRow(deal, peopleByBrokerId)
+		),
 		needSupportRows: filterFlaggedRows(deals, peopleByBrokerId, 'needsSupport'),
 		duplicatedWorkRows: filterFlaggedRows(deals, peopleByBrokerId, 'duplicatedWork'),
 		noActivityTableRows: noActivityRows.map((deal) => toNoActivityRow(deal, peopleByBrokerId)),
@@ -178,7 +178,7 @@ function buildRowCollections(
 	};
 }
 
-function resolveRowsForView(view: AllActivityView, collections: RowCollections) {
+function resolveRowsForView(view: NewBusinessView, collections: RowCollections) {
 	return view === 'need-support'
 		? collections.needSupportRows
 		: view === 'duplicated-work'
@@ -187,7 +187,7 @@ function resolveRowsForView(view: AllActivityView, collections: RowCollections) 
 				? collections.noActivityTableRows
 				: view === 'likely-out-of-date'
 					? collections.likelyOutOfDateViewRows
-					: collections.allActivityTableRows;
+					: collections.newBusinessTableRows;
 }
 
 function createFilterDrawerData(people: DashboardPerson[], deals: readonly DealRecordData[]) {
@@ -207,13 +207,13 @@ function createFilterDrawerData(people: DashboardPerson[], deals: readonly DealR
 	};
 }
 
-export const getAllActivityList = query({
+export const getNewBusinessList = query({
 	args: {
-		view: allActivityViewValidator
+		view: newBusinessViewValidator
 	},
-	returns: allActivityListReadModelValidator,
-	handler: async (ctx, args): Promise<AllActivityListReadModel> => {
-		const selectedView = args.view as AllActivityView;
+	returns: newBusinessListReadModelValidator,
+	handler: async (ctx, args): Promise<NewBusinessListReadModel> => {
+		const selectedView = args.view as NewBusinessView;
 		const [brokers, deals] = await Promise.all([
 			ctx.db.query('brokers').collect(),
 			ctx.db.query('deals').collect()
@@ -231,13 +231,13 @@ export const getAllActivityList = query({
 	}
 });
 
-export const getAllActivityDetail = query({
+export const getNewBusinessDetail = query({
 	args: {
 		dealKey: v.string(),
-		view: allActivityViewValidator
+		view: newBusinessViewValidator
 	},
-	returns: v.union(allActivityDetailReadModelValidator, v.null()),
-	handler: async (ctx, args): Promise<AllActivityDetailReadModel | null> => {
+	returns: v.union(newBusinessDetailReadModelValidator, v.null()),
+	handler: async (ctx, args): Promise<NewBusinessDetailReadModel | null> => {
 		const [deal, brokers] = await Promise.all([
 			findDealDocumentByKey(ctx, args.dealKey as DealKey),
 			ctx.db.query('brokers').collect()

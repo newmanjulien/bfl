@@ -4,7 +4,7 @@ import {
 	type DashboardRouteRef,
 	isDashboardNavRouteActive
 } from '$lib/dashboard/routing';
-import { DEFAULT_ALL_ACTIVITY_VIEW } from '$lib/dashboard/routing/all-activity';
+import { DEFAULT_NEW_BUSINESS_VIEW } from '$lib/dashboard/routing/new-business';
 import { DEFAULT_MY_DEALS_VIEW } from '$lib/dashboard/routing/my-deals';
 
 export type { DashboardNavRouteRef } from '$lib/dashboard/routing';
@@ -103,10 +103,10 @@ export const DASHBOARD_NAV_SECTIONS: readonly DashboardNavSection[] = [
 		items: [
 			createRouteItem({
 				route: {
-					kind: 'all-activity-list',
-					view: DEFAULT_ALL_ACTIVITY_VIEW
+					kind: 'new-business-list',
+					view: DEFAULT_NEW_BUSINESS_VIEW
 				},
-				label: 'All activity',
+				label: 'New business',
 				icon: List
 			})
 		]

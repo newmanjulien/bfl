@@ -10,21 +10,21 @@
 	import SelectableIconRow from '$lib/dashboard/ui/shared/SelectableIconRow.svelte';
 	import Section from './Section.svelte';
 	import type {
-		AllActivityFilterOptionToggle,
-		AllActivityFilterSectionId
+		NewBusinessFilterOptionToggle,
+		NewBusinessFilterSectionId
 	} from './model';
 	import type {
-		AllActivityBrokerFilterSection,
-		AllActivityFilterDrawerSection,
-		AllActivityIndustryFilterSection
+		NewBusinessBrokerFilterSection,
+		NewBusinessFilterDrawerSection,
+		NewBusinessIndustryFilterSection
 	} from './sections';
 
 	type Props = {
 		open: boolean;
-		sections: readonly AllActivityFilterDrawerSection[];
+		sections: readonly NewBusinessFilterDrawerSection[];
 		onClose: () => void;
-		onToggleSection: (sectionId: AllActivityFilterSectionId) => void;
-		onToggleOption: (toggle: AllActivityFilterOptionToggle) => void;
+		onToggleSection: (sectionId: NewBusinessFilterSectionId) => void;
+		onToggleOption: (toggle: NewBusinessFilterOptionToggle) => void;
 	};
 
 	let {
@@ -96,7 +96,7 @@
 {#if open}
 	<div
 		class="app-layer-drawer pointer-events-none absolute inset-0 hidden md:block"
-		data-all-activity-filter-drawer-root
+		data-new-business-filter-drawer-root
 	>
 		<button
 			type="button"
@@ -107,7 +107,7 @@
 		></button>
 
 		<aside
-			data-all-activity-filter-drawer
+			data-new-business-filter-drawer
 			class="pointer-events-auto absolute inset-y-0 right-0 flex flex-col border-l border-zinc-100 bg-white shadow-[0_18px_60px_rgba(24,24,27,0.14)] will-change-transform"
 			style={`width: ${drawerWidth};`}
 			transition:drawerSlide
@@ -142,7 +142,7 @@
 									onSelect={(optionId) =>
 										onToggleOption({
 											sectionId: 'broker',
-											optionId: optionId as AllActivityBrokerFilterSection['options'][number]['id']
+											optionId: optionId as NewBusinessBrokerFilterSection['options'][number]['id']
 										})}
 									searchLabel={section.searchLabel}
 									searchPlaceholder={section.searchPlaceholder}
@@ -160,7 +160,7 @@
 									onSelect={(optionId) =>
 										onToggleOption({
 											sectionId: 'industry',
-											optionId: optionId as AllActivityIndustryFilterSection['options'][number]['id']
+											optionId: optionId as NewBusinessIndustryFilterSection['options'][number]['id']
 										})}
 									searchLabel={section.searchLabel}
 									searchPlaceholder={section.searchPlaceholder}

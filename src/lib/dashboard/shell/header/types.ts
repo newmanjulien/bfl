@@ -1,18 +1,18 @@
 import type {
-	AllActivityListRouteRef,
 	MyDealsListRouteRef,
+	NewBusinessListRouteRef,
 	OpportunitiesListRouteRef,
 	SinceLastMeetingRouteRef
 } from '$lib/dashboard/routing';
 
 export type DashboardHeaderBackLinkRouteRef =
 	| MyDealsListRouteRef
-	| AllActivityListRouteRef
+	| NewBusinessListRouteRef
 	| OpportunitiesListRouteRef;
 
 export type DashboardHeaderTitleMenuRouteRef =
 	| MyDealsListRouteRef
-	| AllActivityListRouteRef;
+	| NewBusinessListRouteRef;
 
 export type DashboardHeaderControl =
 	| {

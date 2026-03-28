@@ -1,7 +1,4 @@
 export type {
-	AllActivityDetailReadModel,
-	AllActivityDetailRef,
-	AllActivityListReadModel,
 	DashboardMeeting,
 	DashboardPerson,
 	DashboardShellReadModel,
@@ -9,6 +6,9 @@ export type {
 	MyDealsDetailRef,
 	MyDealsFeedItemReadModel,
 	MyDealsListReadModel,
+	NewBusinessDetailReadModel,
+	NewBusinessDetailRef,
+	NewBusinessListReadModel,
 	OpportunityDetailReadModel,
 	OpportunityDetailRef,
 	OpportunitiesListReadModel,

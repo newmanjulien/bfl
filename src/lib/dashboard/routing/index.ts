@@ -1,11 +1,11 @@
 import type { AbsoluteUrl } from '$lib/types/url';
 import type { DealKey, InsightKey, MeetingKey } from '$lib/types/keys';
 import {
-	DEFAULT_ALL_ACTIVITY_VIEW,
-	isNonDefaultAllActivityView,
-	type NonDefaultAllActivityView,
-	type AllActivityView
-} from './all-activity';
+	DEFAULT_NEW_BUSINESS_VIEW,
+	isNonDefaultNewBusinessView,
+	type NewBusinessView,
+	type NonDefaultNewBusinessView
+} from './new-business';
 import {
 	DEFAULT_MY_DEALS_DETAIL_TAB_ID,
 	DEFAULT_MY_DEALS_VIEW,
@@ -17,7 +17,7 @@ import {
 } from './my-deals';
 
 const MY_DEALS_BASE_PATH = '/my-deals';
-const ALL_ACTIVITY_BASE_PATH = '/all-activity';
+const NEW_BUSINESS_BASE_PATH = '/new-business';
 const OPPORTUNITIES_BASE_PATH = '/opportunities';
 const SINCE_LAST_MEETING_PATH = '/since-last-meeting';
 
@@ -27,10 +27,13 @@ const DASHBOARD_ROUTE_IDS = {
 		'/(dashboard)/my-deals/detail/[dealKey]',
 		'/(dashboard)/my-deals/[view=myDealsView]/detail/[dealKey]'
 	],
-	allActivityList: ['/(dashboard)/all-activity', '/(dashboard)/all-activity/[view=allActivityView]'],
-	allActivityDetail: [
-		'/(dashboard)/all-activity/detail/[dealKey]',
-		'/(dashboard)/all-activity/[view=allActivityView]/detail/[dealKey]'
+	newBusinessList: [
+		'/(dashboard)/new-business',
+		'/(dashboard)/new-business/[view=newBusinessView]'
+	],
+	newBusinessDetail: [
+		'/(dashboard)/new-business/detail/[dealKey]',
+		'/(dashboard)/new-business/[view=newBusinessView]/detail/[dealKey]'
 	],
 	opportunities: ['/(dashboard)/opportunities', '/(dashboard)/opportunities/detail/[insightKey]'],
 	sinceLastMeeting: ['/(dashboard)/since-last-meeting']
@@ -48,15 +51,15 @@ export type MyDealsDetailRouteRef = {
 	tab: MyDealsDetailTabId;
 };
 
-export type AllActivityListRouteRef = {
-	kind: 'all-activity-list';
-	view: AllActivityView;
+export type NewBusinessListRouteRef = {
+	kind: 'new-business-list';
+	view: NewBusinessView;
 };
 
-export type AllActivityDetailRouteRef = {
-	kind: 'all-activity-detail';
+export type NewBusinessDetailRouteRef = {
+	kind: 'new-business-detail';
 	dealKey: DealKey;
-	view: AllActivityView;
+	view: NewBusinessView;
 };
 
 export type OpportunitiesListRouteRef = {
@@ -77,14 +80,14 @@ export type SinceLastMeetingRouteRef = {
 
 export type DashboardNavRouteRef =
 	| MyDealsListRouteRef
-	| AllActivityListRouteRef
+	| NewBusinessListRouteRef
 	| OpportunitiesListRouteRef
 	| SinceLastMeetingRouteRef;
 
 export type DashboardRouteRef =
 	| DashboardNavRouteRef
 	| MyDealsDetailRouteRef
-	| AllActivityDetailRouteRef
+	| NewBusinessDetailRouteRef
 	| OpportunitiesDetailRouteRef;
 
 export type InternalLink<TRoute extends DashboardRouteRef = DashboardRouteRef> = {
@@ -121,10 +124,10 @@ type DashboardPathname =
 	| `/my-deals/detail/${DealKey}?tab=${NonDefaultMyDealsDetailTabId}`
 	| `/my-deals/${NonDefaultMyDealsView}/detail/${DealKey}`
 	| `/my-deals/${NonDefaultMyDealsView}/detail/${DealKey}?tab=${NonDefaultMyDealsDetailTabId}`
-	| '/all-activity'
-	| `/all-activity/${NonDefaultAllActivityView}`
-	| `/all-activity/detail/${DealKey}`
-	| `/all-activity/${NonDefaultAllActivityView}/detail/${DealKey}`
+	| '/new-business'
+	| `/new-business/${NonDefaultNewBusinessView}`
+	| `/new-business/detail/${DealKey}`
+	| `/new-business/${NonDefaultNewBusinessView}/detail/${DealKey}`
 	| '/opportunities'
 	| `/opportunities?meetingKey=${MeetingKey}`
 	| `/opportunities/detail/${InsightKey}`
@@ -154,9 +157,9 @@ type DashboardRouteDefinitionMap = {
 	[K in DashboardRouteRef['kind']]: DashboardRouteDefinition<Extract<DashboardRouteRef, { kind: K }>>;
 };
 
-export const DEFAULT_DASHBOARD_ROUTE_REF: AllActivityListRouteRef = {
-	kind: 'all-activity-list',
-	view: DEFAULT_ALL_ACTIVITY_VIEW
+export const DEFAULT_DASHBOARD_ROUTE_REF: NewBusinessListRouteRef = {
+	kind: 'new-business-list',
+	view: DEFAULT_NEW_BUSINESS_VIEW
 };
 
 function hasOnlyAllowedSearchParams(
@@ -190,12 +193,12 @@ function resolveMyDealsListPath(view: MyDealsView) {
 	return `${MY_DEALS_BASE_PATH}/${view}`;
 }
 
-function resolveAllActivityListPath(view: AllActivityView) {
-	if (view === DEFAULT_ALL_ACTIVITY_VIEW) {
-		return ALL_ACTIVITY_BASE_PATH;
+function resolveNewBusinessListPath(view: NewBusinessView) {
+	if (view === DEFAULT_NEW_BUSINESS_VIEW) {
+		return NEW_BUSINESS_BASE_PATH;
 	}
 
-	return `${ALL_ACTIVITY_BASE_PATH}/${view}`;
+	return `${NEW_BUSINESS_BASE_PATH}/${view}`;
 }
 
 function resolveRequiredRouteParam(value: string | undefined) {
@@ -289,33 +292,33 @@ const dashboardRouteDefinitions = {
 			return `/my-deals/${route.view}/detail/${route.dealKey}?tab=${route.tab}`;
 		}
 	},
-	'all-activity-list': {
-		routeIds: DASHBOARD_ROUTE_IDS.allActivityList,
+	'new-business-list': {
+		routeIds: DASHBOARD_ROUTE_IDS.newBusinessList,
 		parse: ({ routeId, params, searchParams }) => {
 			if (searchParams.size > 0) {
 				return null;
 			}
 
-			if (routeId === DASHBOARD_ROUTE_IDS.allActivityList[0]) {
+			if (routeId === DASHBOARD_ROUTE_IDS.newBusinessList[0]) {
 				return {
-					kind: 'all-activity-list',
-					view: DEFAULT_ALL_ACTIVITY_VIEW
+					kind: 'new-business-list',
+					view: DEFAULT_NEW_BUSINESS_VIEW
 				};
 			}
 
-			if (!params.view || !isNonDefaultAllActivityView(params.view)) {
+			if (!params.view || !isNonDefaultNewBusinessView(params.view)) {
 				return null;
 			}
 
 			return {
-				kind: 'all-activity-list',
+				kind: 'new-business-list',
 				view: params.view
 			};
 		},
-		href: (route) => resolveAllActivityListPath(route.view)
+		href: (route) => resolveNewBusinessListPath(route.view)
 	},
-	'all-activity-detail': {
-		routeIds: DASHBOARD_ROUTE_IDS.allActivityDetail,
+	'new-business-detail': {
+		routeIds: DASHBOARD_ROUTE_IDS.newBusinessDetail,
 		parse: ({ routeId, params, searchParams }) => {
 			if (searchParams.size > 0) {
 				return null;
@@ -327,25 +330,25 @@ const dashboardRouteDefinitions = {
 				return null;
 			}
 
-			if (routeId === DASHBOARD_ROUTE_IDS.allActivityDetail[0]) {
+			if (routeId === DASHBOARD_ROUTE_IDS.newBusinessDetail[0]) {
 				return {
-					kind: 'all-activity-detail',
+					kind: 'new-business-detail',
 					dealKey: dealKey as DealKey,
-					view: DEFAULT_ALL_ACTIVITY_VIEW
+					view: DEFAULT_NEW_BUSINESS_VIEW
 				};
 			}
 
-			if (!params.view || !isNonDefaultAllActivityView(params.view)) {
+			if (!params.view || !isNonDefaultNewBusinessView(params.view)) {
 				return null;
 			}
 
 			return {
-				kind: 'all-activity-detail',
+				kind: 'new-business-detail',
 				dealKey: dealKey as DealKey,
 				view: params.view
 			};
 		},
-		href: (route) => `${resolveAllActivityListPath(route.view)}/detail/${route.dealKey}`
+		href: (route) => `${resolveNewBusinessListPath(route.view)}/detail/${route.dealKey}`
 	},
 	'opportunities-list': {
 		routeIds: [DASHBOARD_ROUTE_IDS.opportunities[0]],
@@ -443,9 +446,9 @@ export function isDashboardNavRouteActive(
 	switch (itemRoute.kind) {
 		case 'my-deals-list':
 			return currentRoute.kind === 'my-deals-list' || currentRoute.kind === 'my-deals-detail';
-		case 'all-activity-list':
+		case 'new-business-list':
 			return (
-				currentRoute.kind === 'all-activity-list' || currentRoute.kind === 'all-activity-detail'
+				currentRoute.kind === 'new-business-list' || currentRoute.kind === 'new-business-detail'
 			);
 		case 'opportunities-list':
 			return (

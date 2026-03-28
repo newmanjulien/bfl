@@ -5,11 +5,11 @@ import {
 import type { SearchableFilterPanelOption } from '$lib/dashboard/ui/pickers/filter-panel';
 import type { ActivityLevel, DealIndustry } from '$lib/types/vocab';
 import type {
-	AllActivityFilterDrawerData,
-	AllActivityFilterExpansionState
+	NewBusinessFilterDrawerData,
+	NewBusinessFilterExpansionState
 } from './model';
 
-type BrokerOption = AllActivityFilterDrawerData['brokers'][number];
+type BrokerOption = NewBusinessFilterDrawerData['brokers'][number];
 
 type BaseFilterOption<Id, Extra = object> = {
 	id: Id;
@@ -17,17 +17,17 @@ type BaseFilterOption<Id, Extra = object> = {
 	selected: boolean;
 } & Extra;
 
-export type AllActivityBrokerFilterOption = BaseFilterOption<
+export type NewBusinessBrokerFilterOption = BaseFilterOption<
 	BrokerOption['key'],
 	{ avatar: string }
 >;
 
-export type AllActivityActivityLevelFilterOption = BaseFilterOption<
+export type NewBusinessActivityLevelFilterOption = BaseFilterOption<
 	ActivityLevel,
 	{ iconVariant: ActivityLevelIconVariant }
 >;
 
-export type AllActivityIndustryFilterOption = BaseFilterOption<DealIndustry>;
+export type NewBusinessIndustryFilterOption = BaseFilterOption<DealIndustry>;
 
 type BaseSection<Id extends string, Option> = {
 	id: Id;
@@ -47,32 +47,32 @@ type SearchableSection<Id extends string, Option extends SearchableFilterPanelOp
 	emptyLabel: string;
 };
 
-export type AllActivityBrokerFilterSection = SearchableSection<
+export type NewBusinessBrokerFilterSection = SearchableSection<
 	'broker',
-	AllActivityBrokerFilterOption
+	NewBusinessBrokerFilterOption
 >;
 
-export type AllActivityActivityLevelFilterSection = BaseSection<
+export type NewBusinessActivityLevelFilterSection = BaseSection<
 	'activity-level',
-	AllActivityActivityLevelFilterOption
+	NewBusinessActivityLevelFilterOption
 >;
 
-export type AllActivityIndustryFilterSection = SearchableSection<
+export type NewBusinessIndustryFilterSection = SearchableSection<
 	'industry',
-	AllActivityIndustryFilterOption
+	NewBusinessIndustryFilterOption
 >;
 
-export type AllActivityFilterDrawerSection =
-	| AllActivityBrokerFilterSection
-	| AllActivityActivityLevelFilterSection
-	| AllActivityIndustryFilterSection;
+export type NewBusinessFilterDrawerSection =
+	| NewBusinessBrokerFilterSection
+	| NewBusinessActivityLevelFilterSection
+	| NewBusinessIndustryFilterSection;
 
-type BuildAllActivityFilterDrawerSectionsParams = {
-	data: AllActivityFilterDrawerData;
+type BuildNewBusinessFilterDrawerSectionsParams = {
+	data: NewBusinessFilterDrawerData;
 	selectedBrokerKeys: readonly BrokerOption['key'][];
 	selectedActivityLevels: readonly ActivityLevel[];
 	selectedIndustries: readonly DealIndustry[];
-	expandedSections: AllActivityFilterExpansionState;
+	expandedSections: NewBusinessFilterExpansionState;
 };
 
 function getSectionSummary(selectedCount: number) {
@@ -96,8 +96,8 @@ function sortSelectedOptions<Option extends { selected: boolean; label: string }
 }
 
 function buildBrokerSection(
-	params: BuildAllActivityFilterDrawerSectionsParams
-): AllActivityBrokerFilterSection {
+	params: BuildNewBusinessFilterDrawerSectionsParams
+): NewBusinessBrokerFilterSection {
 	const options = sortSelectedOptions(
 		params.data.brokers.map((broker) => ({
 			id: broker.key,
@@ -121,8 +121,8 @@ function buildBrokerSection(
 }
 
 function buildActivityLevelSection(
-	params: BuildAllActivityFilterDrawerSectionsParams
-): AllActivityActivityLevelFilterSection {
+	params: BuildNewBusinessFilterDrawerSectionsParams
+): NewBusinessActivityLevelFilterSection {
 	return {
 		id: 'activity-level',
 		title: 'Activity level',
@@ -139,8 +139,8 @@ function buildActivityLevelSection(
 }
 
 function buildIndustrySection(
-	params: BuildAllActivityFilterDrawerSectionsParams
-): AllActivityIndustryFilterSection {
+	params: BuildNewBusinessFilterDrawerSectionsParams
+): NewBusinessIndustryFilterSection {
 	const options = sortSelectedOptions(
 		params.data.industries.map((industry) => ({
 			id: industry.id,
@@ -162,9 +162,9 @@ function buildIndustrySection(
 	};
 }
 
-export function buildAllActivityFilterDrawerSections(
-	params: BuildAllActivityFilterDrawerSectionsParams
-): readonly AllActivityFilterDrawerSection[] {
+export function buildNewBusinessFilterDrawerSections(
+	params: BuildNewBusinessFilterDrawerSectionsParams
+): readonly NewBusinessFilterDrawerSection[] {
 	return [
 		buildBrokerSection(params),
 		buildActivityLevelSection(params),

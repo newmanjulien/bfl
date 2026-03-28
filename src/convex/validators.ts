@@ -1,9 +1,9 @@
 import { v } from 'convex/values';
 import {
-	type AllActivityView,
-	ALL_ACTIVITY_NON_DEFAULT_VIEWS,
-	DEFAULT_ALL_ACTIVITY_VIEW
-} from '../lib/dashboard/routing/all-activity';
+	type NewBusinessView,
+	DEFAULT_NEW_BUSINESS_VIEW,
+	NEW_BUSINESS_NON_DEFAULT_VIEWS
+} from '../lib/dashboard/routing/new-business';
 import {
 	DEFAULT_MY_DEALS_VIEW,
 	MY_DEALS_DETAIL_TAB_IDS,
@@ -47,9 +47,9 @@ export const dealActivityStreamValidator = literalUnion(DEAL_ACTIVITY_STREAMS);
 export const dealNewsSourceValidator = literalUnion(DEAL_NEWS_SOURCES);
 export const dealInsightKindValidator = literalUnion(DEAL_INSIGHT_KINDS);
 
-export const allActivityViewValidator = literalUnion([
-	DEFAULT_ALL_ACTIVITY_VIEW,
-	...ALL_ACTIVITY_NON_DEFAULT_VIEWS
+export const newBusinessViewValidator = literalUnion([
+	DEFAULT_NEW_BUSINESS_VIEW,
+	...NEW_BUSINESS_NON_DEFAULT_VIEWS
 ] as const);
 export const myDealsViewValidator = literalUnion([
 	DEFAULT_MY_DEALS_VIEW,
@@ -57,7 +57,7 @@ export const myDealsViewValidator = literalUnion([
 ] as const);
 export const myDealsDetailTabIdValidator = literalUnion(MY_DEALS_DETAIL_TAB_IDS);
 
-export type AllActivityViewValue = AllActivityView;
+export type NewBusinessViewValue = NewBusinessView;
 export type MyDealsViewValue = MyDealsView;
 export type MyDealsDetailTabIdValue = MyDealsDetailTabId;
 
@@ -88,7 +88,7 @@ export const myDealsDetailRefValidator = v.object({
 	defaultTab: myDealsDetailTabIdValidator
 });
 
-export const allActivityDetailRefValidator = v.object({
+export const newBusinessDetailRefValidator = v.object({
 	dealKey: v.string()
 });
 
@@ -255,7 +255,7 @@ export const myDealsTableRowReadModelValidator = v.object({
 	isReservedInEpic: v.boolean()
 });
 
-export const allActivityRowLastActivityValidator = v.union(
+export const newBusinessRowLastActivityValidator = v.union(
 	v.object({
 		kind: v.literal('relative'),
 		atIso: v.string()
@@ -266,18 +266,18 @@ export const allActivityRowLastActivityValidator = v.union(
 	})
 );
 
-export const allActivityTableRowReadModelValidator = v.object({
+export const newBusinessTableRowReadModelValidator = v.object({
 	key: v.string(),
-	detail: v.union(allActivityDetailRefValidator, v.null()),
+	detail: v.union(newBusinessDetailRefValidator, v.null()),
 	probability: v.number(),
 	activityLevel: activityLevelValidator,
 	deal: v.string(),
 	stage: v.string(),
-	lastActivity: allActivityRowLastActivityValidator,
+	lastActivity: newBusinessRowLastActivityValidator,
 	owner: v.union(dashboardPersonValidator, v.null())
 });
 
-export const allActivityFilterDrawerDataValidator = v.object({
+export const newBusinessFilterDrawerDataValidator = v.object({
 	brokers: v.array(dashboardPersonValidator),
 	activityLevels: v.array(
 		v.object({
@@ -324,12 +324,12 @@ export const myDealsDetailReadModelValidator = v.object({
 	rightRail: detailRightRailDataValidator
 });
 
-export const allActivityListReadModelValidator = v.object({
-	rows: v.array(allActivityTableRowReadModelValidator),
-	filterDrawerData: allActivityFilterDrawerDataValidator
+export const newBusinessListReadModelValidator = v.object({
+	rows: v.array(newBusinessTableRowReadModelValidator),
+	filterDrawerData: newBusinessFilterDrawerDataValidator
 });
 
-export const allActivityDetailReadModelValidator = v.object({
+export const newBusinessDetailReadModelValidator = v.object({
 	title: v.string(),
 	hero: canvasHeroValidator,
 	activityItems: v.array(timelineItemValidator),
@@ -366,7 +366,7 @@ export type MyDealsDetailRef = {
 	defaultTab: MyDealsDetailTabId;
 };
 
-export type AllActivityDetailRef = {
+export type NewBusinessDetailRef = {
 	dealKey: DealKey;
 };
 
@@ -406,9 +406,9 @@ export type MyDealsTableRowReadModel = {
 	isReservedInEpic: boolean;
 };
 
-export type AllActivityTableRowReadModel = {
+export type NewBusinessTableRowReadModel = {
 	key: DealKey;
-	detail: AllActivityDetailRef | null;
+	detail: NewBusinessDetailRef | null;
 	probability: number;
 	activityLevel: ActivityLevel;
 	deal: string;
@@ -425,7 +425,7 @@ export type AllActivityTableRowReadModel = {
 	owner: DashboardPerson | null;
 };
 
-export type AllActivityFilterDrawerData = {
+export type NewBusinessFilterDrawerData = {
 	brokers: DashboardPerson[];
 	activityLevels: {
 		id: ActivityLevel;
@@ -468,12 +468,12 @@ export type MyDealsDetailReadModel = {
 	rightRail: DetailRightRailData;
 };
 
-export type AllActivityListReadModel = {
-	rows: AllActivityTableRowReadModel[];
-	filterDrawerData: AllActivityFilterDrawerData;
+export type NewBusinessListReadModel = {
+	rows: NewBusinessTableRowReadModel[];
+	filterDrawerData: NewBusinessFilterDrawerData;
 };
 
-export type AllActivityDetailReadModel = {
+export type NewBusinessDetailReadModel = {
 	title: string;
 	hero: CanvasHeroData;
 	activityItems: TimelineItem[];

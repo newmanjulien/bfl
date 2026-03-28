@@ -2,22 +2,22 @@
 	import { resolve } from '$app/paths';
 	import { formatIsoDateTimeRelative } from '$lib/format/date-time';
 	import { resolveDashboardRoute } from '$lib/dashboard/routing';
-	import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
+	import type { NewBusinessListPageData } from '$lib/dashboard/page-models/newBusiness';
 	import ActivityLevelLabel from '$lib/dashboard/ui/activity-level/ActivityLevelLabel.svelte';
 	import PersonInline from '$lib/dashboard/ui/people/PersonInline.svelte';
 	import DashboardTableShell from '$lib/dashboard/ui/shared/DashboardTableShell.svelte';
 	import { cn } from '$lib/support/cn';
-	type AllActivityTableRow = AllActivityListPageData['rows'][number];
+	type NewBusinessTableRow = NewBusinessListPageData['rows'][number];
 
-	type AllActivityTableSelection = {
+	type NewBusinessTableSelection = {
 		headerLabel: 'Select';
-		selectedRowKeys: ReadonlySet<AllActivityTableRow['key']>;
-		onToggleRow: (rowKey: AllActivityTableRow['key'], checked: boolean) => void;
+		selectedRowKeys: ReadonlySet<NewBusinessTableRow['key']>;
+		onToggleRow: (rowKey: NewBusinessTableRow['key'], checked: boolean) => void;
 	};
 
 	type Props = {
-		rows: readonly AllActivityTableRow[];
-		selection?: AllActivityTableSelection;
+		rows: readonly NewBusinessTableRow[];
+		selection?: NewBusinessTableSelection;
 	};
 
 	let { rows, selection }: Props = $props();
@@ -31,7 +31,7 @@
 	let minWidthClass = $derived(selection ? 'min-w-[59rem] md:min-w-full' : 'min-w-[55rem] md:min-w-full');
 </script>
 
-{#snippet rowCells(row: AllActivityTableRow, isLinked: boolean)}
+{#snippet rowCells(row: NewBusinessTableRow, isLinked: boolean)}
 	{#if selection}
 		<label
 			data-table-cell
@@ -86,7 +86,7 @@
 	{headers}
 	{columnClass}
 	{minWidthClass}
-	ariaLabel="All activity deals table"
+	ariaLabel="New business deals table"
 	rowsLength={rows.length}
 	interactiveRows={!selection}
 >

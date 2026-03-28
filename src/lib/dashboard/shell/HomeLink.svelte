@@ -12,7 +12,7 @@
 
 <a
 	href={resolve(resolveDashboardRoute(DEFAULT_DASHBOARD_ROUTE_REF))}
-	aria-label="Go to all activity"
+	aria-label="Go to new business"
 	class={`overflow-hidden rounded-sm ${className}`}
 	{onclick}
 >

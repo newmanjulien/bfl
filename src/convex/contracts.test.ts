@@ -271,10 +271,10 @@ describe('Convex feature contracts', () => {
 			brokerKey: seed.collaboratorBrokerKey,
 			view: 'news'
 		});
-		const allActivityList = await t.query(api.allActivity.getAllActivityList, {
+		const newBusinessList = await t.query(api.newBusiness.getNewBusinessList, {
 			view: 'deals'
 		});
-		const allActivityDetail = await t.query(api.allActivity.getAllActivityDetail, {
+		const newBusinessDetail = await t.query(api.newBusiness.getNewBusinessDetail, {
 			dealKey: seed.dealKey,
 			view: 'deals'
 		});
@@ -301,8 +301,8 @@ describe('Convex feature contracts', () => {
 		expect(myDealsDetail?.title).toBe('Acme Expansion');
 		expect(getIndustryRow(myDealsDetail!)).toMatchObject({ dealKey: seed.dealKey });
 
-		expect(allActivityList).not.toHaveProperty('header');
-		expect(allActivityList.rows).toEqual(
+		expect(newBusinessList).not.toHaveProperty('header');
+		expect(newBusinessList.rows).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					key: seed.dealKey,
@@ -312,8 +312,8 @@ describe('Convex feature contracts', () => {
 				})
 			])
 		);
-		expect(allActivityDetail?.title).toBe('Acme Expansion');
-		expect(allActivityDetail?.orgChartNodes).toEqual(
+		expect(newBusinessDetail?.title).toBe('Acme Expansion');
+		expect(newBusinessDetail?.orgChartNodes).toEqual(
 			toExpectedDashboardOrgChartNodes(seed.dealOrgChartNodes, seed)
 		);
 
@@ -345,7 +345,7 @@ describe('Convex feature contracts', () => {
 			})
 		).resolves.toBeNull();
 		await expect(
-			t.query(api.allActivity.getAllActivityDetail, {
+			t.query(api.newBusiness.getNewBusinessDetail, {
 				dealKey: 'bad-deal-key',
 				view: 'deals'
 			})
@@ -448,7 +448,7 @@ describe('Convex feature contracts', () => {
 			);
 		});
 
-		const allActivityDetail = await t.query(api.allActivity.getAllActivityDetail, {
+		const newBusinessDetail = await t.query(api.newBusiness.getNewBusinessDetail, {
 			dealKey: legacyDealKey,
 			view: 'deals'
 		});
@@ -457,7 +457,7 @@ describe('Convex feature contracts', () => {
 			meetingKey: seed.march20MeetingKey
 		});
 
-		expect(allActivityDetail?.orgChartNodes).toEqual([
+		expect(newBusinessDetail?.orgChartNodes).toEqual([
 			{
 				id: 'legacy-root',
 				name: 'Alex Morgan',

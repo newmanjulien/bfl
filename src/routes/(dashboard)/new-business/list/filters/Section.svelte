@@ -2,13 +2,13 @@
 	import { ChevronDown } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
 	import { cn } from '$lib/support/cn';
-	import type { AllActivityFilterSectionId } from './model';
-	import type { AllActivityFilterDrawerSection } from './sections';
+	import type { NewBusinessFilterSectionId } from './model';
+	import type { NewBusinessFilterDrawerSection } from './sections';
 
 	type Props = {
-		section: AllActivityFilterDrawerSection;
+		section: NewBusinessFilterDrawerSection;
 		showDivider?: boolean;
-		onToggleSection: (sectionId: AllActivityFilterSectionId) => void;
+		onToggleSection: (sectionId: NewBusinessFilterSectionId) => void;
 		children?: Snippet;
 	};
 
@@ -21,7 +21,7 @@
 </script>
 
 <section
-	data-all-activity-filter-section={section.id}
+	data-new-business-filter-section={section.id}
 	class={cn(showDivider && 'border-t border-zinc-100', 'px-4 py-4')}
 >
 	{#if section.collapsible}
@@ -34,7 +34,7 @@
 			<div class="min-w-0 flex-1">
 				<p class="text-[9px] uppercase tracking-[0.08em] text-zinc-400">{section.title}</p>
 				<p
-					data-all-activity-filter-summary={section.id}
+					data-new-business-filter-summary={section.id}
 					class="mt-1 text-[11px] tracking-wide text-zinc-500"
 				>
 					{section.summary}
@@ -52,7 +52,7 @@
 			<div class="min-w-0 flex-1">
 				<p class="text-[9px] uppercase tracking-[0.08em] text-zinc-400">{section.title}</p>
 				<p
-					data-all-activity-filter-summary={section.id}
+					data-new-business-filter-summary={section.id}
 					class="mt-1 text-[11px] tracking-wide text-zinc-500"
 				>
 					{section.summary}

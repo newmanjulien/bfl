@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
+	import type { NewBusinessListPageData } from '$lib/dashboard/page-models/newBusiness';
 	import DashboardPageLayout from '$lib/dashboard/layout/DashboardPageLayout.svelte';
 	import DashboardHeaderScope from '$lib/dashboard/shell/header/DashboardHeaderScope.svelte';
 	import {
@@ -11,30 +11,30 @@
 	import Table from './Table.svelte';
 	import LikelyOutOfDateTable from './LikelyOutOfDateTable.svelte';
 	import {
-		createDefaultAllActivityFilterExpansionState,
-		type AllActivityFilterDrawerData,
-		type AllActivityFilterOptionToggle,
-		type AllActivityFilterSectionId
+		createDefaultNewBusinessFilterExpansionState,
+		type NewBusinessFilterDrawerData,
+		type NewBusinessFilterOptionToggle,
+		type NewBusinessFilterSectionId
 	} from './filters/model';
-	import { buildAllActivityFilterDrawerSections } from './filters/sections';
+	import { buildNewBusinessFilterDrawerSections } from './filters/sections';
 
-	type BrokerKey = AllActivityFilterDrawerData['brokers'][number]['key'];
+	type BrokerKey = NewBusinessFilterDrawerData['brokers'][number]['key'];
 
 	type Props = {
-		data: AllActivityListPageData;
+		data: NewBusinessListPageData;
 	};
 
-	const HEADER_SCOPE_ID = 'all-activity-list';
+	const HEADER_SCOPE_ID = 'new-business-list';
 
 	let { data }: Props = $props();
 	const filterDrawerData = $derived(data.filterDrawerData);
 	let isFilterDrawerOpen = $state(false);
-	let expandedSections = $state(createDefaultAllActivityFilterExpansionState());
+	let expandedSections = $state(createDefaultNewBusinessFilterExpansionState());
 	let selectedBrokerKeys = $state<BrokerKey[]>([]);
 	let selectedActivityLevels = $state<ActivityLevel[]>([]);
 	let selectedIndustries = $state<DealIndustry[]>([]);
 	const filterDrawerSections = $derived(
-		buildAllActivityFilterDrawerSections({
+		buildNewBusinessFilterDrawerSections({
 			data: filterDrawerData,
 			selectedBrokerKeys,
 			selectedActivityLevels,
@@ -63,7 +63,7 @@
 			: [...selectedValues, value];
 	}
 
-	function toggleFilterSection(sectionId: AllActivityFilterSectionId) {
+	function toggleFilterSection(sectionId: NewBusinessFilterSectionId) {
 		const isExpanding = !expandedSections[sectionId];
 
 		expandedSections = {
@@ -74,7 +74,7 @@
 		};
 	}
 
-	function toggleFilterOption(toggle: AllActivityFilterOptionToggle) {
+	function toggleFilterOption(toggle: NewBusinessFilterOptionToggle) {
 		if (toggle.sectionId === 'broker') {
 			selectedBrokerKeys = toggleSelectedValue(selectedBrokerKeys, toggle.optionId);
 			return;
@@ -88,7 +88,7 @@
 		selectedIndustries = toggleSelectedValue(selectedIndustries, toggle.optionId);
 	}
 
-	function getAllActivityHeaderUiScope(
+	function getNewBusinessHeaderUiScope(
 		filterHandler: DashboardHeaderButtonHandler
 	): DashboardHeaderUiScope {
 		return {
@@ -116,7 +116,7 @@
 
 <DashboardHeaderScope
 	scopeId={HEADER_SCOPE_ID}
-	scope={getAllActivityHeaderUiScope(toggleFilterDrawer)}
+	scope={getNewBusinessHeaderUiScope(toggleFilterDrawer)}
 />
 
 <DashboardPageLayout width="wide">

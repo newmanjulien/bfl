@@ -1,10 +1,10 @@
 import type { DashboardHeaderUiScope } from '$lib/dashboard/shell/header/ui-controller';
-import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
+import type { NewBusinessListPageData } from '$lib/dashboard/page-models/newBusiness';
 
-export const LIKELY_OUT_OF_DATE_HEADER_SCOPE_ID = 'all-activity-likely-out-of-date';
+export const LIKELY_OUT_OF_DATE_HEADER_SCOPE_ID = 'new-business-likely-out-of-date';
 
-type AllActivityTableRow = AllActivityListPageData['rows'][number];
-type LikelyOutOfDateRow = Pick<AllActivityTableRow, 'key'>;
+type NewBusinessTableRow = NewBusinessListPageData['rows'][number];
+type LikelyOutOfDateRow = Pick<NewBusinessTableRow, 'key'>;
 
 export function getLikelyOutOfDateHeaderUiScope(
 	selectedRowCount: number

@@ -1,15 +1,15 @@
 import type {
-	AllActivityListRouteRef,
 	MyDealsListRouteRef,
+	NewBusinessListRouteRef,
 	OpportunitiesListRouteRef,
 	SinceLastMeetingRouteRef
 } from '$lib/dashboard/routing';
 import type { DashboardHeader } from '$lib/dashboard/shell/header/types';
 import {
-	ALL_ACTIVITY_VIEW_OPTIONS,
-	getAllActivityViewLabel,
-	type AllActivityView
-} from '$lib/dashboard/routing/all-activity';
+	NEW_BUSINESS_VIEW_OPTIONS,
+	getNewBusinessViewLabel,
+	type NewBusinessView
+} from '$lib/dashboard/routing/new-business';
 import {
 	MY_DEALS_VIEW_OPTIONS,
 	getMyDealsViewLabel,
@@ -28,7 +28,7 @@ function buildHeaderTitleMenu<TId extends string>(params: {
 	activeLabel: string;
 	selectedId: TId;
 	options: readonly HeaderMenuOption<TId>[];
-	buildRoute: (id: TId) => MyDealsListRouteRef | AllActivityListRouteRef;
+	buildRoute: (id: TId) => MyDealsListRouteRef | NewBusinessListRouteRef;
 }) {
 	const { menuId, ariaLabel, sectionLabel, activeLabel, selectedId, options, buildRoute } = params;
 
@@ -130,20 +130,20 @@ export function createMyDealsDetailHeader(
 	};
 }
 
-export function createAllActivityListHeader(selectedView: AllActivityView): DashboardHeader {
+export function createNewBusinessListHeader(selectedView: NewBusinessView): DashboardHeader {
 	return {
 		leading: {
 			kind: 'title-menu',
-			title: 'All activity',
+			title: 'New business',
 			menu: buildHeaderTitleMenu({
-				menuId: 'desktop-all-activity-view',
-				ariaLabel: 'Change all activity view',
-				sectionLabel: 'Select all activity view',
-				activeLabel: getAllActivityViewLabel(selectedView),
+				menuId: 'desktop-new-business-view',
+				ariaLabel: 'Change new business view',
+				sectionLabel: 'Select new business view',
+				activeLabel: getNewBusinessViewLabel(selectedView),
 				selectedId: selectedView,
-				options: ALL_ACTIVITY_VIEW_OPTIONS,
+				options: NEW_BUSINESS_VIEW_OPTIONS,
 				buildRoute: (view) => ({
-					kind: 'all-activity-list',
+					kind: 'new-business-list',
 					view
 				})
 			})
@@ -152,9 +152,9 @@ export function createAllActivityListHeader(selectedView: AllActivityView): Dash
 	};
 }
 
-export function createAllActivityDetailHeader(
+export function createNewBusinessDetailHeader(
 	title: string,
-	selectedView: AllActivityView
+	selectedView: NewBusinessView
 ): DashboardHeader {
 	return {
 		leading: {
@@ -163,10 +163,10 @@ export function createAllActivityDetailHeader(
 			control: {
 				kind: 'back-link',
 				route: {
-					kind: 'all-activity-list',
+					kind: 'new-business-list',
 					view: selectedView
 				},
-				label: getAllActivityViewLabel(selectedView)
+				label: getNewBusinessViewLabel(selectedView)
 			}
 		},
 		actions: ['share']
