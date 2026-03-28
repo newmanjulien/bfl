@@ -1,4 +1,4 @@
-import type { BrokerId, DealId } from '$lib/types/ids';
+import type { BrokerKey, DealKey } from '$lib/types/keys';
 import type { ActivityLevel, DealIndustry } from '$lib/types/vocab';
 import type { IsoDateTime } from '$lib/types/dates';
 import {
@@ -7,7 +7,7 @@ import {
 } from '$lib/format/date-time';
 
 type PersonSummaryLike = {
-	id: BrokerId;
+	key: BrokerKey;
 	name: string;
 	avatar: string;
 };
@@ -27,7 +27,7 @@ type DealContextLike = {
 };
 
 type DealOverviewLike = {
-	id: DealId;
+	key: DealKey;
 	dealName: string;
 	dealNumber: number;
 	activityLevel: ActivityLevel;
@@ -48,7 +48,7 @@ export type DetailRightRailRow =
 			label: string;
 			kind: 'industry';
 			value: DealIndustry;
-			dealId: DealId;
+			dealKey: DealKey;
 	  }
 	| {
 			id: string;
@@ -152,7 +152,7 @@ export function toDetailRightRailOverviewSection(
 				label: 'Industry',
 				kind: 'industry',
 				value: deal.industry,
-				dealId: deal.id
+				dealKey: deal.key
 			},
 			{
 				id: 'owner',

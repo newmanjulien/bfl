@@ -1,5 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import { api, createServerConvexClient } from '$lib/server/convex';
+import { parseDealKey } from '$lib/types/keys';
 import { DEAL_INDUSTRIES, type DealIndustry } from '$lib/types/vocab';
 
 function isDealIndustry(value: string): value is DealIndustry {
@@ -23,11 +24,11 @@ export async function applyDealIndustryUpdate(params: {
 	url: URL;
 }) {
 	const formData = await params.request.formData();
-	const dealId = formData.get('dealId');
+	const dealKey = parseDealKey(formData.get('dealKey'));
 	const industry = formData.get('industry');
 
-	if (typeof dealId !== 'string' || dealId.length === 0) {
-		throw error(400, 'Invalid deal id.');
+	if (!dealKey) {
+		throw error(400, 'Invalid deal key.');
 	}
 
 	if (typeof industry !== 'string' || !isDealIndustry(industry)) {
@@ -35,7 +36,7 @@ export async function applyDealIndustryUpdate(params: {
 	}
 
 	const result = await createServerConvexClient().action(api.mutations.updateDealIndustry, {
-		dealId,
+		dealKey,
 		industry
 	});
 

@@ -4,22 +4,22 @@ import {
 import {
 	requireDashboardRouteKind
 } from '$lib/dashboard/page-models/layout';
-import { resolveDefaultBrokerId } from '$lib/server/brokers';
+import { resolveDefaultBrokerKey } from '$lib/server/brokers';
 import { api, createServerConvexClient } from '$lib/server/convex';
-import { resolveMyDealsActiveBrokerId } from './data/active-broker';
+import { resolveMyDealsActiveBrokerKey } from './data/active-broker';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const layoutData = await parent();
 	const route = requireDashboardRouteKind(layoutData.route, 'my-deals-list');
-	const activeBrokerId = resolveMyDealsActiveBrokerId(
+	const activeBrokerKey = resolveMyDealsActiveBrokerKey(
 		layoutData.dashboardShell.people,
-		resolveDefaultBrokerId()
+		resolveDefaultBrokerKey()
 	);
 	const readModel = await createServerConvexClient().query(api.myDeals.getMyDealsList, {
-		brokerId: activeBrokerId,
+		brokerKey: activeBrokerKey,
 		view: route.view
 	});
 
-	return buildMyDealsListPageData({ route, readModel, activeBrokerId });
+	return buildMyDealsListPageData({ route, readModel, activeBrokerKey });
 };

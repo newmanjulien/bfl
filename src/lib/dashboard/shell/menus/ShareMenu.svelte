@@ -7,7 +7,7 @@
 	import { useDashboardMenu } from './menu-state.svelte';
 
 	type ShareMenuPerson = {
-		id: string;
+		key: string;
 		name: string;
 		avatar: string;
 	};
@@ -20,16 +20,16 @@
 	let { menuId, people }: Props = $props();
 	const menu = useDashboardMenu(() => menuId);
 
-	const allPersonIds = $derived(people.map((person) => person.id));
+	const allPersonKeys = $derived(people.map((person) => person.key));
 	let selectedIds = $state<string[]>([]);
 
 	$effect(() => {
 		if (selectedIds.length === 0) {
-			selectedIds = [...allPersonIds];
+			selectedIds = [...allPersonKeys];
 		}
 	});
 
-	const selectedPeople = $derived(people.filter((person) => selectedIds.includes(person.id)));
+	const selectedPeople = $derived(people.filter((person) => selectedIds.includes(person.key)));
 
 	function toggleSelectedId(selectedId: string, checked: boolean) {
 		const hasId = selectedIds.includes(selectedId);
@@ -82,8 +82,8 @@
 				>
 					{#snippet body()}
 						<ul class="mt-1 space-y-1">
-							{#each people as person (person.id)}
-								{@const selected = isSelected(person.id)}
+							{#each people as person (person.key)}
+								{@const selected = isSelected(person.key)}
 								<li>
 									<SelectableAvatarRow
 										label={person.name}
@@ -91,7 +91,7 @@
 										selected={selected}
 										role="menuitemcheckbox"
 										ariaChecked={selected}
-										onClick={() => toggleSelectedId(person.id, !selected)}
+										onClick={() => toggleSelectedId(person.key, !selected)}
 									/>
 								</li>
 							{/each}

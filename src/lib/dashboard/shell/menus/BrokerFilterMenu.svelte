@@ -6,7 +6,7 @@
 	import { useDashboardMenu } from './menu-state.svelte';
 
 	type BrokerFilterPerson = {
-		id: string;
+		key: string;
 		name: string;
 		avatar: string;
 	};
@@ -19,12 +19,12 @@
 	let { menuId, people }: Props = $props();
 	const menu = useDashboardMenu(() => menuId);
 
-	const allPersonIds = $derived(people.map((person) => person.id));
+	const allPersonKeys = $derived(people.map((person) => person.key));
 	let selectedIds = $state<string[]>([]);
 
 	$effect(() => {
 		if (selectedIds.length === 0) {
-			selectedIds = [...allPersonIds];
+			selectedIds = [...allPersonKeys];
 		}
 	});
 
@@ -67,8 +67,8 @@
 		<DashboardMenuPanel panelId={menu.panelId} class={menu.menuPanelClass} title="Filter by broker">
 			{#snippet body()}
 				<ul class="mt-1 space-y-1">
-					{#each people as person (person.id)}
-						{@const selected = isSelected(person.id)}
+					{#each people as person (person.key)}
+						{@const selected = isSelected(person.key)}
 						<li>
 							<SelectableAvatarRow
 								label={person.name}
@@ -76,7 +76,7 @@
 								selected={selected}
 								role="menuitemcheckbox"
 								ariaChecked={selected}
-								onClick={() => toggleSelectedId(person.id, !selected)}
+								onClick={() => toggleSelectedId(person.key, !selected)}
 							/>
 						</li>
 					{/each}

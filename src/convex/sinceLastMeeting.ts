@@ -1,14 +1,13 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
 import { sortDealActivitiesAscending } from '../lib/dashboard/view-models/deal';
+import type { MeetingKey } from '../lib/types/keys';
+import { toTimelineItem } from '../lib/dashboard/view-models/deal-content';
 import {
-	createPersonSummaryMap,
-	toTimelineItem
-} from '../lib/dashboard/view-models/deal-content';
-import {
-	requireMeetingRecord,
+	createDashboardPersonByBrokerIdMap,
+	requireMeetingRecordByKey,
 	toActivityRecord,
-	toDashboardPeople,
+	toBrokerRecord,
 	toDealRecord
 } from './readModels';
 import {
@@ -43,7 +42,7 @@ function toSinceLastMeetingDeals(
 
 		return [
 			{
-				id: deal.id,
+				key: deal.key,
 				deal: deal.dealName,
 				probability: deal.probability,
 				activityLevel: deal.activityLevel,
@@ -55,23 +54,23 @@ function toSinceLastMeetingDeals(
 
 export const getSinceLastMeeting = query({
 	args: {
-		meetingId: v.id('meetings')
+		meetingKey: v.string()
 	},
 	returns: sinceLastMeetingReadModelValidator,
 	handler: async (ctx, args): Promise<SinceLastMeetingReadModel> => {
-		const [meeting, brokers, activities, deals] = await Promise.all([
-			requireMeetingRecord(ctx, args.meetingId),
+		const [meeting, brokers, deals] = await Promise.all([
+			requireMeetingRecordByKey(ctx, args.meetingKey as MeetingKey),
 			ctx.db.query('brokers').collect(),
-			ctx.db
-				.query('activities')
-				.withIndex('by_meeting_id_stream_occurred_on_iso', (query) =>
-					query.eq('meetingId', args.meetingId).eq('stream', 'meeting-update')
-				)
-				.collect(),
 			ctx.db.query('deals').collect()
 		]);
-		const people = await toDashboardPeople(ctx, brokers);
-		const peopleById = createPersonSummaryMap(people);
+		const activities = await ctx.db
+			.query('activities')
+			.withIndex('by_meeting_id_stream_occurred_on_iso', (query) =>
+				query.eq('meetingId', meeting.id).eq('stream', 'meeting-update')
+			)
+			.collect();
+		const brokerRecords = await Promise.all(brokers.map((broker) => toBrokerRecord(ctx, broker)));
+		const peopleById = createDashboardPersonByBrokerIdMap(brokerRecords);
 		const meetingUpdateActivities = sortDealActivitiesAscending(
 			activities.map((activity) => toActivityRecord(activity))
 		);

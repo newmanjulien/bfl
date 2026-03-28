@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { resolveDashboardRoute } from '$lib/dashboard/routing';
 	import type { MyDealsListPageData } from '$lib/dashboard/page-models/myDeals';
-	import type { BrokerId } from '$lib/types/ids';
+	import type { BrokerKey } from '$lib/types/keys';
 	import { Check } from 'lucide-svelte';
 	import NewsSourceInline from '$lib/dashboard/ui/detail/NewsSourceInline.svelte';
 	import PersonInline from '$lib/dashboard/ui/people/PersonInline.svelte';
@@ -12,10 +12,10 @@
 
 	type Props = {
 		rows: readonly MyDealsTableRow[];
-		activeBrokerId: BrokerId;
+		activeBrokerKey: BrokerKey;
 	};
 
-	let { rows, activeBrokerId }: Props = $props();
+	let { rows, activeBrokerKey }: Props = $props();
 
 	const headers = ['Deal', 'Latest news', 'Last activity', 'Owner', 'Reserved in Epic'] as const;
 	const columnClass =
@@ -25,7 +25,7 @@
 
 	{#snippet rowCells(row: MyDealsTableRow, isLinked: boolean)}
 		{@const showReservedInEpic =
-			row.owner?.id === activeBrokerId && row.isReservedInEpic}
+			row.owner?.key === activeBrokerKey && row.isReservedInEpic}
 		<span
 			data-table-cell
 			class={`overflow-hidden font-medium text-zinc-600${
@@ -75,7 +75,7 @@
 	>
 		{#snippet body()}
 			<div class="divide-y divide-zinc-100">
-				{#each rows as row (row.id)}
+				{#each rows as row (row.key)}
 					{#if row.navigation.kind === 'internal'}
 						<a
 							href={resolve(resolveDashboardRoute(row.navigation.route))}

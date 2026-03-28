@@ -26,7 +26,7 @@ type NewsRecordLike = {
 };
 
 export type DealSummaryRow = {
-	id: string;
+	key: string;
 	deal: string;
 	probability: number;
 	activityLevel: ActivityLevel;

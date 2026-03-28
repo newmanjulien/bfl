@@ -18,7 +18,7 @@
 	} from './filters/model';
 	import { buildAllActivityFilterDrawerSections } from './filters/sections';
 
-	type BrokerId = AllActivityFilterDrawerData['brokers'][number]['id'];
+	type BrokerKey = AllActivityFilterDrawerData['brokers'][number]['key'];
 
 	type Props = {
 		data: AllActivityListPageData;
@@ -30,13 +30,13 @@
 	const filterDrawerData = $derived(data.filterDrawerData);
 	let isFilterDrawerOpen = $state(false);
 	let expandedSections = $state(createDefaultAllActivityFilterExpansionState());
-	let selectedBrokerIds = $state<BrokerId[]>([]);
+	let selectedBrokerKeys = $state<BrokerKey[]>([]);
 	let selectedActivityLevels = $state<ActivityLevel[]>([]);
 	let selectedIndustries = $state<DealIndustry[]>([]);
 	const filterDrawerSections = $derived(
 		buildAllActivityFilterDrawerSections({
 			data: filterDrawerData,
-			selectedBrokerIds,
+			selectedBrokerKeys,
 			selectedActivityLevels,
 			selectedIndustries,
 			expandedSections
@@ -44,7 +44,7 @@
 	);
 
 	$effect(() => {
-		selectedBrokerIds = filterDrawerData.brokers.map((broker) => broker.id);
+		selectedBrokerKeys = filterDrawerData.brokers.map((broker) => broker.key);
 		selectedActivityLevels = filterDrawerData.activityLevels.map((activityLevel) => activityLevel.id);
 		selectedIndustries = filterDrawerData.industries.map((industry) => industry.id);
 	});
@@ -76,7 +76,7 @@
 
 	function toggleFilterOption(toggle: AllActivityFilterOptionToggle) {
 		if (toggle.sectionId === 'broker') {
-			selectedBrokerIds = toggleSelectedValue(selectedBrokerIds, toggle.optionId);
+			selectedBrokerKeys = toggleSelectedValue(selectedBrokerKeys, toggle.optionId);
 			return;
 		}
 

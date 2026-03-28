@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
 import { type BrokerId } from '../lib/types/ids';
+import type { BrokerKey, DealKey } from '../lib/types/keys';
 import {
 	DEFAULT_MY_DEALS_DETAIL_TAB_ID
 } from '../lib/dashboard/routing/my-deals';
@@ -11,7 +12,6 @@ import {
 	sortDealNewsDescending
 } from '../lib/dashboard/view-models/deal';
 import {
-	createPersonSummaryMap,
 	type PersonSummaryMap,
 	resolveOptionalBrokerPerson,
 	toTimelineItem
@@ -26,11 +26,14 @@ import {
 } from '../lib/dashboard/detail/right-rail';
 import {
 	type ActivityRecordData,
+	type BrokerRecordData,
 	type DealRecordData,
 	type NewsRecordData,
 	toActivityRecord,
-	toDashboardPeople,
+	createDashboardPersonByBrokerIdMap,
+	findDealDocumentByKey,
 	toDealRecord,
+	toBrokerRecord,
 	toNewsRecord
 } from './readModels';
 import {
@@ -115,7 +118,7 @@ function toMyDealsWatchlistItem(
 		kind: 'activity',
 		dateIso: activity.occurredOnIso,
 		detail: {
-			dealId: entry.deal.id,
+			dealKey: entry.deal.key,
 			defaultTab: 'activity' as const
 		}
 	} as const;
@@ -165,7 +168,7 @@ function getMyDealsRowDetailTabId(entry: Pick<MyDealsEntryBundle, 'newsItems' | 
 
 function toTableRow(
 	entry: MyDealsEntryBundle,
-	peopleById: PersonSummaryMap<DashboardPerson>
+	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ) {
 	const newsItems = sortDealNewsDescending(entry.newsItems);
 	const activityItems = sortDealActivitiesAscending(entry.activities);
@@ -174,19 +177,19 @@ function toTableRow(
 
 	const detail = isMyDealsDetailEligible(entry)
 		? {
-				dealId: entry.deal.id,
+				dealKey: entry.deal.key,
 				defaultTab: getMyDealsRowDetailTabId(entry)
 			}
 		: null;
 
 	return {
-		id: entry.deal.id,
+		key: entry.deal.key,
 		detail,
 		deal: entry.deal.dealName,
 		latestNewsSource: latestNews?.source ?? null,
 		latestNews: latestNews?.title ?? NO_RECENT_NEWS_LABEL,
 		lastActivityDescription: latestActivity?.body ?? NO_RECORDED_ACTIVITY_LABEL,
-		owner: resolveOptionalBrokerPerson(peopleById, entry.deal.ownerBrokerId),
+		owner: resolveOptionalBrokerPerson(peopleByBrokerId, entry.deal.ownerBrokerId),
 		isReservedInEpic: entry.deal.isReservedInEpic
 	};
 }
@@ -250,9 +253,22 @@ function buildEntries(input: {
 	});
 }
 
+function requireBrokerRecord(
+	brokerRecords: readonly BrokerRecordData[],
+	brokerKey: BrokerKey
+): BrokerRecordData {
+	const broker = brokerRecords.find((record) => record.key === brokerKey);
+
+	if (!broker) {
+		throw new Error(`Unknown broker "${brokerKey}".`);
+	}
+
+	return broker;
+}
+
 export const getMyDealsList = query({
 	args: {
-		brokerId: v.id('brokers'),
+		brokerKey: v.string(),
 		view: myDealsViewValidator
 	},
 	returns: myDealsListReadModelValidator,
@@ -266,51 +282,34 @@ export const getMyDealsList = query({
 				.withIndex('by_stream_occurred_on_iso', (query) => query.eq('stream', 'deal-detail'))
 				.collect()
 		]);
-		const people = await toDashboardPeople(ctx, brokers);
-		const peopleById = createPersonSummaryMap(people);
+		const brokerRecords = await Promise.all(brokers.map((broker) => toBrokerRecord(ctx, broker)));
+		const activeBroker = requireBrokerRecord(brokerRecords, args.brokerKey as BrokerKey);
+		const peopleByBrokerId = createDashboardPersonByBrokerIdMap(brokerRecords);
 		const entries = buildEntries({
-			activeBrokerId: args.brokerId,
+			activeBrokerId: activeBroker.id,
 			deals: deals.map((deal) => toDealRecord(deal)),
 			newsItems: newsItems.map((newsItem) => toNewsRecord(newsItem)),
 			activities: activities.map((activity) => toActivityRecord(activity))
 		});
 
 		return {
-			rows: entries.map((entry) => toTableRow(entry, peopleById)),
+			rows: entries.map((entry) => toTableRow(entry, peopleByBrokerId)),
 			newsItems: toMyDealsNewsItems(entries),
-			watchlistItems: toMyDealsWatchlistItems(entries, args.brokerId)
+			watchlistItems: toMyDealsWatchlistItems(entries, activeBroker.id)
 		};
 	}
 });
 
 export const getMyDealsDetail = query({
 	args: {
-		detailId: v.string(),
-		brokerId: v.id('brokers'),
+		dealKey: v.string(),
+		brokerKey: v.string(),
 		view: myDealsViewValidator
 	},
 	returns: v.union(myDealsDetailReadModelValidator, v.null()),
 	handler: async (ctx, args): Promise<MyDealsDetailReadModel | null> => {
-		const normalizedDealId = await ctx.db.normalizeId('deals', args.detailId);
-
-		if (!normalizedDealId) {
-			return null;
-		}
-
-		const [deal, newsItems, activities, brokers] = await Promise.all([
-			ctx.db.get(normalizedDealId),
-			ctx.db
-				.query('news')
-				.withIndex('by_deal_id_published_on_iso', (query) =>
-					query.eq('dealId', normalizedDealId)
-				)
-				.collect(),
-			ctx.db
-				.query('activities')
-				.withIndex('by_deal_id_stream_occurred_on_iso', (query) =>
-					query.eq('dealId', normalizedDealId).eq('stream', 'deal-detail')
-				)
-				.collect(),
+		const [deal, brokers] = await Promise.all([
+			findDealDocumentByKey(ctx, args.dealKey as DealKey),
 			ctx.db.query('brokers').collect()
 		]);
 
@@ -318,15 +317,31 @@ export const getMyDealsDetail = query({
 			return null;
 		}
 
-		const people = await toDashboardPeople(ctx, brokers);
-		const peopleById = createPersonSummaryMap(people);
+		const brokerRecords = await Promise.all(brokers.map((broker) => toBrokerRecord(ctx, broker)));
+		const activeBroker = requireBrokerRecord(brokerRecords, args.brokerKey as BrokerKey);
+
+		const [newsItems, activities] = await Promise.all([
+			ctx.db
+				.query('news')
+				.withIndex('by_deal_id_published_on_iso', (query) =>
+					query.eq('dealId', deal._id)
+				)
+				.collect(),
+			ctx.db
+				.query('activities')
+				.withIndex('by_deal_id_stream_occurred_on_iso', (query) =>
+					query.eq('dealId', deal._id).eq('stream', 'deal-detail')
+				)
+				.collect()
+		]);
+		const peopleByBrokerId = createDashboardPersonByBrokerIdMap(brokerRecords);
 		const entry = {
 			deal: toDealRecord(deal),
 			newsItems: newsItems.map((newsItem) => toNewsRecord(newsItem)),
 			activities: activities.map((activity) => toActivityRecord(activity))
 		} satisfies MyDealsEntryBundle;
 
-		if (!isDealParticipant(entry.deal, args.brokerId) || !isMyDealsDetailEligible(entry)) {
+		if (!isDealParticipant(entry.deal, activeBroker.id) || !isMyDealsDetailEligible(entry)) {
 			return null;
 		}
 
@@ -348,13 +363,13 @@ export const getMyDealsDetail = query({
 			}),
 			newsItems: sortDealNewsDescending(entry.newsItems).map((newsItem) => toMyDealsNewsItem(newsItem)),
 			activityItems: sortDealActivitiesAscending(entry.activities).map((activity) =>
-				toTimelineItem(activity, peopleById)
+				toTimelineItem(activity, peopleByBrokerId)
 			),
 			update: buildDealUploadFieldData(entry.deal.dealName),
 			rightRail: toDetailRightRailData([
 				toDetailRightRailOverviewSection(
 					entry.deal,
-					resolveOptionalBrokerPerson(peopleById, entry.deal.ownerBrokerId)
+					resolveOptionalBrokerPerson(peopleByBrokerId, entry.deal.ownerBrokerId)
 				)
 			])
 		};

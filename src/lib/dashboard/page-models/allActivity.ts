@@ -31,7 +31,7 @@ function toDetailNavigation(
 		kind: 'internal',
 		route: {
 			kind: 'all-activity-detail',
-			dealId: detail.dealId,
+			dealKey: detail.dealKey,
 			view: route.view
 		}
 	};

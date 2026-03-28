@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { DealId } from '$lib/types/ids';
+import type { DealKey } from '$lib/types/keys';
 import { buildMyDealsFeedTabs } from './feed-tabs';
 
-const dealId = 'deal-1' as DealId;
+const dealKey = 'deal-1' as DealKey;
 
 describe('buildMyDealsFeedTabs', () => {
 	it('keeps news as the default when a news item exists and splits linkedin items out', () => {
@@ -33,7 +33,7 @@ describe('buildMyDealsFeedTabs', () => {
 						kind: 'internal',
 						route: {
 							kind: 'my-deals-detail',
-							dealId,
+							dealKey,
 							view: 'news',
 							tab: 'activity'
 						}
@@ -86,7 +86,7 @@ describe('buildMyDealsFeedTabs', () => {
 						kind: 'internal',
 						route: {
 							kind: 'my-deals-detail',
-							dealId,
+							dealKey,
 							view: 'news',
 							tab: 'activity'
 						}
@@ -109,7 +109,7 @@ describe('buildMyDealsFeedTabs', () => {
 					kind: 'internal',
 					route: {
 						kind: 'my-deals-detail',
-						dealId,
+						dealKey,
 						view: 'news',
 						tab: 'activity'
 					}

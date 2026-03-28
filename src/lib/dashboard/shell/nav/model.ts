@@ -79,7 +79,7 @@ export const DASHBOARD_NAV_SECTIONS: readonly DashboardNavSection[] = [
 			createRouteItem({
 				route: {
 					kind: 'since-last-meeting',
-					meetingId: null
+					meetingKey: null
 				},
 				label: 'Since last meeting',
 				icon: Activity
@@ -87,7 +87,7 @@ export const DASHBOARD_NAV_SECTIONS: readonly DashboardNavSection[] = [
 			createRouteItem({
 				route: {
 					kind: 'opportunities-list',
-					meetingId: null
+					meetingKey: null
 				},
 				label: 'Opportunities and risks',
 				icon: Lightbulb

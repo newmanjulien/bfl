@@ -17,7 +17,7 @@ vi.mock('$lib/server/convex', () => ({
 
 import { applyDealIndustryUpdate } from './update-industry';
 
-const dealId = 'deal-doc-3m';
+const dealKey = 'deal-doc-3m';
 
 describe('applyDealIndustryUpdate', () => {
 	beforeEach(() => {
@@ -29,19 +29,19 @@ describe('applyDealIndustryUpdate', () => {
 
 		await expect(
 			applyDealIndustryUpdate({
-				request: new Request(`http://localhost/my-deals/detail/${dealId}?/updateIndustry`, {
+				request: new Request(`http://localhost/my-deals/detail/${dealKey}?/updateIndustry`, {
 					method: 'POST',
-					body: new URLSearchParams({ dealId, industry: 'Hospitality' })
+					body: new URLSearchParams({ dealKey, industry: 'Hospitality' })
 				}),
-				url: new URL(`http://localhost/my-deals/detail/${dealId}?/updateIndustry`)
+				url: new URL(`http://localhost/my-deals/detail/${dealKey}?/updateIndustry`)
 			})
 		).rejects.toMatchObject({
 			status: 303,
-			location: `/my-deals/detail/${dealId}`
+			location: `/my-deals/detail/${dealKey}`
 		});
 
 		expect(mocks.action).toHaveBeenCalledWith('updateDealIndustry', {
-			dealId,
+			dealKey,
 			industry: 'Hospitality'
 		});
 	});
@@ -52,28 +52,28 @@ describe('applyDealIndustryUpdate', () => {
 		await expect(
 			applyDealIndustryUpdate({
 				request: new Request(
-					`http://localhost/my-deals/detail/${dealId}?/updateIndustry&tab=activity`,
+					`http://localhost/my-deals/detail/${dealKey}?/updateIndustry&tab=activity`,
 					{
 						method: 'POST',
-						body: new URLSearchParams({ dealId, industry: 'Hospitality' })
+						body: new URLSearchParams({ dealKey, industry: 'Hospitality' })
 					}
 				),
-				url: new URL(`http://localhost/my-deals/detail/${dealId}?/updateIndustry&tab=activity`)
+				url: new URL(`http://localhost/my-deals/detail/${dealKey}?/updateIndustry&tab=activity`)
 			})
 		).rejects.toMatchObject({
 			status: 303,
-			location: `/my-deals/detail/${dealId}?tab=activity`
+			location: `/my-deals/detail/${dealKey}?tab=activity`
 		});
 	});
 
 	it('rejects invalid industry values', async () => {
 		await expect(
 			applyDealIndustryUpdate({
-				request: new Request(`http://localhost/my-deals/detail/${dealId}?/updateIndustry`, {
+				request: new Request(`http://localhost/my-deals/detail/${dealKey}?/updateIndustry`, {
 					method: 'POST',
-					body: new URLSearchParams({ dealId, industry: 'NotReal' })
+					body: new URLSearchParams({ dealKey, industry: 'NotReal' })
 				}),
-				url: new URL(`http://localhost/my-deals/detail/${dealId}`)
+				url: new URL(`http://localhost/my-deals/detail/${dealKey}`)
 			})
 		).rejects.toMatchObject({
 			status: 400
@@ -82,7 +82,7 @@ describe('applyDealIndustryUpdate', () => {
 		expect(mocks.action).not.toHaveBeenCalled();
 	});
 
-	it('rejects requests without a canonical deal id', async () => {
+	it('rejects requests without a canonical deal key', async () => {
 
 		await expect(
 			applyDealIndustryUpdate({
@@ -99,16 +99,16 @@ describe('applyDealIndustryUpdate', () => {
 		expect(mocks.action).not.toHaveBeenCalled();
 	});
 
-	it('returns 404 when the deal id cannot be normalized', async () => {
+	it('returns 404 when the deal key cannot be resolved', async () => {
 		mocks.action.mockResolvedValue('not-found');
 
 		await expect(
 			applyDealIndustryUpdate({
-				request: new Request('http://localhost/my-deals/detail/not-a-deal-id?/updateIndustry', {
+				request: new Request('http://localhost/my-deals/detail/not-a-deal-key?/updateIndustry', {
 					method: 'POST',
-					body: new URLSearchParams({ dealId: 'not-a-deal-id', industry: 'Hospitality' })
+					body: new URLSearchParams({ dealKey: 'not-a-deal-key', industry: 'Hospitality' })
 				}),
-				url: new URL('http://localhost/my-deals/detail/not-a-deal-id')
+				url: new URL('http://localhost/my-deals/detail/not-a-deal-key')
 			})
 		).rejects.toMatchObject({
 			status: 404

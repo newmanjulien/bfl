@@ -12,7 +12,7 @@ import type {
 	MyDealsFeedItemReadModel,
 	MyDealsListReadModel
 } from '$lib/dashboard/read-models';
-import type { BrokerId } from '$lib/types/ids';
+import type { BrokerKey } from '$lib/types/keys';
 import { createMyDealsDetailHeader, createMyDealsListHeader } from './headers';
 
 const MY_DEALS_NEWS_HERO = {
@@ -35,7 +35,7 @@ function toDetailNavigation(
 		kind: 'internal',
 		route: {
 			kind: 'my-deals-detail',
-			dealId: detail.dealId,
+			dealKey: detail.dealKey,
 			view: route.view,
 			tab: detail.defaultTab
 		}
@@ -56,7 +56,7 @@ function toFeedItemNavigation(
 		kind: 'internal',
 		route: {
 			kind: 'my-deals-detail',
-			dealId: item.detail.dealId,
+			dealKey: item.detail.dealKey,
 			view: route.view,
 			tab: item.detail.defaultTab
 		}
@@ -79,7 +79,7 @@ export type MyDealsListPageData = {
 	route: MyDealsListRouteRef;
 	header: DashboardHeader;
 	hero?: CanvasHeroData;
-	activeBrokerId: BrokerId;
+	activeBrokerKey: BrokerKey;
 	rows: MyDealsTableRowPageData[];
 	newsItems: MyDealsFeedItemPageData[];
 	watchlistItems: MyDealsFeedItemPageData[];
@@ -98,15 +98,15 @@ export type MyDealsDetailPageData = {
 export function buildMyDealsListPageData(params: {
 	route: MyDealsListRouteRef;
 	readModel: MyDealsListReadModel;
-	activeBrokerId: BrokerId;
+	activeBrokerKey: BrokerKey;
 }): MyDealsListPageData {
-	const { route, readModel, activeBrokerId } = params;
+	const { route, readModel, activeBrokerKey } = params;
 
 	return {
 		route,
 		header: createMyDealsListHeader(route.view),
 		hero: route.view === 'news' ? MY_DEALS_NEWS_HERO : undefined,
-		activeBrokerId,
+		activeBrokerKey,
 		rows: readModel.rows.map((row) => ({
 			...row,
 			navigation: toDetailNavigation(route, row.detail)

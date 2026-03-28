@@ -18,7 +18,7 @@
 </script>
 
 <ol class="space-y-2.5 pt-1">
-	{#each tiles as tile (tile.id)}
+	{#each tiles as tile (tile.key)}
 		{@const hasBottomMeta = Boolean(tile.dealLabel || tile.activityLevel)}
 		<li>
 			<ListCard link={{ kind: 'internal', route: tile.route }}>

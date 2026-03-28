@@ -1,16 +1,18 @@
 import { env } from '$env/dynamic/private';
-import type { BrokerId } from '$lib/types/ids';
+import { parseBrokerKey, type BrokerKey } from '$lib/types/keys';
 
 type BrokerEnv = Record<string, string | undefined>;
 
-export const DEFAULT_BROKER_ID_ENV_VAR = 'DEFAULT_BROKER_ID';
+export const DEFAULT_BROKER_KEY_ENV_VAR = 'DEFAULT_BROKER_KEY';
 
-export function resolveDefaultBrokerId(brokerEnv: BrokerEnv = env): BrokerId | null {
-	const defaultBrokerId = brokerEnv.DEFAULT_BROKER_ID?.trim();
+export function resolveDefaultBrokerKey(brokerEnv: BrokerEnv = env): BrokerKey {
+	const defaultBrokerKey = parseBrokerKey(brokerEnv.DEFAULT_BROKER_KEY?.trim() ?? null);
 
-	if (!defaultBrokerId) {
-		return null;
+	if (defaultBrokerKey) {
+		return defaultBrokerKey;
 	}
 
-	return defaultBrokerId as BrokerId;
+	throw new Error(
+		`Missing ${DEFAULT_BROKER_KEY_ENV_VAR}. Set it to the default broker key for My Deals.`
+	);
 }

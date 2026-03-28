@@ -18,7 +18,7 @@ type BaseFilterOption<Id, Extra = object> = {
 } & Extra;
 
 export type AllActivityBrokerFilterOption = BaseFilterOption<
-	BrokerOption['id'],
+	BrokerOption['key'],
 	{ avatar: string }
 >;
 
@@ -69,7 +69,7 @@ export type AllActivityFilterDrawerSection =
 
 type BuildAllActivityFilterDrawerSectionsParams = {
 	data: AllActivityFilterDrawerData;
-	selectedBrokerIds: readonly BrokerOption['id'][];
+	selectedBrokerKeys: readonly BrokerOption['key'][];
 	selectedActivityLevels: readonly ActivityLevel[];
 	selectedIndustries: readonly DealIndustry[];
 	expandedSections: AllActivityFilterExpansionState;
@@ -100,9 +100,9 @@ function buildBrokerSection(
 ): AllActivityBrokerFilterSection {
 	const options = sortSelectedOptions(
 		params.data.brokers.map((broker) => ({
-			id: broker.id,
+			id: broker.key,
 			label: broker.name,
-			selected: params.selectedBrokerIds.includes(broker.id),
+			selected: params.selectedBrokerKeys.includes(broker.key),
 			avatar: broker.avatar
 		}))
 	);
@@ -110,7 +110,7 @@ function buildBrokerSection(
 	return {
 		id: 'broker',
 		title: 'Broker',
-		summary: getSectionSummary(params.selectedBrokerIds.length),
+		summary: getSectionSummary(params.selectedBrokerKeys.length),
 		expanded: params.expandedSections.broker,
 		collapsible: true,
 		searchLabel: 'Search brokers',

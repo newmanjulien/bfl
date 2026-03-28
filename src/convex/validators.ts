@@ -12,13 +12,13 @@ import {
 	type MyDealsView
 } from '../lib/dashboard/routing/my-deals';
 import type { DetailRightRailData } from '../lib/dashboard/detail/right-rail';
-import type { OrgChartNodeRecord as SharedOrgChartNodeRecord } from '../lib/domain/org-chart';
+import type { OrgChartNodeRecord as SharedOrgChartNodeRecord } from '../lib/dashboard/view-models/deal-content';
 import type { CanvasHeroData } from '../lib/dashboard/ui/detail/CanvasHero.types';
 import type { FileUploadFieldData } from '../lib/dashboard/ui/detail/FileUploadField.types';
 import type { DealSummaryRow } from '../lib/dashboard/view-models/deal';
 import type { TimelineItem } from '../lib/dashboard/view-models/deal-content';
 import type { IsoDate, IsoDateTime } from '../lib/types/dates';
-import type { BrokerId, DealId, InsightId, MeetingId } from '../lib/types/ids';
+import type { BrokerKey, DealKey, InsightKey, MeetingKey } from '../lib/types/keys';
 import {
 	ACTIVITY_LEVELS,
 	DEAL_ACTIVITY_STREAMS,
@@ -62,38 +62,38 @@ export type MyDealsViewValue = MyDealsView;
 export type MyDealsDetailTabIdValue = MyDealsDetailTabId;
 
 export const dashboardPersonValidator = v.object({
-	id: v.id('brokers'),
+	key: v.string(),
 	name: v.string(),
 	avatar: v.string()
 });
 
 export const dashboardMeetingValidator = v.object({
-	id: v.id('meetings'),
+	key: v.string(),
 	dateIso: v.string()
 });
 
 export type DashboardPerson = {
-	id: BrokerId;
+	key: BrokerKey;
 	name: string;
 	avatar: string;
 };
 
 export type DashboardMeeting = {
-	id: MeetingId;
+	key: MeetingKey;
 	dateIso: IsoDate;
 };
 
 export const myDealsDetailRefValidator = v.object({
-	dealId: v.id('deals'),
+	dealKey: v.string(),
 	defaultTab: myDealsDetailTabIdValidator
 });
 
 export const allActivityDetailRefValidator = v.object({
-	dealId: v.id('deals')
+	dealKey: v.string()
 });
 
 export const opportunityDetailRefValidator = v.object({
-	insightId: v.id('insights')
+	insightKey: v.string()
 });
 
 export const canvasHeroValidator = v.object({
@@ -143,7 +143,7 @@ export const timelineItemValidator = v.union(
 export type TimelineItemData = TimelineItem;
 
 export const dealSummaryRowValidator = v.object({
-	id: v.string(),
+	key: v.string(),
 	deal: v.string(),
 	probability: v.number(),
 	activityLevel: activityLevelValidator,
@@ -154,12 +154,12 @@ export const orgChartNodeRecordValidator = v.object({
 	id: v.string(),
 	name: v.string(),
 	role: v.string(),
-	lastContactedByBrokerId: v.id('brokers'),
+	lastContactedByBrokerKey: v.string(),
 	lastContactedOnIso: v.string(),
 	parentId: v.optional(v.string())
 });
 
-export type OrgChartNodeRecord = SharedOrgChartNodeRecord<BrokerId>;
+export type OrgChartNodeRecord = SharedOrgChartNodeRecord<BrokerKey>;
 
 export const detailRightRailRowValidator = v.union(
 	v.object({
@@ -173,7 +173,7 @@ export const detailRightRailRowValidator = v.union(
 		label: v.string(),
 		kind: v.literal('industry'),
 		value: dealIndustryValidator,
-		dealId: v.id('deals')
+		dealKey: v.string()
 	}),
 	v.object({
 		id: v.string(),
@@ -245,7 +245,7 @@ export const myDealsFeedItemReadModelValidator = v.union(
 );
 
 export const myDealsTableRowReadModelValidator = v.object({
-	id: v.id('deals'),
+	key: v.string(),
 	detail: v.union(myDealsDetailRefValidator, v.null()),
 	deal: v.string(),
 	latestNewsSource: v.union(dealNewsSourceValidator, v.null()),
@@ -267,7 +267,7 @@ export const allActivityRowLastActivityValidator = v.union(
 );
 
 export const allActivityTableRowReadModelValidator = v.object({
-	id: v.id('deals'),
+	key: v.string(),
 	detail: v.union(allActivityDetailRefValidator, v.null()),
 	probability: v.number(),
 	activityLevel: activityLevelValidator,
@@ -294,7 +294,7 @@ export const allActivityFilterDrawerDataValidator = v.object({
 });
 
 export const opportunityTileReadModelValidator = v.object({
-	id: v.id('insights'),
+	key: v.string(),
 	detail: opportunityDetailRefValidator,
 	title: v.string(),
 	dealNumber: v.number(),
@@ -306,7 +306,7 @@ export const opportunityTileReadModelValidator = v.object({
 export const dashboardShellResultValidator = v.object({
 	people: v.array(dashboardPersonValidator),
 	meetings: v.array(dashboardMeetingValidator),
-	defaultMeetingId: v.union(v.id('meetings'), v.null())
+	defaultMeetingKey: v.union(v.string(), v.null())
 });
 
 export const myDealsListReadModelValidator = v.object({
@@ -362,16 +362,16 @@ export const sinceLastMeetingReadModelValidator = v.object({
 });
 
 export type MyDealsDetailRef = {
-	dealId: DealId;
+	dealKey: DealKey;
 	defaultTab: MyDealsDetailTabId;
 };
 
 export type AllActivityDetailRef = {
-	dealId: DealId;
+	dealKey: DealKey;
 };
 
 export type OpportunityDetailRef = {
-	insightId: InsightId;
+	insightKey: InsightKey;
 };
 
 export type MyDealsFeedItemReadModel =
@@ -396,7 +396,7 @@ export type MyDealsFeedItemReadModel =
 	  };
 
 export type MyDealsTableRowReadModel = {
-	id: DealId;
+	key: DealKey;
 	detail: MyDealsDetailRef | null;
 	deal: string;
 	latestNewsSource: DealNewsSource | null;
@@ -407,7 +407,7 @@ export type MyDealsTableRowReadModel = {
 };
 
 export type AllActivityTableRowReadModel = {
-	id: DealId;
+	key: DealKey;
 	detail: AllActivityDetailRef | null;
 	probability: number;
 	activityLevel: ActivityLevel;
@@ -438,7 +438,7 @@ export type AllActivityFilterDrawerData = {
 };
 
 export type OpportunityTileReadModel = {
-	id: InsightId;
+	key: InsightKey;
 	detail: OpportunityDetailRef;
 	title: string;
 	dealNumber: number;
@@ -450,7 +450,7 @@ export type OpportunityTileReadModel = {
 export type DashboardShellReadModel = {
 	people: DashboardPerson[];
 	meetings: DashboardMeeting[];
-	defaultMeetingId: MeetingId | null;
+	defaultMeetingKey: MeetingKey | null;
 };
 
 export type MyDealsListReadModel = {

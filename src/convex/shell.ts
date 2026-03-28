@@ -1,5 +1,10 @@
 import { query } from './_generated/server';
-import { listMeetingRecords, toDashboardPeople } from './readModels';
+import {
+	listMeetingRecords,
+	toBrokerRecord,
+	toDashboardMeeting,
+	toDashboardPeople
+} from './readModels';
 import {
 	dashboardShellResultValidator,
 	type DashboardShellReadModel
@@ -15,11 +20,12 @@ export const getDashboardShell = query({
 			listMeetingRecords(ctx),
 			ctx.db.query('brokers').collect()
 		]);
+		const brokerRecords = await Promise.all(brokers.map((broker) => toBrokerRecord(ctx, broker)));
 
 		return {
-			people: await toDashboardPeople(ctx, brokers),
-			meetings,
-			defaultMeetingId: meetings[0]?.id ?? null
+			people: toDashboardPeople(brokerRecords),
+			meetings: meetings.map((meeting) => toDashboardMeeting(meeting)),
+			defaultMeetingKey: meetings[0]?.key ?? null
 		};
 	}
 });

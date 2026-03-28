@@ -4,7 +4,7 @@ import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActi
 export const LIKELY_OUT_OF_DATE_HEADER_SCOPE_ID = 'all-activity-likely-out-of-date';
 
 type AllActivityTableRow = AllActivityListPageData['rows'][number];
-type LikelyOutOfDateRow = Pick<AllActivityTableRow, 'id'>;
+type LikelyOutOfDateRow = Pick<AllActivityTableRow, 'key'>;
 
 export function getLikelyOutOfDateHeaderUiScope(
 	selectedRowCount: number
@@ -24,11 +24,11 @@ export function getLikelyOutOfDateHeaderUiScope(
 	};
 }
 
-export function getStaleLikelyOutOfDateSelectionRowIds(
-	selectedRowIds: Iterable<LikelyOutOfDateRow['id']>,
+export function getStaleLikelyOutOfDateSelectionRowKeys(
+	selectedRowKeys: Iterable<LikelyOutOfDateRow['key']>,
 	rows: readonly LikelyOutOfDateRow[]
 ) {
-	const visibleRowIds = new Set(rows.map((row) => row.id));
+	const visibleRowKeys = new Set(rows.map((row) => row.key));
 
-	return [...selectedRowIds].filter((rowId) => !visibleRowIds.has(rowId));
+	return [...selectedRowKeys].filter((rowKey) => !visibleRowKeys.has(rowKey));
 }

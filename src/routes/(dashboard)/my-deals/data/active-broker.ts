@@ -1,35 +1,27 @@
-import type { BrokerId } from '$lib/types/ids';
+import type { BrokerKey } from '$lib/types/keys';
 
 type BrokerOption = {
-	id: BrokerId;
+	key: BrokerKey;
 };
 
-export function resolveMyDealsActiveBrokerId(
+export function resolveMyDealsActiveBrokerKey(
 	people: readonly BrokerOption[],
-	defaultBrokerId: BrokerId | null
-): BrokerId {
-	const activeBroker = defaultBrokerId
-		? people.find((person) => person.id === defaultBrokerId)
-		: null;
+	defaultBrokerKey: BrokerKey
+): BrokerKey {
+	const activeBroker = people.find((person) => person.key === defaultBrokerKey);
 
-	if (activeBroker) {
-		return activeBroker.id;
+	if (!activeBroker) {
+		throw new Error(`Unknown default broker key "${defaultBrokerKey}".`);
 	}
 
-	const fallbackBroker = people[0];
-
-	if (!fallbackBroker) {
-		throw new Error('No brokers available for my deals.');
-	}
-
-	return fallbackBroker.id;
+	return activeBroker.key;
 }
 
-export async function resolveMyDealsActiveBrokerIdFromParent(
+export async function resolveMyDealsActiveBrokerKeyFromParent(
 	parent: () => Promise<{ dashboardShell: { people: readonly BrokerOption[] } }>,
-	defaultBrokerId: BrokerId
+	defaultBrokerKey: BrokerKey
 ) {
 	const { dashboardShell } = await parent();
 
-	return resolveMyDealsActiveBrokerId(dashboardShell.people, defaultBrokerId);
+	return resolveMyDealsActiveBrokerKey(dashboardShell.people, defaultBrokerKey);
 }

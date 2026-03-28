@@ -9,7 +9,7 @@ type BrokerOption = AllActivityFilterDrawerData['brokers'][number];
 export type AllActivityFilterSectionId = 'broker' | 'activity-level' | 'industry';
 
 export type AllActivityFilterOptionIdBySection = {
-	broker: BrokerOption['id'];
+	broker: BrokerOption['key'];
 	'activity-level': ActivityLevel;
 	industry: DealIndustry;
 };

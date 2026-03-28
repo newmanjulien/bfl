@@ -1,22 +1,26 @@
 import { error } from '@sveltejs/kit';
 import type { DashboardShellReadModel } from '$lib/dashboard/read-models';
-import type { MeetingId } from '$lib/types/ids';
+import type { MeetingKey } from '$lib/types/keys';
 
-export function resolveSelectedMeetingId(
-	dashboardShell: Pick<DashboardShellReadModel, 'meetings' | 'defaultMeetingId'>,
-	requestedMeetingId: string | null
-): MeetingId {
-	if (requestedMeetingId) {
-		const requestedMeeting = dashboardShell.meetings.find((meeting) => meeting.id === requestedMeetingId);
+export function resolveSelectedMeetingKey(
+	dashboardShell: Pick<DashboardShellReadModel, 'meetings' | 'defaultMeetingKey'>,
+	requestedMeetingKey: string | null
+): MeetingKey {
+	if (requestedMeetingKey) {
+		const requestedMeeting = dashboardShell.meetings.find(
+			(meeting) => meeting.key === requestedMeetingKey
+		);
 
 		if (requestedMeeting) {
-			return requestedMeeting.id;
+			return requestedMeeting.key;
 		}
+
+		throw error(404, 'Not found');
 	}
 
-	if (!dashboardShell.defaultMeetingId) {
+	if (!dashboardShell.defaultMeetingKey) {
 		throw error(503, 'No meetings available.');
 	}
 
-	return dashboardShell.defaultMeetingId;
+	return dashboardShell.defaultMeetingKey;
 }

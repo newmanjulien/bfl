@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import type { DealKey, InsightKey, MeetingKey } from '$lib/types/keys';
 import { resolveDashboardLayoutRoute } from './layout';
 
-const dealId = 'deal-doc-1';
-const insightId = 'insight-doc-1';
+const dealKey = 'deal-doc-1' as DealKey;
+const insightKey = 'insight-doc-1' as InsightKey;
+const meetingKey = 'meeting-doc-1' as MeetingKey;
 
 function createInput({
 	pathname,
@@ -13,7 +15,8 @@ function createInput({
 	routeId: string | null;
 	params?: {
 		view?: string;
-		detailId?: string;
+		dealKey?: string;
+		insightKey?: string;
 	};
 }) {
 	return {
@@ -61,17 +64,17 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/my-deals/detail/${dealId}`,
-					routeId: '/(dashboard)/my-deals/detail/[detailId]',
+					pathname: `/my-deals/detail/${dealKey}`,
+					routeId: '/(dashboard)/my-deals/detail/[dealKey]',
 					params: {
-						detailId: dealId
+						dealKey
 					}
 				})
 			)
 		).toEqual({
 			route: {
 				kind: 'my-deals-detail',
-				dealId,
+				dealKey,
 				view: 'news',
 				tab: 'news'
 			},
@@ -81,18 +84,18 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/my-deals/deals/detail/${dealId}?tab=activity`,
-					routeId: '/(dashboard)/my-deals/[view=myDealsView]/detail/[detailId]',
+					pathname: `/my-deals/deals/detail/${dealKey}?tab=activity`,
+					routeId: '/(dashboard)/my-deals/[view=myDealsView]/detail/[dealKey]',
 					params: {
 						view: 'deals',
-						detailId: dealId
+						dealKey
 					}
 				})
 			)
 		).toEqual({
 			route: {
 				kind: 'my-deals-detail',
-				dealId,
+				dealKey,
 				view: 'deals',
 				tab: 'activity'
 			},
@@ -135,17 +138,17 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/all-activity/detail/${dealId}`,
-					routeId: '/(dashboard)/all-activity/detail/[detailId]',
+					pathname: `/all-activity/detail/${dealKey}`,
+					routeId: '/(dashboard)/all-activity/detail/[dealKey]',
 					params: {
-						detailId: dealId
+						dealKey
 					}
 				})
 			)
 		).toEqual({
 			route: {
 				kind: 'all-activity-detail',
-				dealId,
+				dealKey,
 				view: 'deals'
 			},
 			redirectTo: null
@@ -154,18 +157,18 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/all-activity/need-support/detail/${dealId}`,
-					routeId: '/(dashboard)/all-activity/[view=allActivityView]/detail/[detailId]',
+					pathname: `/all-activity/need-support/detail/${dealKey}`,
+					routeId: '/(dashboard)/all-activity/[view=allActivityView]/detail/[dealKey]',
 					params: {
 						view: 'need-support',
-						detailId: dealId
+						dealKey
 					}
 				})
 			)
 		).toEqual({
 			route: {
 				kind: 'all-activity-detail',
-				dealId,
+				dealKey,
 				view: 'need-support'
 			},
 			redirectTo: null
@@ -181,7 +184,7 @@ describe('resolveDashboardLayoutRoute', () => {
 		).toEqual({
 			route: {
 				kind: 'opportunities-list',
-				meetingId: null
+				meetingKey: null
 			},
 			redirectTo: null
 		});
@@ -189,14 +192,14 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: '/opportunities?meetingId=meeting-doc-1',
+					pathname: '/opportunities?meetingKey=meeting-doc-1',
 					routeId: '/(dashboard)/opportunities'
 				})
 			)
 		).toEqual({
 			route: {
 				kind: 'opportunities-list',
-				meetingId: 'meeting-doc-1'
+				meetingKey
 			},
 			redirectTo: null
 		});
@@ -204,18 +207,18 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/opportunities/detail/${insightId}`,
-					routeId: '/(dashboard)/opportunities/detail/[detailId]',
+					pathname: `/opportunities/detail/${insightKey}`,
+					routeId: '/(dashboard)/opportunities/detail/[insightKey]',
 					params: {
-						detailId: insightId
+						insightKey
 					}
 				})
 			)
 		).toEqual({
 			route: {
 				kind: 'opportunities-detail',
-				insightId,
-				meetingId: null
+				insightKey,
+				meetingKey: null
 			},
 			redirectTo: null
 		});
@@ -230,7 +233,7 @@ describe('resolveDashboardLayoutRoute', () => {
 		).toEqual({
 			route: {
 				kind: 'since-last-meeting',
-				meetingId: null
+				meetingKey: null
 			},
 			redirectTo: null
 		});
@@ -240,42 +243,42 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/my-deals/detail/${dealId}?tab=news`,
-					routeId: '/(dashboard)/my-deals/detail/[detailId]',
+					pathname: `/my-deals/detail/${dealKey}?tab=news`,
+					routeId: '/(dashboard)/my-deals/detail/[dealKey]',
 					params: {
-						detailId: dealId
+						dealKey
 					}
 				})
 			)
 		).toEqual({
 			route: {
 				kind: 'my-deals-detail',
-				dealId,
+				dealKey,
 				view: 'news',
 				tab: 'news'
 			},
-			redirectTo: `/my-deals/detail/${dealId}`
+			redirectTo: `/my-deals/detail/${dealKey}`
 		});
 
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/my-deals/deals/detail/${dealId}?tab=news`,
-					routeId: '/(dashboard)/my-deals/[view=myDealsView]/detail/[detailId]',
+					pathname: `/my-deals/deals/detail/${dealKey}?tab=news`,
+					routeId: '/(dashboard)/my-deals/[view=myDealsView]/detail/[dealKey]',
 					params: {
 						view: 'deals',
-						detailId: dealId
+						dealKey
 					}
 				})
 			)
 		).toEqual({
 			route: {
 				kind: 'my-deals-detail',
-				dealId,
+				dealKey,
 				view: 'deals',
 				tab: 'news'
 			},
-			redirectTo: `/my-deals/deals/detail/${dealId}`
+			redirectTo: `/my-deals/deals/detail/${dealKey}`
 		});
 	});
 
@@ -304,10 +307,10 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/my-deals/detail/${dealId}?tab=bogus`,
-					routeId: '/(dashboard)/my-deals/detail/[detailId]',
+					pathname: `/my-deals/detail/${dealKey}?tab=bogus`,
+					routeId: '/(dashboard)/my-deals/detail/[dealKey]',
 					params: {
-						detailId: dealId
+						dealKey
 					}
 				})
 			)
@@ -316,10 +319,10 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/my-deals/detail/${dealId}?%2FupdateIndustry`,
-					routeId: '/(dashboard)/my-deals/detail/[detailId]',
+					pathname: `/my-deals/detail/${dealKey}?%2FupdateIndustry`,
+					routeId: '/(dashboard)/my-deals/detail/[dealKey]',
 					params: {
-						detailId: dealId
+						dealKey
 					}
 				})
 			)
@@ -328,10 +331,10 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/my-deals/detail/${dealId}?tab=activity&foo=bar`,
-					routeId: '/(dashboard)/my-deals/detail/[detailId]',
+					pathname: `/my-deals/detail/${dealKey}?tab=activity&foo=bar`,
+					routeId: '/(dashboard)/my-deals/detail/[dealKey]',
 					params: {
-						detailId: dealId
+						dealKey
 					}
 				})
 			)
@@ -352,10 +355,10 @@ describe('resolveDashboardLayoutRoute', () => {
 		expect(
 			resolveDashboardLayoutRoute(
 				createInput({
-					pathname: `/all-activity/detail/${dealId}?tab=activity`,
-					routeId: '/(dashboard)/all-activity/detail/[detailId]',
+					pathname: `/all-activity/detail/${dealKey}?tab=activity`,
+					routeId: '/(dashboard)/all-activity/detail/[dealKey]',
 					params: {
-						detailId: dealId
+						dealKey
 					}
 				})
 			)

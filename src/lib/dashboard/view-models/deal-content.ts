@@ -1,43 +1,38 @@
-import type { BrokerId } from '$lib/types/ids';
+import type { BrokerKey } from '$lib/types/keys';
 import type { IsoDate } from '$lib/types/dates';
-import type { OrgChartNodeRecord } from '$lib/domain/org-chart';
 import { formatIsoDateLong } from '$lib/format/date-time';
 
 type PersonSummaryLike = {
-	id: BrokerId;
+	key: string;
 	name: string;
 	avatar: string;
 };
 
-type TimelineMarkerRecord<BrokerIdValue extends string = BrokerId> =
+type TimelineMarkerRecord<BrokerRef extends string = string> =
 	| {
 			kind: 'dot';
 	  }
 	| {
 			kind: 'broker-avatar';
-			brokerId: BrokerIdValue;
+			brokerRef: BrokerRef;
 	  };
 
-type DealActivityRecordLike<BrokerIdValue extends string = BrokerId> =
+type DealActivityRecordLike<BrokerRef extends string = string> =
 	| {
 			kind: 'headline';
 			id: string;
-			dealId: string;
-			stream: string;
 			occurredOnIso: IsoDate;
 			body: string;
-			marker: TimelineMarkerRecord<BrokerIdValue>;
+			marker: TimelineMarkerRecord<BrokerRef>;
 			title: string;
 	  }
 	| {
 			kind: 'actor-action';
 			id: string;
-			dealId: string;
-			stream: string;
 			occurredOnIso: IsoDate;
 			body: string;
-			marker: TimelineMarkerRecord<BrokerIdValue>;
-			actorBrokerId: BrokerIdValue;
+			marker: TimelineMarkerRecord<BrokerRef>;
+			actorBrokerRef: BrokerRef;
 			action: string;
 	  };
 
@@ -79,49 +74,58 @@ export type OrgChartNode = {
 	directReports?: OrgChartNode[];
 };
 
-export type PersonSummaryMap<TPerson extends PersonSummaryLike = PersonSummaryLike> = ReadonlyMap<
-	TPerson['id'],
-	TPerson
->;
+export type OrgChartNodeRecord<BrokerRef extends string = BrokerKey> = {
+	id: string;
+	name: string;
+	role: string;
+	lastContactedByBrokerKey: BrokerRef;
+	lastContactedOnIso: IsoDate;
+	parentId?: string;
+};
+
+export type PersonSummaryMap<
+	TPerson extends PersonSummaryLike = PersonSummaryLike,
+	TRef extends string = TPerson['key']
+> = ReadonlyMap<TRef, TPerson>;
 
 export function createPersonSummaryMap<TPerson extends PersonSummaryLike>(
 	people: readonly TPerson[]
 ): PersonSummaryMap<TPerson> {
-	return new Map(people.map((person) => [person.id, person]));
+	return new Map(people.map((person) => [person.key, person]));
 }
 
-export function resolveBrokerPerson<TPerson extends PersonSummaryLike>(
-	peopleById: PersonSummaryMap<TPerson>,
-	brokerId: TPerson['id']
+export function resolveBrokerPerson<TRef extends string, TPerson extends PersonSummaryLike>(
+	peopleByRef: PersonSummaryMap<TPerson, TRef>,
+	brokerRef: TRef
 ): TPerson {
-	const broker = peopleById.get(brokerId);
+	const broker = peopleByRef.get(brokerRef);
 
 	if (!broker) {
-		throw new Error(`Unknown broker id "${brokerId}".`);
+		throw new Error(`Unknown broker "${brokerRef}".`);
 	}
 
 	return broker;
 }
 
-export function resolveOptionalBrokerPerson<TPerson extends PersonSummaryLike>(
-	peopleById: PersonSummaryMap<TPerson>,
-	brokerId: TPerson['id'] | null
+export function resolveOptionalBrokerPerson<TRef extends string, TPerson extends PersonSummaryLike>(
+	peopleByRef: PersonSummaryMap<TPerson, TRef>,
+	brokerRef: TRef | null
 ): TPerson | null {
-	return brokerId ? resolveBrokerPerson(peopleById, brokerId) : null;
+	return brokerRef ? resolveBrokerPerson(peopleByRef, brokerRef) : null;
 }
 
 export function toTimelineItem<
-	BrokerIdValue extends BrokerId,
+	BrokerRef extends string,
 	TPerson extends PersonSummaryLike
 >(
-	record: DealActivityRecordLike<BrokerIdValue>,
-	peopleById: PersonSummaryMap<TPerson>
+	record: DealActivityRecordLike<BrokerRef>,
+	peopleByRef: PersonSummaryMap<TPerson, BrokerRef>
 ): TimelineItem {
 	const marker: TimelineMarker =
 		record.marker.kind === 'broker-avatar'
 			? {
 					kind: 'avatar',
-					person: resolveBrokerPerson(peopleById, record.marker.brokerId)
+					person: resolveBrokerPerson(peopleByRef, record.marker.brokerRef)
 				}
 			: { kind: 'dot' };
 
@@ -129,7 +133,7 @@ export function toTimelineItem<
 		return {
 			kind: 'actor-action',
 			id: record.id,
-			actor: resolveBrokerPerson(peopleById, record.actorBrokerId),
+			actor: resolveBrokerPerson(peopleByRef, record.actorBrokerRef),
 			action: record.action,
 			occurredOnIso: record.occurredOnIso,
 			body: record.body,
@@ -148,14 +152,14 @@ export function toTimelineItem<
 }
 
 export function toOrgChartRoot<
-	BrokerIdValue extends BrokerId,
+	BrokerRef extends string,
 	TPerson extends PersonSummaryLike
 >(
-	nodes: readonly OrgChartNodeRecord<BrokerIdValue>[],
-	peopleById: PersonSummaryMap<TPerson>
+	nodes: readonly OrgChartNodeRecord<BrokerRef>[],
+	peopleByRef: PersonSummaryMap<TPerson, BrokerRef>
 ): OrgChartNode {
-	const nodesById = new Map<string, OrgChartNodeRecord<BrokerIdValue>>();
-	const nodesByParentId = new Map<string, OrgChartNodeRecord<BrokerIdValue>[]>();
+	const nodesById = new Map<string, OrgChartNodeRecord<BrokerRef>>();
+	const nodesByParentId = new Map<string, OrgChartNodeRecord<BrokerRef>[]>();
 	const rootIds: string[] = [];
 
 	for (const node of nodes) {
@@ -216,7 +220,7 @@ export function toOrgChartRoot<
 
 		buildingNodeIds.add(nodeId);
 
-		const broker = resolveBrokerPerson(peopleById, node.lastContactedByBrokerId);
+		const broker = resolveBrokerPerson(peopleByRef, node.lastContactedByBrokerKey);
 		const directReports = nodesByParentId
 			.get(nodeId)
 			?.map((childNode) => buildNode(childNode.id));

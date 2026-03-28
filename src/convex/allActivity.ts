@@ -1,9 +1,10 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
+import type { BrokerId } from '../lib/types/ids';
+import type { DealKey } from '../lib/types/keys';
 import { type AllActivityView } from '../lib/dashboard/routing/all-activity';
 import { getActivityLevelLabel, sortDealActivitiesAscending } from '../lib/dashboard/view-models/deal';
 import {
-	createPersonSummaryMap,
 	type PersonSummaryMap,
 	resolveOptionalBrokerPerson,
 	toTimelineItem
@@ -21,7 +22,12 @@ import {
 import { DEAL_INDUSTRIES, type ActivityLevel, type DealIndustry } from '../lib/types/vocab';
 import {
 	type DealRecordData,
+	createBrokerKeyByIdMap,
+	createDashboardPersonByBrokerIdMap,
+	findDealDocumentByKey,
 	toActivityRecord,
+	toBrokerRecord,
+	toDashboardOrgChartNodes,
 	toDashboardPeople,
 	toDealRecord
 } from './readModels';
@@ -64,14 +70,13 @@ function toAllActivityRowNavigation(
 ) {
 	return deal.context
 		? {
-				dealId: deal.id
+				dealKey: deal.key
 			}
 		: null;
 }
 
 function toAllActivityTableRow(
 	deal: DealRecordData,
-	view: AllActivityView,
 	lastActivity:
 		| {
 				kind: 'relative';
@@ -81,17 +86,17 @@ function toAllActivityTableRow(
 				kind: 'text';
 				label: string;
 		  },
-	peopleById: PersonSummaryMap<DashboardPerson>
+	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ) {
 	return {
-		id: deal.id,
+		key: deal.key,
 		detail: toAllActivityRowNavigation(deal),
 		probability: deal.probability,
 		activityLevel: deal.activityLevel,
 		deal: deal.dealName,
 		stage: deal.stage,
 		lastActivity,
-		owner: resolveOptionalBrokerPerson(peopleById, deal.ownerBrokerId)
+		owner: resolveOptionalBrokerPerson(peopleByBrokerId, deal.ownerBrokerId)
 	};
 }
 
@@ -99,33 +104,29 @@ function toRelativeLastActivityRow(
 	deal: DealRecordData & {
 		lastActivityAtIso: NonNullable<DealRecordData['lastActivityAtIso']>;
 	},
-	view: AllActivityView,
-	peopleById: PersonSummaryMap<DashboardPerson>
+	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ) {
 	return toAllActivityTableRow(
 		deal,
-		view,
 		{
 			kind: 'relative',
 			atIso: deal.lastActivityAtIso
 		},
-		peopleById
+		peopleByBrokerId
 	);
 }
 
 function toNoActivityRow(
 	deal: DealRecordData,
-	view: AllActivityView,
-	peopleById: PersonSummaryMap<DashboardPerson>
+	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ) {
 	return toAllActivityTableRow(
 		deal,
-		view,
 		{
 			kind: 'text',
 			label: NO_ACTIVITY_LABEL
 		},
-		peopleById
+		peopleByBrokerId
 	);
 }
 
@@ -142,40 +143,36 @@ function toNonNavigableRow(row: ReturnType<typeof toAllActivityTableRow>) {
 
 function filterFlaggedRows(
 	deals: readonly DealRecordData[],
-	view: AllActivityView,
-	peopleById: PersonSummaryMap<DashboardPerson>,
+	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>,
 	flag: keyof DealRecordData['dashboardFlags']
 ) {
 	return deals
 		.filter((deal) => deal.dashboardFlags[flag])
 		.map((deal) =>
 			hasListActivityData(deal)
-				? toRelativeLastActivityRow(deal, view, peopleById)
-				: toNoActivityRow(deal, view, peopleById)
+				? toRelativeLastActivityRow(deal, peopleByBrokerId)
+				: toNoActivityRow(deal, peopleByBrokerId)
 		);
 }
 
 function buildRowCollections(
 	deals: readonly DealRecordData[],
-	view: AllActivityView,
-	peopleById: PersonSummaryMap<DashboardPerson>
+	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ): RowCollections {
 	const allActivityRows = deals.filter(hasListActivityData);
 	const noActivityRows = deals.filter((deal) => !hasListActivityData(deal));
 	const likelyOutOfDateRows = deals.filter((deal) => deal.isLikelyOutOfDate);
 
 	return {
-		allActivityTableRows: allActivityRows.map((deal) =>
-			toRelativeLastActivityRow(deal, view, peopleById)
-		),
-		needSupportRows: filterFlaggedRows(deals, view, peopleById, 'needsSupport'),
-		duplicatedWorkRows: filterFlaggedRows(deals, view, peopleById, 'duplicatedWork'),
-		noActivityTableRows: noActivityRows.map((deal) => toNoActivityRow(deal, view, peopleById)),
+		allActivityTableRows: allActivityRows.map((deal) => toRelativeLastActivityRow(deal, peopleByBrokerId)),
+		needSupportRows: filterFlaggedRows(deals, peopleByBrokerId, 'needsSupport'),
+		duplicatedWorkRows: filterFlaggedRows(deals, peopleByBrokerId, 'duplicatedWork'),
+		noActivityTableRows: noActivityRows.map((deal) => toNoActivityRow(deal, peopleByBrokerId)),
 		likelyOutOfDateViewRows: likelyOutOfDateRows.map((deal) =>
 			toNonNavigableRow(
 				hasListActivityData(deal)
-					? toRelativeLastActivityRow(deal, view, peopleById)
-					: toNoActivityRow(deal, view, peopleById)
+					? toRelativeLastActivityRow(deal, peopleByBrokerId)
+					: toNoActivityRow(deal, peopleByBrokerId)
 			)
 		)
 	};
@@ -221,10 +218,11 @@ export const getAllActivityList = query({
 			ctx.db.query('brokers').collect(),
 			ctx.db.query('deals').collect()
 		]);
-		const people = await toDashboardPeople(ctx, brokers);
-		const peopleById = createPersonSummaryMap(people);
+		const brokerRecords = await Promise.all(brokers.map((broker) => toBrokerRecord(ctx, broker)));
+		const people = toDashboardPeople(brokerRecords);
+		const peopleByBrokerId = createDashboardPersonByBrokerIdMap(brokerRecords);
 		const dealRecords = deals.map((deal) => toDealRecord(deal));
-		const collections = buildRowCollections(dealRecords, selectedView, peopleById);
+		const collections = buildRowCollections(dealRecords, peopleByBrokerId);
 
 		return {
 			rows: resolveRowsForView(selectedView, collections),
@@ -235,31 +233,26 @@ export const getAllActivityList = query({
 
 export const getAllActivityDetail = query({
 	args: {
-		detailId: v.string(),
+		dealKey: v.string(),
 		view: allActivityViewValidator
 	},
 	returns: v.union(allActivityDetailReadModelValidator, v.null()),
 	handler: async (ctx, args): Promise<AllActivityDetailReadModel | null> => {
-		const normalizedDealId = await ctx.db.normalizeId('deals', args.detailId);
-
-		if (!normalizedDealId) {
-			return null;
-		}
-
-		const [deal, activities, brokers] = await Promise.all([
-			ctx.db.get(normalizedDealId),
-			ctx.db
-				.query('activities')
-				.withIndex('by_deal_id_stream_occurred_on_iso', (query) =>
-					query.eq('dealId', normalizedDealId).eq('stream', 'deal-detail')
-				)
-				.collect(),
+		const [deal, brokers] = await Promise.all([
+			findDealDocumentByKey(ctx, args.dealKey as DealKey),
 			ctx.db.query('brokers').collect()
 		]);
 
 		if (!deal) {
 			return null;
 		}
+
+		const activities = await ctx.db
+			.query('activities')
+			.withIndex('by_deal_id_stream_occurred_on_iso', (query) =>
+				query.eq('dealId', deal._id).eq('stream', 'deal-detail')
+			)
+			.collect();
 
 		const dealRecord = toDealRecord(deal);
 		const context = dealRecord.context;
@@ -268,8 +261,9 @@ export const getAllActivityDetail = query({
 			return null;
 		}
 
-		const people = await toDashboardPeople(ctx, brokers);
-		const peopleById = createPersonSummaryMap(people);
+		const brokerRecords = await Promise.all(brokers.map((broker) => toBrokerRecord(ctx, broker)));
+		const peopleByBrokerId = createDashboardPersonByBrokerIdMap(brokerRecords);
+		const brokerKeyById = createBrokerKeyByIdMap(brokerRecords);
 
 		return {
 			title: dealRecord.dealName,
@@ -283,13 +277,13 @@ export const getAllActivityDetail = query({
 			}),
 			activityItems: sortDealActivitiesAscending(
 				activities.map((activity) => toActivityRecord(activity))
-			).map((activity) => toTimelineItem(activity, peopleById)),
-			orgChartNodes: context.orgChartNodes,
+			).map((activity) => toTimelineItem(activity, peopleByBrokerId)),
+			orgChartNodes: toDashboardOrgChartNodes(context.orgChartNodes, brokerKeyById),
 			update: buildDealUploadFieldData(dealRecord.dealName),
 			rightRail: toDetailRightRailData([
 				toDetailRightRailOverviewSection(
 					dealRecord,
-					resolveOptionalBrokerPerson(peopleById, dealRecord.ownerBrokerId)
+					resolveOptionalBrokerPerson(peopleByBrokerId, dealRecord.ownerBrokerId)
 				),
 				toDetailRightRailTimingSection(dealRecord, context),
 				toDetailRightRailHelpfulContactsSection(context)

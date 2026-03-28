@@ -8,7 +8,7 @@
 		getLikelyOutOfDateHeaderUiScope,
 		LIKELY_OUT_OF_DATE_HEADER_SCOPE_ID
 	} from './likely-out-of-date';
-	import { getStaleLikelyOutOfDateSelectionRowIds } from './likely-out-of-date';
+	import { getStaleLikelyOutOfDateSelectionRowKeys } from './likely-out-of-date';
 
 	type AllActivityTableRow = AllActivityListPageData['rows'][number];
 
@@ -17,33 +17,33 @@
 	};
 
 	let { rows }: Props = $props();
-	let selectedRowIds = new SvelteSet<AllActivityTableRow['id']>();
+	let selectedRowKeys = new SvelteSet<AllActivityTableRow['key']>();
 	const selection = {
 		headerLabel: 'Select' as const,
-		selectedRowIds,
+		selectedRowKeys,
 		onToggleRow: toggleSelectedRow
 	};
 
 	$effect(() => {
-		const staleRowIds = getStaleLikelyOutOfDateSelectionRowIds(selectedRowIds, rows);
+		const staleRowKeys = getStaleLikelyOutOfDateSelectionRowKeys(selectedRowKeys, rows);
 
-		for (const rowId of staleRowIds) {
-			selectedRowIds.delete(rowId);
+		for (const rowKey of staleRowKeys) {
+			selectedRowKeys.delete(rowKey);
 		}
 	});
 
-	function toggleSelectedRow(rowId: AllActivityTableRow['id'], checked: boolean) {
+	function toggleSelectedRow(rowKey: AllActivityTableRow['key'], checked: boolean) {
 		if (checked) {
-			selectedRowIds.add(rowId);
+			selectedRowKeys.add(rowKey);
 		} else {
-			selectedRowIds.delete(rowId);
+			selectedRowKeys.delete(rowKey);
 		}
 	}
 </script>
 
 <DashboardHeaderScope
 	scopeId={LIKELY_OUT_OF_DATE_HEADER_SCOPE_ID}
-	scope={getLikelyOutOfDateHeaderUiScope(selectedRowIds.size)}
+	scope={getLikelyOutOfDateHeaderUiScope(selectedRowKeys.size)}
 />
 
 <Table {rows} {selection} />

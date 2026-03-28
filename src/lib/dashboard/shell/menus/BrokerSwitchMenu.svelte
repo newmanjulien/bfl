@@ -5,7 +5,7 @@
 	import { useDashboardMenu } from './menu-state.svelte';
 
 	type BrokerMenuPerson = {
-		id: string;
+		key: string;
 		name: string;
 		avatar: string;
 	};
@@ -40,7 +40,7 @@
 		<DashboardMenuPanel panelId={menu.panelId} class={menu.menuPanelClass} title="Switch broker">
 			{#snippet body()}
 				<ul class="mt-1 space-y-1">
-					{#each people as person (person.id)}
+					{#each people as person (person.key)}
 						<li>
 							<SelectableAvatarRow
 								label={person.name}

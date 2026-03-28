@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { DealId, InsightId } from '$lib/types/ids';
+import type { DealKey, InsightKey, MeetingKey } from '$lib/types/keys';
 import { isDashboardNavRouteActive, resolveDashboardRoute } from './index';
 
-const dealId = 'deal-doc-1' as DealId;
-const insightId = 'insight-doc-1' as InsightId;
+const dealKey = 'deal-doc-1' as DealKey;
+const insightKey = 'insight-doc-1' as InsightKey;
+const meetingKey = 'meeting-doc-1' as MeetingKey;
 
 describe('resolveDashboardRoute', () => {
 	it('resolves my deals routes with canonical default handling', () => {
@@ -24,20 +25,20 @@ describe('resolveDashboardRoute', () => {
 		expect(
 			resolveDashboardRoute({
 				kind: 'my-deals-detail',
-				dealId,
+				dealKey,
 				view: 'news',
 				tab: 'news'
 			})
-		).toBe(`/my-deals/detail/${dealId}`);
+		).toBe(`/my-deals/detail/${dealKey}`);
 
 		expect(
 			resolveDashboardRoute({
 				kind: 'my-deals-detail',
-				dealId,
+				dealKey,
 				view: 'deals',
 				tab: 'activity'
 			})
-		).toBe(`/my-deals/deals/detail/${dealId}?tab=activity`);
+		).toBe(`/my-deals/deals/detail/${dealKey}?tab=activity`);
 	});
 
 	it('resolves all activity routes with canonical default handling', () => {
@@ -51,30 +52,30 @@ describe('resolveDashboardRoute', () => {
 		expect(
 			resolveDashboardRoute({
 				kind: 'all-activity-detail',
-				dealId,
+				dealKey,
 				view: 'need-support'
 			})
-		).toBe(`/all-activity/need-support/detail/${dealId}`);
+		).toBe(`/all-activity/need-support/detail/${dealKey}`);
 	});
 
 	it('resolves opportunities and since-last-meeting routes', () => {
-		expect(resolveDashboardRoute({ kind: 'opportunities-list', meetingId: null })).toBe(
+		expect(resolveDashboardRoute({ kind: 'opportunities-list', meetingKey: null })).toBe(
 			'/opportunities'
 		);
 		expect(
 			resolveDashboardRoute({
 				kind: 'opportunities-list',
-				meetingId: 'meeting-doc-1'
+				meetingKey
 			})
-		).toBe('/opportunities?meetingId=meeting-doc-1');
+		).toBe('/opportunities?meetingKey=meeting-doc-1');
 		expect(
 			resolveDashboardRoute({
 				kind: 'opportunities-detail',
-				insightId,
-				meetingId: 'meeting-doc-1'
+				insightKey,
+				meetingKey
 			})
-		).toBe(`/opportunities/detail/${insightId}?meetingId=meeting-doc-1`);
-		expect(resolveDashboardRoute({ kind: 'since-last-meeting', meetingId: null })).toBe(
+		).toBe(`/opportunities/detail/${insightKey}?meetingKey=meeting-doc-1`);
+		expect(resolveDashboardRoute({ kind: 'since-last-meeting', meetingKey: null })).toBe(
 			'/since-last-meeting'
 		);
 	});
@@ -90,7 +91,7 @@ describe('isDashboardNavRouteActive', () => {
 				},
 				{
 					kind: 'my-deals-detail',
-					dealId,
+					dealKey,
 					view: 'deals',
 					tab: 'activity'
 				}
@@ -105,7 +106,7 @@ describe('isDashboardNavRouteActive', () => {
 				},
 				{
 					kind: 'all-activity-detail',
-					dealId,
+					dealKey,
 					view: 'likely-out-of-date'
 				}
 			)
@@ -115,12 +116,12 @@ describe('isDashboardNavRouteActive', () => {
 			isDashboardNavRouteActive(
 				{
 					kind: 'opportunities-list',
-					meetingId: null
+					meetingKey: null
 				},
 				{
 					kind: 'opportunities-detail',
-					insightId,
-					meetingId: 'meeting-doc-1'
+					insightKey,
+					meetingKey
 				}
 			)
 		).toBe(true);
@@ -131,11 +132,11 @@ describe('isDashboardNavRouteActive', () => {
 			isDashboardNavRouteActive(
 				{
 					kind: 'since-last-meeting',
-					meetingId: null
+					meetingKey: null
 				},
 				{
 					kind: 'since-last-meeting',
-					meetingId: 'meeting-doc-1'
+					meetingKey
 				}
 			)
 		).toBe(true);
@@ -144,11 +145,11 @@ describe('isDashboardNavRouteActive', () => {
 			isDashboardNavRouteActive(
 				{
 					kind: 'since-last-meeting',
-					meetingId: null
+					meetingKey: null
 				},
 				{
 					kind: 'opportunities-list',
-					meetingId: null
+					meetingKey: null
 				}
 			)
 		).toBe(false);

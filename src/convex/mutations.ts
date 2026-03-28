@@ -2,6 +2,7 @@ import { action, mutation } from './_generated/server';
 import { v } from 'convex/values';
 import { makeFunctionReference, type FunctionReference } from 'convex/server';
 import type { DealId } from '../lib/types/ids';
+import type { DealKey } from '../lib/types/keys';
 import type { DealIndustry } from '../lib/types/vocab';
 import { dealIndustryValidator } from './validators';
 import {
@@ -14,14 +15,14 @@ const brokerAvatarUpdateValidator = v.object({
 	avatar: v.id('_storage')
 });
 
-const normalizeDealIdForUpdateReference = makeFunctionReference<
+const findDealIdByKeyForUpdateReference = makeFunctionReference<
 	'query',
-	{ dealId: string },
+	{ dealKey: string },
 	DealId | null
->('industryInternal:normalizeDealIdForUpdate') as unknown as FunctionReference<
+>('industryInternal:findDealIdByKeyForUpdate') as unknown as FunctionReference<
 	'query',
 	'internal',
-	{ dealId: string },
+	{ dealKey: string },
 	DealId | null
 >;
 
@@ -38,16 +39,16 @@ const updateDealIndustryByCanonicalIdReference = makeFunctionReference<
 
 export const updateDealIndustry = action({
 	args: {
-		dealId: v.string(),
+		dealKey: v.string(),
 		industry: dealIndustryValidator
 	},
 	returns: updateDealIndustryResultValidator,
 	handler: async (
 		ctx,
-		args: { dealId: string; industry: DealIndustry }
+		args: { dealKey: DealKey; industry: DealIndustry }
 	): Promise<UpdateDealIndustryResult> => {
-		const normalizedDealId: DealId | null = await ctx.runQuery(normalizeDealIdForUpdateReference, {
-			dealId: args.dealId
+		const normalizedDealId: DealId | null = await ctx.runQuery(findDealIdByKeyForUpdateReference, {
+			dealKey: args.dealKey
 		});
 
 		if (!normalizedDealId) {

@@ -1,7 +1,8 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
+import type { BrokerId } from '../lib/types/ids';
+import type { InsightKey, MeetingKey } from '../lib/types/keys';
 import {
-	createPersonSummaryMap,
 	type PersonSummaryMap,
 	resolveOptionalBrokerPerson,
 	toTimelineItem
@@ -16,7 +17,12 @@ import {
 import {
 	type DealRecordData,
 	type InsightRecordData,
-	toDashboardPeople,
+	createBrokerKeyByIdMap,
+	createDashboardPersonByBrokerIdMap,
+	findInsightDocumentByKey,
+	requireMeetingRecordByKey,
+	toBrokerRecord,
+	toDashboardOrgChartNodes,
 	toDealRecord,
 	toInsightRecord
 } from './readModels';
@@ -39,9 +45,9 @@ type OpportunityTileAvatars = string[];
 
 function getOwnerAvatars(
 	insight: Pick<InsightRecordData, 'ownerBrokerId' | 'collaboratorBrokerIds'>,
-	peopleById: PersonSummaryMap<DashboardPerson>
+	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ): OpportunityTileAvatars {
-	const ownerAvatar = peopleById.get(insight.ownerBrokerId)?.avatar;
+	const ownerAvatar = peopleByBrokerId.get(insight.ownerBrokerId)?.avatar;
 
 	if (!ownerAvatar) {
 		throw new Error(`Unknown owner broker "${insight.ownerBrokerId}".`);
@@ -50,7 +56,7 @@ function getOwnerAvatars(
 	return [
 		ownerAvatar,
 		...insight.collaboratorBrokerIds.flatMap((brokerId) => {
-			const avatar = peopleById.get(brokerId)?.avatar;
+			const avatar = peopleByBrokerId.get(brokerId)?.avatar;
 			return avatar ? [avatar] : [];
 		})
 	];
@@ -59,48 +65,50 @@ function getOwnerAvatars(
 function toTile(
 	insight: InsightRecordData,
 	deal: DealRecordData,
-	peopleById: PersonSummaryMap<DashboardPerson>
+	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ) {
 	return {
-		id: insight.id,
+		key: insight.key,
 		detail: {
-			insightId: insight.id
+			insightKey: insight.key
 		},
 		title: insight.title,
 		dealNumber: deal.dealNumber,
 		dealLabel: deal.dealName,
-		avatars: getOwnerAvatars(insight, peopleById),
+		avatars: getOwnerAvatars(insight, peopleByBrokerId),
 		activityLevel: deal.activityLevel
 	};
 }
 
 function toRightRailData(
 	deal: DealRecordData,
-	peopleById: PersonSummaryMap<DashboardPerson>
+	peopleByBrokerId: PersonSummaryMap<DashboardPerson, BrokerId>
 ) {
 	return toDetailRightRailData([
 		toDetailRightRailOverviewSection(
 			deal,
-			resolveOptionalBrokerPerson(peopleById, deal.ownerBrokerId)
+			resolveOptionalBrokerPerson(peopleByBrokerId, deal.ownerBrokerId)
 		)
 	]);
 }
 
 export const getOpportunitiesList = query({
 	args: {
-		meetingId: v.id('meetings')
+		meetingKey: v.string()
 	},
 	returns: opportunitiesListReadModelValidator,
 	handler: async (ctx, args): Promise<OpportunitiesListReadModel> => {
-		const [brokers, insights, deals] = await Promise.all([
+		const [meeting, brokers, deals] = await Promise.all([
+			requireMeetingRecordByKey(ctx, args.meetingKey as MeetingKey),
 			ctx.db.query('brokers').collect(),
-			ctx.db
-				.query('insights')
-				.withIndex('by_meeting_id', (query) => query.eq('meetingId', args.meetingId))
-				.collect(),
 			ctx.db.query('deals').collect()
 		]);
-		const peopleById = createPersonSummaryMap(await toDashboardPeople(ctx, brokers));
+		const insights = await ctx.db
+			.query('insights')
+			.withIndex('by_meeting_id', (query) => query.eq('meetingId', meeting.id))
+			.collect();
+		const brokerRecords = await Promise.all(brokers.map((broker) => toBrokerRecord(ctx, broker)));
+		const peopleByBrokerId = createDashboardPersonByBrokerIdMap(brokerRecords);
 		const dealsById = new Map(deals.map((deal) => [deal._id, toDealRecord(deal)] as const));
 		const insightRecords = insights.map((insight) => toInsightRecord(insight));
 
@@ -113,7 +121,7 @@ export const getOpportunitiesList = query({
 					throw new Error(`Unknown deal "${insight.dealId}" for insight "${insight.id}".`);
 				}
 
-				return toTile(insight, deal, peopleById);
+				return toTile(insight, deal, peopleByBrokerId);
 			});
 		const riskTiles = insightRecords
 			.filter((insight) => insight.kind === 'risk')
@@ -124,7 +132,7 @@ export const getOpportunitiesList = query({
 					throw new Error(`Unknown deal "${insight.dealId}" for insight "${insight.id}".`);
 				}
 
-				return toTile(insight, deal, peopleById);
+				return toTile(insight, deal, peopleByBrokerId);
 			});
 
 		return {
@@ -140,19 +148,14 @@ export const getOpportunitiesList = query({
 
 export const getOpportunityDetail = query({
 	args: {
-		detailId: v.string(),
-		meetingId: v.id('meetings')
+		insightKey: v.string(),
+		meetingKey: v.string()
 	},
 	returns: v.union(opportunityDetailReadModelValidator, v.null()),
 	handler: async (ctx, args): Promise<OpportunityDetailReadModel | null> => {
-		const normalizedInsightId = await ctx.db.normalizeId('insights', args.detailId);
-
-		if (!normalizedInsightId) {
-			return null;
-		}
-
-		const [insight, brokers] = await Promise.all([
-			ctx.db.get(normalizedInsightId),
+		const [meeting, insight, brokers] = await Promise.all([
+			requireMeetingRecordByKey(ctx, args.meetingKey as MeetingKey),
+			findInsightDocumentByKey(ctx, args.insightKey as InsightKey),
 			ctx.db.query('brokers').collect()
 		]);
 
@@ -160,7 +163,7 @@ export const getOpportunityDetail = query({
 			return null;
 		}
 
-		if (insight.meetingId !== args.meetingId) {
+		if (insight.meetingId !== meeting.id) {
 			return null;
 		}
 
@@ -170,8 +173,9 @@ export const getOpportunityDetail = query({
 			throw new Error(`Unknown deal "${insight.dealId}" for insight "${insight._id}".`);
 		}
 
-		const people = await toDashboardPeople(ctx, brokers);
-		const peopleById = createPersonSummaryMap(people);
+		const brokerRecords = await Promise.all(brokers.map((broker) => toBrokerRecord(ctx, broker)));
+		const peopleByBrokerId = createDashboardPersonByBrokerIdMap(brokerRecords);
+		const brokerKeyById = createBrokerKeyByIdMap(brokerRecords);
 		const dealRecord = toDealRecord(deal);
 		const insightRecord = toInsightRecord(insight);
 
@@ -182,13 +186,13 @@ export const getOpportunityDetail = query({
 				title: insightRecord.title
 			},
 			kind: insightRecord.kind,
-			activityItems: insightRecord.timeline.map((activity) => toTimelineItem(activity, peopleById)),
-			orgChartNodes: insightRecord.orgChartNodes,
+			activityItems: insightRecord.timeline.map((activity) => toTimelineItem(activity, peopleByBrokerId)),
+			orgChartNodes: toDashboardOrgChartNodes(insightRecord.orgChartNodes, brokerKeyById),
 			update: buildDealUploadFieldData(
 				'this opportunity or risk',
 				'Upload call notes, screenshots, or procurement docs that add context to'
 			),
-			rightRail: toRightRailData(dealRecord, peopleById)
+			rightRail: toRightRailData(dealRecord, peopleByBrokerId)
 		};
 	}
 });

@@ -40,7 +40,7 @@
 									{:else if row.kind === 'deal-number'}
 										<span>{formatDealNumber(row.dealNumber)}</span>
 									{:else if row.kind === 'industry'}
-										<DetailRightRailIndustryField dealId={row.dealId} industry={row.value} />
+										<DetailRightRailIndustryField dealKey={row.dealKey} industry={row.value} />
 									{:else if row.kind === 'text'}
 										<span>{row.value}</span>
 									{/if}

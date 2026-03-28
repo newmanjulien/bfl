@@ -40,7 +40,7 @@
 	>
 		{#snippet body()}
 			<div class="divide-y divide-zinc-100">
-				{#each rows as row (row.id)}
+				{#each rows as row (row.key)}
 					<div data-table-row class={columnClass}>
 						{@render rowCells(row)}
 					</div>

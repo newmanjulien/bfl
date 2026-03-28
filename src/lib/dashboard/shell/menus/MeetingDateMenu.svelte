@@ -37,21 +37,21 @@
 	);
 	const meetingDateLabels = $derived(meetings.map((meeting) => formatIsoDateMonthDayLong(meeting.dateIso)));
 	const triggerMeeting = $derived(
-		meetings.find((meeting) => meeting.id === route.meetingId) ?? meetings[0] ?? null
+		meetings.find((meeting) => meeting.key === route.meetingKey) ?? meetings[0] ?? null
 	);
 	const triggerDateLabel = $derived(
 		triggerMeeting ? formatIsoDateMonthDayLong(triggerMeeting.dateIso) : 'Select meeting date'
 	);
 
-	function toMeetingRoute(meetingId: DashboardMeeting['id']) {
+	function toMeetingRoute(meetingKey: DashboardMeeting['key']) {
 		return route.kind === 'opportunities-list'
 			? {
 					kind: 'opportunities-list' as const,
-					meetingId
+					meetingKey
 				}
 			: {
 					kind: 'since-last-meeting' as const,
-					meetingId
+					meetingKey
 				};
 	}
 </script>
@@ -76,15 +76,15 @@
 		<DashboardMenuPanel panelId={menu.panelId} class={menu.menuPanelClass} title="Select meeting date">
 			{#snippet body()}
 				<ul class="mt-1 space-y-1">
-					{#each meetings as meeting, index (meeting.id)}
+					{#each meetings as meeting, index (meeting.key)}
 						<li>
 							<a
 								role="menuitemradio"
-								aria-checked={meeting.id === triggerMeeting?.id}
-								href={resolve(resolveDashboardRoute(toMeetingRoute(meeting.id)))}
+								aria-checked={meeting.key === triggerMeeting?.key}
+								href={resolve(resolveDashboardRoute(toMeetingRoute(meeting.key)))}
 								class={cn(
 									'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
-									meeting.id === triggerMeeting?.id ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
+									meeting.key === triggerMeeting?.key ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
 								)}
 								onclick={menu.close}
 							>

@@ -1,4 +1,5 @@
 import type { AbsoluteUrl } from '$lib/types/url';
+import type { DealKey, InsightKey, MeetingKey } from '$lib/types/keys';
 import {
 	DEFAULT_ALL_ACTIVITY_VIEW,
 	isNonDefaultAllActivityView,
@@ -23,21 +24,17 @@ const SINCE_LAST_MEETING_PATH = '/since-last-meeting';
 const DASHBOARD_ROUTE_IDS = {
 	myDealsList: ['/(dashboard)/my-deals', '/(dashboard)/my-deals/[view=myDealsView]'],
 	myDealsDetail: [
-		'/(dashboard)/my-deals/detail/[detailId]',
-		'/(dashboard)/my-deals/[view=myDealsView]/detail/[detailId]'
+		'/(dashboard)/my-deals/detail/[dealKey]',
+		'/(dashboard)/my-deals/[view=myDealsView]/detail/[dealKey]'
 	],
 	allActivityList: ['/(dashboard)/all-activity', '/(dashboard)/all-activity/[view=allActivityView]'],
 	allActivityDetail: [
-		'/(dashboard)/all-activity/detail/[detailId]',
-		'/(dashboard)/all-activity/[view=allActivityView]/detail/[detailId]'
+		'/(dashboard)/all-activity/detail/[dealKey]',
+		'/(dashboard)/all-activity/[view=allActivityView]/detail/[dealKey]'
 	],
-	opportunities: ['/(dashboard)/opportunities', '/(dashboard)/opportunities/detail/[detailId]'],
+	opportunities: ['/(dashboard)/opportunities', '/(dashboard)/opportunities/detail/[insightKey]'],
 	sinceLastMeeting: ['/(dashboard)/since-last-meeting']
 } as const;
-
-export type DashboardDealRouteParam = string;
-export type DashboardInsightRouteParam = string;
-export type DashboardMeetingRouteParam = string;
 
 export type MyDealsListRouteRef = {
 	kind: 'my-deals-list';
@@ -46,7 +43,7 @@ export type MyDealsListRouteRef = {
 
 export type MyDealsDetailRouteRef = {
 	kind: 'my-deals-detail';
-	dealId: DashboardDealRouteParam;
+	dealKey: DealKey;
 	view: MyDealsView;
 	tab: MyDealsDetailTabId;
 };
@@ -58,24 +55,24 @@ export type AllActivityListRouteRef = {
 
 export type AllActivityDetailRouteRef = {
 	kind: 'all-activity-detail';
-	dealId: DashboardDealRouteParam;
+	dealKey: DealKey;
 	view: AllActivityView;
 };
 
 export type OpportunitiesListRouteRef = {
 	kind: 'opportunities-list';
-	meetingId: DashboardMeetingRouteParam | null;
+	meetingKey: MeetingKey | null;
 };
 
 export type OpportunitiesDetailRouteRef = {
 	kind: 'opportunities-detail';
-	insightId: DashboardInsightRouteParam;
-	meetingId: DashboardMeetingRouteParam | null;
+	insightKey: InsightKey;
+	meetingKey: MeetingKey | null;
 };
 
 export type SinceLastMeetingRouteRef = {
 	kind: 'since-last-meeting';
-	meetingId: DashboardMeetingRouteParam | null;
+	meetingKey: MeetingKey | null;
 };
 
 export type DashboardNavRouteRef =
@@ -120,24 +117,25 @@ type NonDefaultMyDealsDetailTabId = Exclude<
 type DashboardPathname =
 	| '/my-deals'
 	| `/my-deals/${NonDefaultMyDealsView}`
-	| `/my-deals/detail/${DashboardDealRouteParam}`
-	| `/my-deals/detail/${DashboardDealRouteParam}?tab=${NonDefaultMyDealsDetailTabId}`
-	| `/my-deals/${NonDefaultMyDealsView}/detail/${DashboardDealRouteParam}`
-	| `/my-deals/${NonDefaultMyDealsView}/detail/${DashboardDealRouteParam}?tab=${NonDefaultMyDealsDetailTabId}`
+	| `/my-deals/detail/${DealKey}`
+	| `/my-deals/detail/${DealKey}?tab=${NonDefaultMyDealsDetailTabId}`
+	| `/my-deals/${NonDefaultMyDealsView}/detail/${DealKey}`
+	| `/my-deals/${NonDefaultMyDealsView}/detail/${DealKey}?tab=${NonDefaultMyDealsDetailTabId}`
 	| '/all-activity'
 	| `/all-activity/${NonDefaultAllActivityView}`
-	| `/all-activity/detail/${DashboardDealRouteParam}`
-	| `/all-activity/${NonDefaultAllActivityView}/detail/${DashboardDealRouteParam}`
+	| `/all-activity/detail/${DealKey}`
+	| `/all-activity/${NonDefaultAllActivityView}/detail/${DealKey}`
 	| '/opportunities'
-	| `/opportunities?meetingId=${DashboardMeetingRouteParam}`
-	| `/opportunities/detail/${DashboardInsightRouteParam}`
-	| `/opportunities/detail/${DashboardInsightRouteParam}?meetingId=${DashboardMeetingRouteParam}`
+	| `/opportunities?meetingKey=${MeetingKey}`
+	| `/opportunities/detail/${InsightKey}`
+	| `/opportunities/detail/${InsightKey}?meetingKey=${MeetingKey}`
 	| '/since-last-meeting'
-	| `/since-last-meeting?meetingId=${DashboardMeetingRouteParam}`;
+	| `/since-last-meeting?meetingKey=${MeetingKey}`;
 
 type DashboardLayoutRouteParams = {
 	view?: string;
-	detailId?: string;
+	dealKey?: string;
+	insightKey?: string;
 };
 
 type DashboardLayoutRouteParseInput = {
@@ -200,18 +198,18 @@ function resolveAllActivityListPath(view: AllActivityView) {
 	return `${ALL_ACTIVITY_BASE_PATH}/${view}`;
 }
 
-function resolveDetailIdParam(value: string | undefined) {
+function resolveRequiredRouteParam(value: string | undefined) {
 	return value && value.length > 0 ? value : null;
 }
 
-function resolveOptionalMeetingId(searchParams: URLSearchParams) {
-	const meetingId = searchParams.get('meetingId');
+function resolveOptionalMeetingKey(searchParams: URLSearchParams) {
+	const meetingKey = searchParams.get('meetingKey');
 
-	return meetingId && meetingId.length > 0 ? meetingId : null;
+	return meetingKey && meetingKey.length > 0 ? (meetingKey as MeetingKey) : null;
 }
 
-function withOptionalMeetingId(path: string, meetingId: DashboardMeetingRouteParam | null) {
-	return meetingId ? `${path}?meetingId=${meetingId}` : path;
+function withOptionalMeetingKey(path: string, meetingKey: MeetingKey | null) {
+	return meetingKey ? `${path}?meetingKey=${meetingKey}` : path;
 }
 
 const dashboardRouteDefinitions = {
@@ -243,9 +241,9 @@ const dashboardRouteDefinitions = {
 	'my-deals-detail': {
 		routeIds: DASHBOARD_ROUTE_IDS.myDealsDetail,
 		parse: ({ routeId, params, searchParams }) => {
-			const detailId = resolveDetailIdParam(params.detailId);
+			const dealKey = resolveRequiredRouteParam(params.dealKey);
 
-			if (!detailId) {
+			if (!dealKey) {
 				return null;
 			}
 
@@ -258,7 +256,7 @@ const dashboardRouteDefinitions = {
 			if (routeId === DASHBOARD_ROUTE_IDS.myDealsDetail[0]) {
 				return {
 					kind: 'my-deals-detail',
-					dealId: detailId,
+					dealKey: dealKey as DealKey,
 					view: DEFAULT_MY_DEALS_VIEW,
 					tab
 				};
@@ -270,7 +268,7 @@ const dashboardRouteDefinitions = {
 
 			return {
 				kind: 'my-deals-detail',
-				dealId: detailId,
+				dealKey: dealKey as DealKey,
 				view: params.view,
 				tab
 			};
@@ -278,17 +276,17 @@ const dashboardRouteDefinitions = {
 		href: (route) => {
 			if (route.view === DEFAULT_MY_DEALS_VIEW) {
 				if (route.tab === DEFAULT_MY_DEALS_DETAIL_TAB_ID) {
-					return `/my-deals/detail/${route.dealId}`;
+					return `/my-deals/detail/${route.dealKey}`;
 				}
 
-				return `/my-deals/detail/${route.dealId}?tab=${route.tab}`;
+				return `/my-deals/detail/${route.dealKey}?tab=${route.tab}`;
 			}
 
 			if (route.tab === DEFAULT_MY_DEALS_DETAIL_TAB_ID) {
-				return `/my-deals/${route.view}/detail/${route.dealId}`;
+				return `/my-deals/${route.view}/detail/${route.dealKey}`;
 			}
 
-			return `/my-deals/${route.view}/detail/${route.dealId}?tab=${route.tab}`;
+			return `/my-deals/${route.view}/detail/${route.dealKey}?tab=${route.tab}`;
 		}
 	},
 	'all-activity-list': {
@@ -323,16 +321,16 @@ const dashboardRouteDefinitions = {
 				return null;
 			}
 
-			const detailId = resolveDetailIdParam(params.detailId);
+			const dealKey = resolveRequiredRouteParam(params.dealKey);
 
-			if (!detailId) {
+			if (!dealKey) {
 				return null;
 			}
 
 			if (routeId === DASHBOARD_ROUTE_IDS.allActivityDetail[0]) {
 				return {
 					kind: 'all-activity-detail',
-					dealId: detailId,
+					dealKey: dealKey as DealKey,
 					view: DEFAULT_ALL_ACTIVITY_VIEW
 				};
 			}
@@ -343,61 +341,64 @@ const dashboardRouteDefinitions = {
 
 			return {
 				kind: 'all-activity-detail',
-				dealId: detailId,
+				dealKey: dealKey as DealKey,
 				view: params.view
 			};
 		},
-		href: (route) => `${resolveAllActivityListPath(route.view)}/detail/${route.dealId}`
+		href: (route) => `${resolveAllActivityListPath(route.view)}/detail/${route.dealKey}`
 	},
 	'opportunities-list': {
 		routeIds: [DASHBOARD_ROUTE_IDS.opportunities[0]],
 		parse: ({ searchParams }) => {
-			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingId'])) {
+			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingKey'])) {
 				return null;
 			}
 
 			return {
 				kind: 'opportunities-list',
-				meetingId: resolveOptionalMeetingId(searchParams)
+				meetingKey: resolveOptionalMeetingKey(searchParams)
 			};
 		},
-		href: (route) => withOptionalMeetingId(OPPORTUNITIES_BASE_PATH, route.meetingId)
+		href: (route) => withOptionalMeetingKey(OPPORTUNITIES_BASE_PATH, route.meetingKey)
 	},
 	'opportunities-detail': {
 		routeIds: [DASHBOARD_ROUTE_IDS.opportunities[1]],
 		parse: ({ params, searchParams }) => {
-			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingId'])) {
+			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingKey'])) {
 				return null;
 			}
 
-			const detailId = resolveDetailIdParam(params.detailId);
+			const insightKey = resolveRequiredRouteParam(params.insightKey);
 
-			if (!detailId) {
+			if (!insightKey) {
 				return null;
 			}
 
 			return {
 				kind: 'opportunities-detail',
-				insightId: detailId,
-				meetingId: resolveOptionalMeetingId(searchParams)
+				insightKey: insightKey as InsightKey,
+				meetingKey: resolveOptionalMeetingKey(searchParams)
 			};
 		},
 		href: (route) =>
-			withOptionalMeetingId(`${OPPORTUNITIES_BASE_PATH}/detail/${route.insightId}`, route.meetingId)
+			withOptionalMeetingKey(
+				`${OPPORTUNITIES_BASE_PATH}/detail/${route.insightKey}`,
+				route.meetingKey
+			)
 	},
 	'since-last-meeting': {
 		routeIds: DASHBOARD_ROUTE_IDS.sinceLastMeeting,
 		parse: ({ searchParams }) => {
-			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingId'])) {
+			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingKey'])) {
 				return null;
 			}
 
 			return {
 				kind: 'since-last-meeting',
-				meetingId: resolveOptionalMeetingId(searchParams)
+				meetingKey: resolveOptionalMeetingKey(searchParams)
 			};
 		},
-		href: (route) => withOptionalMeetingId(SINCE_LAST_MEETING_PATH, route.meetingId)
+		href: (route) => withOptionalMeetingKey(SINCE_LAST_MEETING_PATH, route.meetingKey)
 	}
 } satisfies DashboardRouteDefinitionMap;
 

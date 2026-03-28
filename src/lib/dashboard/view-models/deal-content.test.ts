@@ -1,35 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import type { OrgChartNodeRecord } from '$lib/domain/org-chart';
-import type { BrokerId } from '$lib/types/ids';
+import type { BrokerKey } from '$lib/types/keys';
 import { createPersonSummaryMap, toOrgChartRoot } from './deal-content';
 
-const julienBrokerId = 'broker-julien' as BrokerId;
-const minaBrokerId = 'broker-mina' as BrokerId;
+const julienBrokerKey = 'broker-julien' as BrokerKey;
+const minaBrokerKey = 'broker-mina' as BrokerKey;
 
 const peopleById = createPersonSummaryMap([
 	{
-		id: julienBrokerId,
+		key: julienBrokerKey,
 		name: 'Julien Newman',
 		avatar: '/avatars/julien.png'
 	},
 	{
-		id: minaBrokerId,
+		key: minaBrokerKey,
 		name: 'Mina Chen',
 		avatar: '/avatars/mina.png'
 	}
 ]);
 
 function createOrgChartNode(
-	overrides: Partial<OrgChartNodeRecord> &
-		Pick<OrgChartNodeRecord, 'id' | 'name' | 'role'>
-): OrgChartNodeRecord {
+	overrides: Partial<Parameters<typeof toOrgChartRoot>[0][number]> &
+		Pick<Parameters<typeof toOrgChartRoot>[0][number], 'id' | 'name' | 'role'>
+): Parameters<typeof toOrgChartRoot>[0][number] {
 	const { id, name, role, ...rest } = overrides;
 
 	return {
 		id,
 		name,
 		role,
-		lastContactedByBrokerId: julienBrokerId,
+		lastContactedByBrokerKey: julienBrokerKey,
 		lastContactedOnIso: '2026-03-21',
 		...rest
 	};
@@ -45,7 +44,7 @@ describe('toOrgChartRoot', () => {
 					parentId: 'root',
 					name: 'Taylor Smith',
 					role: 'VP Finance',
-					lastContactedByBrokerId: minaBrokerId,
+					lastContactedByBrokerKey: minaBrokerKey,
 					lastContactedOnIso: '2026-03-22'
 				}),
 				createOrgChartNode({

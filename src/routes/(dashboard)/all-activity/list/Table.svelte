@@ -11,8 +11,8 @@
 
 	type AllActivityTableSelection = {
 		headerLabel: 'Select';
-		selectedRowIds: ReadonlySet<AllActivityTableRow['id']>;
-		onToggleRow: (rowId: AllActivityTableRow['id'], checked: boolean) => void;
+		selectedRowKeys: ReadonlySet<AllActivityTableRow['key']>;
+		onToggleRow: (rowKey: AllActivityTableRow['key'], checked: boolean) => void;
 	};
 
 	type Props = {
@@ -43,9 +43,9 @@
 				type="checkbox"
 				aria-label={`Select ${row.deal}`}
 				class="h-3.5 w-3.5 rounded-[3px] border-zinc-300 accent-zinc-900"
-				checked={selection.selectedRowIds.has(row.id)}
+				checked={selection.selectedRowKeys.has(row.key)}
 				onchange={(event) =>
-					selection.onToggleRow(row.id, (event.currentTarget as HTMLInputElement).checked)}
+					selection.onToggleRow(row.key, (event.currentTarget as HTMLInputElement).checked)}
 			/>
 		</label>
 	{/if}
@@ -104,7 +104,7 @@
 
 	{#snippet body()}
 		<div class="divide-y divide-zinc-100">
-			{#each rows as row (row.id)}
+			{#each rows as row (row.key)}
 				{#if !selection && row.navigation.kind === 'internal'}
 					<a
 						href={resolve(resolveDashboardRoute(row.navigation.route))}

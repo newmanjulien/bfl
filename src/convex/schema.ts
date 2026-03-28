@@ -6,8 +6,7 @@ import {
 	dealIndustryValidator,
 	dealInsightKindValidator,
 	dealNewsSourceValidator,
-	dealStageValidator,
-	orgChartNodeRecordValidator
+	dealStageValidator
 } from './validators';
 
 const activityMarkerValidator = v.union(
@@ -76,10 +75,19 @@ const helpfulContactValidator = v.object({
 	linkedInUrl: v.string()
 });
 
+const internalOrgChartNodeRecordValidator = v.object({
+	id: v.string(),
+	name: v.string(),
+	role: v.string(),
+	lastContactedByBrokerId: v.id('brokers'),
+	lastContactedOnIso: v.string(),
+	parentId: v.optional(v.string())
+});
+
 const flatDealContextValidator = v.object({
 	summary: v.string(),
 	claimedAtIso: v.string(),
-	orgChartNodes: v.array(orgChartNodeRecordValidator),
+	orgChartNodes: v.array(internalOrgChartNodeRecordValidator),
 	helpfulContacts: v.optional(v.array(helpfulContactValidator))
 });
 
@@ -94,6 +102,7 @@ const legacyDealContextValidator = v.object({
 const dealContextValidator = v.union(flatDealContextValidator, legacyDealContextValidator);
 
 const flatInsightValidator = v.object({
+	key: v.string(),
 	dealId: v.id('deals'),
 	meetingId: v.id('meetings'),
 	kind: dealInsightKindValidator,
@@ -101,10 +110,11 @@ const flatInsightValidator = v.object({
 	ownerBrokerId: v.id('brokers'),
 	collaboratorBrokerIds: v.array(v.id('brokers')),
 	timeline: v.array(embeddedActivityValidator),
-	orgChartNodes: v.array(orgChartNodeRecordValidator)
+	orgChartNodes: v.array(internalOrgChartNodeRecordValidator)
 });
 
 const legacyInsightValidator = v.object({
+	key: v.string(),
 	dealId: v.id('deals'),
 	meetingId: v.id('meetings'),
 	kind: dealInsightKindValidator,
@@ -119,15 +129,20 @@ const insightDocumentValidator = v.union(flatInsightValidator, legacyInsightVali
 
 export default defineSchema({
 	meetings: defineTable({
+		key: v.string(),
 		dateIso: v.string()
-	}).index('by_date_iso', ['dateIso']),
+	})
+		.index('by_key', ['key'])
+		.index('by_date_iso', ['dateIso']),
 
 	brokers: defineTable({
+		key: v.string(),
 		name: v.string(),
 		avatar: v.string()
-	}),
+	}).index('by_key', ['key']),
 
 	deals: defineTable({
+		key: v.string(),
 		dealNumber: v.number(),
 		industry: dealIndustryValidator,
 		dealName: v.string(),
@@ -144,7 +159,7 @@ export default defineSchema({
 			needsSupport: v.boolean(),
 			duplicatedWork: v.boolean()
 		})
-	}),
+	}).index('by_key', ['key']),
 
 	activities: defineTable(activityDocumentValidator)
 		.index('by_stream_occurred_on_iso', ['stream', 'occurredOnIso'])
@@ -161,6 +176,7 @@ export default defineSchema({
 		.index('by_deal_id_published_on_iso', ['dealId', 'publishedOnIso']),
 
 	insights: defineTable(insightDocumentValidator)
+		.index('by_key', ['key'])
 		.index('by_deal_id', ['dealId'])
 		.index('by_kind', ['kind'])
 		.index('by_meeting_id', ['meetingId'])

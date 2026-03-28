@@ -1,35 +1,23 @@
 // @vitest-environment edge-runtime
 
 import { describe, expect, it } from 'vitest';
-import type { BrokerId } from '$lib/types/ids';
-import { resolveMyDealsActiveBrokerId } from './active-broker';
+import type { BrokerKey } from '$lib/types/keys';
+import { resolveMyDealsActiveBrokerKey } from './active-broker';
 
-describe('resolveMyDealsActiveBrokerId', () => {
-	it('resolves the fixed broker from dashboard shell people', () => {
-		const julienId = 'j57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId;
-		const people = [
-			{ id: julienId },
-			{ id: 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId }
-		];
+describe('resolveMyDealsActiveBrokerKey', () => {
+	it('resolves the configured broker key from dashboard shell people', () => {
+		const julienKey = 'julien' as BrokerKey;
+		const people = [{ key: julienKey }, { key: 'mina' as BrokerKey }];
 
-	expect(resolveMyDealsActiveBrokerId(people, julienId)).toBe(julienId);
+		expect(resolveMyDealsActiveBrokerKey(people, julienKey)).toBe(julienKey);
 	});
 
-	it('falls back to the first broker when no default broker id is configured', () => {
-		const firstBrokerId = 'j57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId;
-		const people = [
-			{ id: firstBrokerId },
-			{ id: 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId }
-		];
+	it('throws when the configured broker key is unavailable', () => {
+		const julienKey = 'julien' as BrokerKey;
+		const people = [{ key: 'mina' as BrokerKey }];
 
-		expect(resolveMyDealsActiveBrokerId(people, null)).toBe(firstBrokerId);
-	});
-
-	it('falls back to the first broker when the fixed broker is unavailable', () => {
-		const julienId = 'j57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId;
-		const fallbackBrokerId = 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId;
-		const people = [{ id: fallbackBrokerId }];
-
-		expect(resolveMyDealsActiveBrokerId(people, julienId)).toBe(fallbackBrokerId);
+		expect(() => resolveMyDealsActiveBrokerKey(people, julienKey)).toThrow(
+			'Unknown default broker key "julien".'
+		);
 	});
 });

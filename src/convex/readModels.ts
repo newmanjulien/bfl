@@ -1,6 +1,7 @@
 import type { QueryCtx } from './_generated/server';
 import type { Doc, Id } from './_generated/dataModel';
-import type { OrgChartNodeRecord } from '../lib/domain/org-chart';
+import type { OrgChartNodeRecord as InternalOrgChartNodeRecord } from '../lib/domain/org-chart';
+import type { OrgChartNodeRecord as DashboardOrgChartNodeRecord } from '../lib/dashboard/view-models/deal-content';
 import {
 	parseIsoDate,
 	parseIsoDateTime,
@@ -9,6 +10,7 @@ import {
 	type IsoDateTime
 } from '../lib/types/dates';
 import type { BrokerId, DealId, InsightId, MeetingId } from '../lib/types/ids';
+import type { BrokerKey, DealKey, InsightKey, MeetingKey } from '../lib/types/keys';
 import type {
 	ActivityLevel,
 	DealActivityStream,
@@ -19,10 +21,23 @@ import type {
 } from '../lib/types/vocab';
 import type { DashboardMeeting, DashboardPerson } from './validators';
 
+export type BrokerRecordData = {
+	id: BrokerId;
+	key: BrokerKey;
+	name: string;
+	avatar: string;
+};
+
+export type MeetingRecordData = {
+	id: MeetingId;
+	key: MeetingKey;
+	dateIso: IsoDate;
+};
+
 export type DealContextRecordData = {
 	summary: string;
 	claimedAtIso: IsoDateTime;
-	orgChartNodes: OrgChartNodeRecord[];
+	orgChartNodes: InternalOrgChartNodeRecord[];
 	helpfulContacts?: {
 		id: string;
 		name: string;
@@ -34,6 +49,7 @@ export type DealContextRecordData = {
 
 export type DealRecordData = {
 	id: DealId;
+	key: DealKey;
 	dealNumber: number;
 	industry: DealIndustry;
 	dealName: string;
@@ -52,16 +68,16 @@ export type DealRecordData = {
 	};
 };
 
-type ActivityMarkerData<BrokerIdValue extends string = BrokerId> =
+type ActivityMarkerData<BrokerRef extends string = BrokerId> =
 	| {
 			kind: 'dot';
 	  }
 	| {
 			kind: 'broker-avatar';
-			brokerId: BrokerIdValue;
+			brokerRef: BrokerRef;
 	  };
 
-export type ActivityRecordData<BrokerIdValue extends string = BrokerId> =
+export type ActivityRecordData<BrokerRef extends string = BrokerId> =
 	| {
 			kind: 'headline';
 			id: string;
@@ -69,7 +85,7 @@ export type ActivityRecordData<BrokerIdValue extends string = BrokerId> =
 			stream: DealActivityStream;
 			occurredOnIso: IsoDate;
 			body: string;
-			marker: ActivityMarkerData<BrokerIdValue>;
+			marker: ActivityMarkerData<BrokerRef>;
 			title: string;
 	  }
 	| {
@@ -79,8 +95,8 @@ export type ActivityRecordData<BrokerIdValue extends string = BrokerId> =
 			stream: DealActivityStream;
 			occurredOnIso: IsoDate;
 			body: string;
-			marker: ActivityMarkerData<BrokerIdValue>;
-			actorBrokerId: BrokerIdValue;
+			marker: ActivityMarkerData<BrokerRef>;
+			actorBrokerRef: BrokerRef;
 			action: string;
 	  };
 
@@ -94,6 +110,7 @@ export type NewsRecordData = {
 
 export type InsightRecordData = {
 	id: InsightId;
+	key: InsightKey;
 	dealId: DealId;
 	meetingId: MeetingId;
 	kind: DealInsightKind;
@@ -101,75 +118,14 @@ export type InsightRecordData = {
 	ownerBrokerId: BrokerId;
 	collaboratorBrokerIds: BrokerId[];
 	timeline: ActivityRecordData[];
-	orgChartNodes: OrgChartNodeRecord[];
+	orgChartNodes: InternalOrgChartNodeRecord[];
 };
 
 type DashboardActivityValue = Doc<'activities'> | Doc<'insights'>['timeline'][number];
-export type MeetingRecordData = DashboardMeeting;
-
 type DealContextDocument = NonNullable<Doc<'deals'>['context']>;
 type FlatDealContextDocument = Extract<DealContextDocument, { orgChartNodes: unknown[] }>;
 type InsightDocument = Doc<'insights'>;
 type FlatInsightDocument = Extract<InsightDocument, { orgChartNodes: unknown[] }>;
-
-export function toMeetingRecord(meeting: Doc<'meetings'>): MeetingRecordData {
-	return {
-		id: meeting._id,
-		dateIso: parseIsoDate(meeting.dateIso, `meetings["${meeting._id}"].dateIso`)
-	};
-}
-
-export async function listMeetingRecords(ctx: QueryCtx): Promise<MeetingRecordData[]> {
-	const meetings = await ctx.db.query('meetings').collect();
-
-	return meetings
-		.map((meeting) => toMeetingRecord(meeting))
-		.sort((left, right) => right.dateIso.localeCompare(left.dateIso));
-}
-
-export async function requireMeetingRecord(
-	ctx: QueryCtx,
-	meetingId: MeetingId
-): Promise<MeetingRecordData> {
-	const meeting = await ctx.db.get(meetingId);
-
-	if (!meeting) {
-		throw new Error(`Unknown meeting "${meetingId}".`);
-	}
-
-	return toMeetingRecord(meeting);
-}
-
-async function resolveBrokerAvatar(
-	ctx: QueryCtx,
-	broker: Doc<'brokers'>
-): Promise<DashboardPerson['avatar']> {
-	try {
-		const avatarUrl = await ctx.storage.getUrl(broker.avatar as Id<'_storage'>);
-
-		return avatarUrl ?? broker.avatar;
-	} catch {
-		return broker.avatar;
-	}
-}
-
-export async function toDashboardPerson(
-	ctx: QueryCtx,
-	broker: Doc<'brokers'>
-): Promise<DashboardPerson> {
-	return {
-		id: broker._id,
-		name: broker.name,
-		avatar: await resolveBrokerAvatar(ctx, broker)
-	};
-}
-
-export function toDashboardPeople(
-	ctx: QueryCtx,
-	brokers: readonly Doc<'brokers'>[]
-): Promise<DashboardPerson[]> {
-	return Promise.all(brokers.map((broker) => toDashboardPerson(ctx, broker)));
-}
 
 function requireString(value: unknown, path: string) {
 	if (typeof value !== 'string') {
@@ -179,17 +135,20 @@ function requireString(value: unknown, path: string) {
 	return value;
 }
 
-function toOrgChartNodeRecord(
+function toInternalOrgChartNodeRecord(
 	node:
 		| FlatDealContextDocument['orgChartNodes'][number]
 		| FlatInsightDocument['orgChartNodes'][number]
-): OrgChartNodeRecord {
+): InternalOrgChartNodeRecord {
 	return {
 		id: node.id,
 		name: node.name,
 		role: node.role,
 		lastContactedByBrokerId: node.lastContactedByBrokerId,
-		lastContactedOnIso: parseIsoDate(node.lastContactedOnIso, `orgChartNodes["${node.id}"].lastContactedOnIso`),
+		lastContactedOnIso: parseIsoDate(
+			node.lastContactedOnIso,
+			`orgChartNodes["${node.id}"].lastContactedOnIso`
+		),
 		parentId: node.parentId ?? undefined
 	};
 }
@@ -198,7 +157,7 @@ function toLegacyOrgChartNodeRecords(
 	node: unknown,
 	path: string,
 	parentId?: string
-): OrgChartNodeRecord[] {
+): InternalOrgChartNodeRecord[] {
 	if (!node || typeof node !== 'object' || Array.isArray(node)) {
 		throw new Error(`Invalid legacy org chart node at "${path}".`);
 	}
@@ -211,7 +170,7 @@ function toLegacyOrgChartNodeRecords(
 		throw new Error(`Invalid legacy org chart directReports at "${path}.directReports".`);
 	}
 
-	const currentNode: OrgChartNodeRecord = {
+	const currentNode: InternalOrgChartNodeRecord = {
 		id,
 		name: requireString(rawNode.name, `${path}.name`),
 		role: requireString(rawNode.role, `${path}.role`),
@@ -242,12 +201,187 @@ function hasFlatInsightOrgChartNodes(insight: InsightDocument): insight is FlatI
 	return 'orgChartNodes' in insight;
 }
 
+export async function findBrokerRecordByKey(
+	ctx: QueryCtx,
+	brokerKey: BrokerKey
+): Promise<BrokerRecordData | null> {
+	const broker = await ctx.db
+		.query('brokers')
+		.withIndex('by_key', (query) => query.eq('key', brokerKey))
+		.unique();
+
+	if (!broker) {
+		return null;
+	}
+
+	const avatar = await resolveBrokerAvatar(ctx, broker);
+
+	return {
+		id: broker._id,
+		key: broker.key as BrokerKey,
+		name: broker.name,
+		avatar
+	};
+}
+
+export async function requireBrokerRecordByKey(
+	ctx: QueryCtx,
+	brokerKey: BrokerKey
+): Promise<BrokerRecordData> {
+	const broker = await findBrokerRecordByKey(ctx, brokerKey);
+
+	if (!broker) {
+		throw new Error(`Unknown broker "${brokerKey}".`);
+	}
+
+	return broker;
+}
+
+export async function toBrokerRecord(
+	ctx: QueryCtx,
+	broker: Doc<'brokers'>
+): Promise<BrokerRecordData> {
+	return {
+		id: broker._id,
+		key: broker.key as BrokerKey,
+		name: broker.name,
+		avatar: await resolveBrokerAvatar(ctx, broker)
+	};
+}
+
+export function toDashboardPerson(record: BrokerRecordData): DashboardPerson {
+	return {
+		key: record.key,
+		name: record.name,
+		avatar: record.avatar
+	};
+}
+
+export function toDashboardPeople(records: readonly BrokerRecordData[]): DashboardPerson[] {
+	return records.map((record) => toDashboardPerson(record));
+}
+
+export function createBrokerKeyByIdMap(
+	records: readonly BrokerRecordData[]
+): ReadonlyMap<BrokerId, BrokerKey> {
+	return new Map(records.map((record) => [record.id, record.key] as const));
+}
+
+export function createDashboardPersonByBrokerIdMap(
+	records: readonly BrokerRecordData[]
+): ReadonlyMap<BrokerId, DashboardPerson> {
+	return new Map(records.map((record) => [record.id, toDashboardPerson(record)] as const));
+}
+
+export function toDashboardOrgChartNodes(
+	nodes: readonly InternalOrgChartNodeRecord[],
+	brokerKeyById: ReadonlyMap<BrokerId, BrokerKey>
+): DashboardOrgChartNodeRecord[] {
+	return nodes.map((node) => {
+		const brokerKey = brokerKeyById.get(node.lastContactedByBrokerId);
+
+		if (!brokerKey) {
+			throw new Error(`Unknown broker "${node.lastContactedByBrokerId}" in org chart.`);
+		}
+
+		return {
+			id: node.id,
+			name: node.name,
+			role: node.role,
+			lastContactedByBrokerKey: brokerKey,
+			lastContactedOnIso: node.lastContactedOnIso,
+			parentId: node.parentId
+		};
+	});
+}
+
+export function toMeetingRecord(meeting: Doc<'meetings'>): MeetingRecordData {
+	return {
+		id: meeting._id,
+		key: meeting.key as MeetingKey,
+		dateIso: parseIsoDate(meeting.dateIso, `meetings["${meeting._id}"].dateIso`)
+	};
+}
+
+export function toDashboardMeeting(record: MeetingRecordData): DashboardMeeting {
+	return {
+		key: record.key,
+		dateIso: record.dateIso
+	};
+}
+
+export async function listMeetingRecords(ctx: QueryCtx): Promise<MeetingRecordData[]> {
+	const meetings = await ctx.db.query('meetings').collect();
+
+	return meetings
+		.map((meeting) => toMeetingRecord(meeting))
+		.sort((left, right) => right.dateIso.localeCompare(left.dateIso));
+}
+
+export async function findMeetingRecordByKey(
+	ctx: QueryCtx,
+	meetingKey: MeetingKey
+): Promise<MeetingRecordData | null> {
+	const meeting = await ctx.db
+		.query('meetings')
+		.withIndex('by_key', (query) => query.eq('key', meetingKey))
+		.unique();
+
+	return meeting ? toMeetingRecord(meeting) : null;
+}
+
+export async function requireMeetingRecordByKey(
+	ctx: QueryCtx,
+	meetingKey: MeetingKey
+): Promise<MeetingRecordData> {
+	const meeting = await findMeetingRecordByKey(ctx, meetingKey);
+
+	if (!meeting) {
+		throw new Error(`Unknown meeting "${meetingKey}".`);
+	}
+
+	return meeting;
+}
+
+export async function findDealDocumentByKey(
+	ctx: QueryCtx,
+	dealKey: DealKey
+): Promise<Doc<'deals'> | null> {
+	return ctx.db
+		.query('deals')
+		.withIndex('by_key', (query) => query.eq('key', dealKey))
+		.unique();
+}
+
+export async function findInsightDocumentByKey(
+	ctx: QueryCtx,
+	insightKey: InsightKey
+): Promise<Doc<'insights'> | null> {
+	return ctx.db
+		.query('insights')
+		.withIndex('by_key', (query) => query.eq('key', insightKey))
+		.unique();
+}
+
+async function resolveBrokerAvatar(
+	ctx: QueryCtx,
+	broker: Doc<'brokers'>
+): Promise<DashboardPerson['avatar']> {
+	try {
+		const avatarUrl = await ctx.storage.getUrl(broker.avatar as Id<'_storage'>);
+
+		return avatarUrl ?? broker.avatar;
+	} catch {
+		return broker.avatar;
+	}
+}
+
 export function toDealContextRecord(context: DealContextDocument): DealContextRecordData {
 	return {
 		summary: context.summary,
 		claimedAtIso: parseIsoDateTime(context.claimedAtIso, 'deal.context.claimedAtIso'),
 		orgChartNodes: hasFlatOrgChartNodes(context)
-			? context.orgChartNodes.map((node) => toOrgChartNodeRecord(node))
+			? context.orgChartNodes.map((node) => toInternalOrgChartNodeRecord(node))
 			: toLegacyOrgChartNodeRecords(context.orgChartRoot, 'deal.context.orgChartRoot'),
 		helpfulContacts: context.helpfulContacts?.map((contact) => ({
 			id: contact.id,
@@ -262,6 +396,7 @@ export function toDealContextRecord(context: DealContextDocument): DealContextRe
 export function toDealRecord(deal: Doc<'deals'>): DealRecordData {
 	return {
 		id: deal._id,
+		key: deal.key as DealKey,
 		dealNumber: deal.dealNumber,
 		industry: deal.industry as DealIndustry,
 		dealName: deal.dealName,
@@ -284,23 +419,31 @@ export function toDealRecord(deal: Doc<'deals'>): DealRecordData {
 	};
 }
 
+function getActivityLocalId(activity: DashboardActivityValue) {
+	if ('id' in activity) {
+		return activity.id;
+	}
+
+	return `activity-${activity._creationTime}`;
+}
+
 export function toActivityRecord(activity: DashboardActivityValue): ActivityRecordData {
-	const id = 'id' in activity ? activity.id : String(activity._id);
+	const id = getActivityLocalId(activity);
 	const marker =
 		activity.marker.kind === 'dot'
 			? { kind: 'dot' as const }
-			: { kind: 'broker-avatar' as const, brokerId: activity.marker.brokerId };
+			: { kind: 'broker-avatar' as const, brokerRef: activity.marker.brokerId };
 
 	if (activity.kind === 'headline') {
-			return {
-				kind: 'headline',
-				id,
-				dealId: activity.dealId,
-				stream: activity.stream as DealActivityStream,
-				occurredOnIso: parseIsoDate(activity.occurredOnIso, `activity["${id}"].occurredOnIso`),
-				body: activity.body,
-				marker,
-				title: activity.title
+		return {
+			kind: 'headline',
+			id,
+			dealId: activity.dealId,
+			stream: activity.stream as DealActivityStream,
+			occurredOnIso: parseIsoDate(activity.occurredOnIso, `activity["${id}"].occurredOnIso`),
+			body: activity.body,
+			marker,
+			title: activity.title
 		};
 	}
 
@@ -312,14 +455,14 @@ export function toActivityRecord(activity: DashboardActivityValue): ActivityReco
 		occurredOnIso: parseIsoDate(activity.occurredOnIso, `activity["${id}"].occurredOnIso`),
 		body: activity.body,
 		marker,
-		actorBrokerId: activity.actorBrokerId,
+		actorBrokerRef: activity.actorBrokerId,
 		action: activity.action
 	};
 }
 
 export function toNewsRecord(newsItem: Doc<'news'>): NewsRecordData {
 	return {
-		id: String(newsItem._id),
+		id: `news-${newsItem._creationTime}`,
 		dealId: newsItem.dealId,
 		title: newsItem.title,
 		source: newsItem.source as DealNewsSource,
@@ -330,6 +473,7 @@ export function toNewsRecord(newsItem: Doc<'news'>): NewsRecordData {
 export function toInsightRecord(insight: InsightDocument): InsightRecordData {
 	return {
 		id: insight._id,
+		key: insight.key as InsightKey,
 		dealId: insight.dealId,
 		meetingId: insight.meetingId,
 		kind: insight.kind as DealInsightKind,
@@ -338,7 +482,7 @@ export function toInsightRecord(insight: InsightDocument): InsightRecordData {
 		collaboratorBrokerIds: insight.collaboratorBrokerIds,
 		timeline: insight.timeline.map((activity) => toActivityRecord(activity)),
 		orgChartNodes: hasFlatInsightOrgChartNodes(insight)
-			? insight.orgChartNodes.map((node) => toOrgChartNodeRecord(node))
+			? insight.orgChartNodes.map((node) => toInternalOrgChartNodeRecord(node))
 			: toLegacyOrgChartNodeRecords(insight.orgChartRoot, `insights["${insight._id}"].orgChartRoot`)
 	};
 }

@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 	const layoutData = await parent();
 	const route = requireDashboardRouteKind(layoutData.route, 'all-activity-detail');
 	const readModel = await createServerConvexClient().query(api.allActivity.getAllActivityDetail, {
-		detailId: route.dealId,
+		dealKey: route.dealKey,
 		view: route.view
 	});
 
