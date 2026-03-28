@@ -20,6 +20,7 @@
 	const header = $derived(page.data.header ?? null);
 	const route = $derived(data.route);
 	const dashboardShell = $derived(data.dashboardShell);
+	const sidebarBroker = $derived(data.sidebarBroker);
 	const desktopViewport = new MediaQuery('(min-width: 768px)', true);
 	const shellState = $state<DashboardShellState>({
 		isSidebarExpanded: false,
@@ -42,7 +43,7 @@
 		class="dashboard-canvas flex h-full min-h-0 md:gap-(--dashboard-canvas-gap)"
 		data-sidebar-state={desktopViewport.current && shellState.isSidebarExpanded ? 'expanded' : 'collapsed'}
 	>
-		<Sidebar {route} class="hidden md:flex" />
+		<Sidebar {route} broker={sidebarBroker} class="hidden md:flex" />
 		<main class="min-w-0 flex min-h-0 flex-1 flex-col overflow-hidden bg-white md:rounded-sm md:border md:border-zinc-100">
 			<MobileDrawer {route} />
 			<MobileHeader

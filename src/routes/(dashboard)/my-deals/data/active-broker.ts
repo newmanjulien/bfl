@@ -1,3 +1,4 @@
+import { resolveDefaultBroker } from '$lib/server/brokers';
 import type { BrokerId } from '$lib/types/ids';
 
 type BrokerOption = {
@@ -8,15 +9,7 @@ export function resolveMyDealsActiveBrokerId(
 	people: readonly BrokerOption[],
 	defaultBrokerId: BrokerId | null
 ): BrokerId {
-	const activeBroker = defaultBrokerId
-		? people.find((person) => person.id === defaultBrokerId)
-		: null;
-
-	if (activeBroker) {
-		return activeBroker.id;
-	}
-
-	const fallbackBroker = people[0];
+	const fallbackBroker = resolveDefaultBroker(people, defaultBrokerId);
 
 	if (!fallbackBroker) {
 		throw new Error('No brokers available for my deals.');

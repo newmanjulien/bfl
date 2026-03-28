@@ -19,7 +19,7 @@
 
 	const headers = ['Deal', 'Latest news', 'Last activity', 'Owner', 'Reserved in Epic'] as const;
 	const columnClass =
-		'justify-start grid-cols-[minmax(8.5rem,10rem)_minmax(13rem,16rem)_minmax(13rem,16rem)_minmax(8rem,10rem)_minmax(8.5rem,10rem)] md:grid-cols-[minmax(11rem,14rem)_minmax(18rem,24rem)_minmax(18rem,24rem)_minmax(10rem,13rem)_minmax(9rem,11rem)]';
+		'justify-start grid-cols-[minmax(10rem,1.35fr)_minmax(13rem,1.2fr)_minmax(13rem,1.2fr)_minmax(8rem,0.9fr)_minmax(5.5rem,0.5fr)] md:grid-cols-[minmax(10rem,1.4fr)_minmax(18rem,1.35fr)_minmax(18rem,1.35fr)_minmax(9rem,0.95fr)_minmax(6rem,0.45fr)]';
 	const minWidthClass = 'min-w-[52rem] md:min-w-full';
 </script>
 

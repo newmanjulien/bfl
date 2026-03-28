@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { ChevronsUpDown } from 'lucide-svelte';
+	import type { DashboardPerson } from '$lib/dashboard/read-models';
 	import type { DashboardRouteRef } from '$lib/dashboard/routing';
 	import { useDashboardShellState } from '$lib/dashboard/shell/state.svelte';
 	import { cn } from '$lib/support/cn';
@@ -14,10 +15,11 @@
 
 	type Props = {
 		route: DashboardRouteRef;
+		broker: DashboardPerson | null;
 		class?: string;
 	};
 
-	let { route, class: className = '' }: Props = $props();
+	let { route, broker, class: className = '' }: Props = $props();
 
 	const shellState = useDashboardShellState();
 	const currentRoute = $derived(route);
@@ -62,11 +64,13 @@
 		>
 			<div class="inline-flex h-6 origin-center scale-110 items-center gap-1 rounded-full border border-zinc-100 bg-zinc-50 px-1 text-zinc-100">
 				<span class="inline-flex size-5 shrink-0 overflow-hidden rounded-full border border-zinc-100 bg-white">
-					<img
-						src="/avatars/yash.webp"
-						alt="User profile avatar"
-						class="h-full w-full object-cover"
-					/>
+					{#if broker}
+						<img
+							src={broker.avatar}
+							alt={`${broker.name} profile avatar`}
+							class="h-full w-full object-cover"
+						/>
+					{/if}
 				</span>
 				<ChevronsUpDown aria-hidden="true" class="h-3 w-3 text-zinc-400" />
 			</div>

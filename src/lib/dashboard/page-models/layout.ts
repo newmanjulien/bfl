@@ -1,10 +1,11 @@
 import { error } from '@sveltejs/kit';
 import type { DashboardRouteRef } from '$lib/dashboard/routing';
-import type { DashboardShellReadModel } from '$lib/dashboard/read-models';
+import type { DashboardPerson, DashboardShellReadModel } from '$lib/dashboard/read-models';
 
 export type DashboardLayoutData = {
 	route: DashboardRouteRef;
 	dashboardShell: DashboardShellReadModel;
+	sidebarBroker: DashboardPerson | null;
 };
 
 export function requireDashboardRouteKind<TRouteKind extends DashboardRouteRef['kind']>(
