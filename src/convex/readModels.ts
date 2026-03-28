@@ -427,6 +427,23 @@ function getActivityLocalId(activity: DashboardActivityValue) {
 	return `activity-${activity._creationTime}`;
 }
 
+function hasActorActivityFields(
+	activity: DashboardActivityValue
+): activity is DashboardActivityValue & {
+	actorBrokerId: BrokerId;
+	action: string;
+} {
+	return 'actorBrokerId' in activity && 'action' in activity;
+}
+
+function hasHeadlineActivityFields(
+	activity: DashboardActivityValue
+): activity is DashboardActivityValue & {
+	title: string;
+} {
+	return 'title' in activity;
+}
+
 export function toActivityRecord(activity: DashboardActivityValue): ActivityRecordData {
 	const id = getActivityLocalId(activity);
 	const marker =
@@ -434,7 +451,14 @@ export function toActivityRecord(activity: DashboardActivityValue): ActivityReco
 			? { kind: 'dot' as const }
 			: { kind: 'broker-avatar' as const, brokerRef: activity.marker.brokerId };
 
-	if (activity.kind === 'headline') {
+	const hasActorFields = hasActorActivityFields(activity);
+	const hasHeadlineFields = hasHeadlineActivityFields(activity);
+
+	if (hasActorFields === hasHeadlineFields) {
+		throw new Error(`Invalid activity shape for "${id}".`);
+	}
+
+	if (hasHeadlineFields) {
 		return {
 			kind: 'headline',
 			id,
@@ -445,19 +469,19 @@ export function toActivityRecord(activity: DashboardActivityValue): ActivityReco
 			marker,
 			title: activity.title
 		};
+	} else {
+		return {
+			kind: 'actor-action',
+			id,
+			dealId: activity.dealId,
+			stream: activity.stream as DealActivityStream,
+			occurredOnIso: parseIsoDate(activity.occurredOnIso, `activity["${id}"].occurredOnIso`),
+			body: activity.body,
+			marker,
+			actorBrokerRef: activity.actorBrokerId,
+			action: activity.action
+		};
 	}
-
-	return {
-		kind: 'actor-action',
-		id,
-		dealId: activity.dealId,
-		stream: activity.stream as DealActivityStream,
-		occurredOnIso: parseIsoDate(activity.occurredOnIso, `activity["${id}"].occurredOnIso`),
-		body: activity.body,
-		marker,
-		actorBrokerRef: activity.actorBrokerId,
-		action: activity.action
-	};
 }
 
 export function toNewsRecord(newsItem: Doc<'news'>): NewsRecordData {

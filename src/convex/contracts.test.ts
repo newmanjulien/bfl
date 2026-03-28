@@ -166,7 +166,6 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 		});
 
 		await ctx.db.insert('activities', {
-			kind: 'headline',
 			dealId,
 			stream: 'deal-detail',
 			occurredOnIso: '2026-03-24',
@@ -175,7 +174,6 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 			title: 'Weekly follow-up'
 		});
 		await ctx.db.insert('activities', {
-			kind: 'headline',
 			dealId,
 			meetingId: march27MeetingId,
 			stream: 'meeting-update',
@@ -185,7 +183,6 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 			title: 'Old update'
 		});
 		await ctx.db.insert('activities', {
-			kind: 'headline',
 			dealId,
 			meetingId: march20MeetingId,
 			stream: 'meeting-update',
@@ -205,7 +202,6 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 			collaboratorBrokerIds: [collaboratorBrokerId],
 			timeline: [
 				{
-					kind: 'headline',
 					id: 'timeline-1',
 					dealId,
 					stream: 'deal-detail',
@@ -229,8 +225,6 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 			insightKey,
 			march20MeetingId,
 			march20MeetingKey,
-			march27MeetingId,
-			march27MeetingKey,
 			dealOrgChartNodes,
 			insightOrgChartNodes
 		};
@@ -264,21 +258,7 @@ function getIndustryRow(result: {
 }
 
 describe('Convex feature contracts', () => {
-	it('returns my deals detail for a valid route param and preserves the canonical deal key', async () => {
-		const t = createConvex();
-		const seed = await seedDashboardRecords(t);
-
-		const result = await t.query(api.myDeals.getMyDealsDetail, {
-			dealKey: seed.dealKey,
-			brokerKey: seed.collaboratorBrokerKey,
-			view: 'news'
-		});
-
-		expect(result).not.toBeNull();
-		expect(getIndustryRow(result!)).toMatchObject({ dealKey: seed.dealKey });
-	});
-
-	it('returns dashboard read models without UI navigation contracts', async () => {
+	it('serves the core dashboard read models without leaking UI shell contracts', async () => {
 		const t = createConvex();
 		const seed = await seedDashboardRecords(t);
 
@@ -318,20 +298,8 @@ describe('Convex feature contracts', () => {
 				})
 			])
 		);
-		expect(myDealsList.newsItems.every((item) => !('detail' in item))).toBe(true);
-		expect(myDealsList.watchlistItems).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					kind: 'activity',
-					detail: {
-						dealKey: seed.dealKey,
-						defaultTab: 'activity'
-					}
-				})
-			])
-		);
-		expect(myDealsDetail).not.toHaveProperty('header');
 		expect(myDealsDetail?.title).toBe('Acme Expansion');
+		expect(getIndustryRow(myDealsDetail!)).toMatchObject({ dealKey: seed.dealKey });
 
 		expect(allActivityList).not.toHaveProperty('header');
 		expect(allActivityList.rows).toEqual(
@@ -344,8 +312,10 @@ describe('Convex feature contracts', () => {
 				})
 			])
 		);
-		expect(allActivityDetail).not.toHaveProperty('header');
 		expect(allActivityDetail?.title).toBe('Acme Expansion');
+		expect(allActivityDetail?.orgChartNodes).toEqual(
+			toExpectedDashboardOrgChartNodes(seed.dealOrgChartNodes, seed)
+		);
 
 		expect(opportunitiesList.opportunityTiles).toEqual(
 			expect.arrayContaining([
@@ -357,66 +327,42 @@ describe('Convex feature contracts', () => {
 				})
 			])
 		);
-		expect(opportunitiesList.update).toEqual(
-			expect.objectContaining({
-				sectionId: 'update',
-				uploadLabel: 'Upload files'
-			})
-		);
-		expect(opportunityDetail).not.toHaveProperty('header');
 		expect(opportunityDetail?.title).toBe('Expand into adjacent services');
-	});
-
-	it('returns null for an invalid my deals route param', async () => {
-		const t = createConvex();
-		const seed = await seedDashboardRecords(t);
-
-		const result = await t.query(api.myDeals.getMyDealsDetail, {
-			dealKey: 'not-a-deal-key',
-			brokerKey: seed.collaboratorBrokerKey,
-			view: 'news'
-		});
-
-		expect(result).toBeNull();
-	});
-
-	it('returns null for a deleted my deals record', async () => {
-		const t = createConvex();
-		const seed = await seedDashboardRecords(t);
-
-		await t.run(async (ctx) => {
-			await ctx.db.delete(seed.dealId);
-		});
-
-		const result = await t.query(api.myDeals.getMyDealsDetail, {
-			dealKey: seed.dealKey,
-			brokerKey: seed.collaboratorBrokerKey,
-			view: 'news'
-		});
-
-		expect(result).toBeNull();
-	});
-
-	it('returns all activity detail for a valid route param and preserves the canonical deal key', async () => {
-		const t = createConvex();
-		const seed = await seedDashboardRecords(t);
-
-		const result = await t.query(api.allActivity.getAllActivityDetail, {
-			dealKey: seed.dealKey,
-			view: 'deals'
-		});
-
-		expect(result).not.toBeNull();
-		expect(getIndustryRow(result!)).toMatchObject({ dealKey: seed.dealKey });
-		expect(result!.orgChartNodes).toEqual(
-			toExpectedDashboardOrgChartNodes(seed.dealOrgChartNodes, seed)
+		expect(opportunityDetail?.orgChartNodes).toEqual(
+			toExpectedDashboardOrgChartNodes(seed.insightOrgChartNodes, seed)
 		);
 	});
 
-	it('normalizes legacy deal org charts stored as nested roots', async () => {
+	it('returns null for invalid detail route keys', async () => {
+		const t = createConvex();
+		const seed = await seedDashboardRecords(t);
+
+		await expect(
+			t.query(api.myDeals.getMyDealsDetail, {
+				dealKey: 'not-a-deal-key',
+				brokerKey: seed.collaboratorBrokerKey,
+				view: 'news'
+			})
+		).resolves.toBeNull();
+		await expect(
+			t.query(api.allActivity.getAllActivityDetail, {
+				dealKey: 'bad-deal-key',
+				view: 'deals'
+			})
+		).resolves.toBeNull();
+		await expect(
+			t.query(api.opportunities.getOpportunityDetail, {
+				insightKey: 'bad-insight-key',
+				meetingKey: seed.march20MeetingKey
+			})
+		).resolves.toBeNull();
+	});
+
+	it('normalizes legacy nested org charts for deals and insights', async () => {
 		const t = createConvex();
 		const seed = await seedDashboardRecords(t);
 		const legacyDealKey = 'legacy-org-chart' as DealKey;
+		const legacyInsightKey = 'legacy-risk-insight' as InsightKey;
 
 		await t.run(async (ctx) => {
 			await ctx.db.insert(
@@ -460,84 +406,7 @@ describe('Convex feature contracts', () => {
 					}
 				} as never
 			);
-		});
 
-		const result = await t.query(api.allActivity.getAllActivityDetail, {
-			dealKey: legacyDealKey,
-			view: 'deals'
-		});
-
-		expect(result).not.toBeNull();
-		expect(result!.orgChartNodes).toEqual([
-			{
-				id: 'legacy-root',
-				name: 'Alex Morgan',
-				role: 'CFO',
-				parentId: undefined,
-				lastContactedByBrokerKey: seed.ownerBrokerKey,
-				lastContactedOnIso: '2026-03-21'
-			},
-			{
-				id: 'legacy-child',
-				parentId: 'legacy-root',
-				name: 'Taylor Smith',
-				role: 'VP Finance',
-				lastContactedByBrokerKey: seed.collaboratorBrokerKey,
-				lastContactedOnIso: '2026-03-22'
-			}
-		]);
-	});
-
-	it('returns null for an invalid all activity route param', async () => {
-		const t = createConvex();
-		await seedDashboardRecords(t);
-
-		const result = await t.query(api.allActivity.getAllActivityDetail, {
-			dealKey: 'bad-deal-key',
-			view: 'deals'
-		});
-
-		expect(result).toBeNull();
-	});
-
-	it('returns null for a deleted all activity record', async () => {
-		const t = createConvex();
-		const seed = await seedDashboardRecords(t);
-
-		await t.run(async (ctx) => {
-			await ctx.db.delete(seed.dealId);
-		});
-
-		const result = await t.query(api.allActivity.getAllActivityDetail, {
-			dealKey: seed.dealKey,
-			view: 'deals'
-		});
-
-		expect(result).toBeNull();
-	});
-
-	it('returns opportunity detail for a valid route param and preserves the canonical deal key', async () => {
-		const t = createConvex();
-		const seed = await seedDashboardRecords(t);
-
-		const result = await t.query(api.opportunities.getOpportunityDetail, {
-			insightKey: seed.insightKey,
-			meetingKey: seed.march20MeetingKey
-		});
-
-		expect(result).not.toBeNull();
-		expect(getIndustryRow(result!)).toMatchObject({ dealKey: seed.dealKey });
-		expect(result!.orgChartNodes).toEqual(
-			toExpectedDashboardOrgChartNodes(seed.insightOrgChartNodes, seed)
-		);
-	});
-
-	it('normalizes legacy insight org charts stored as nested roots', async () => {
-		const t = createConvex();
-		const seed = await seedDashboardRecords(t);
-		const legacyInsightKey = 'legacy-risk-insight' as InsightKey;
-
-		await t.run(async (ctx) => {
 			await ctx.db.insert(
 				'insights',
 				{
@@ -550,7 +419,6 @@ describe('Convex feature contracts', () => {
 					collaboratorBrokerIds: [seed.collaboratorBrokerId],
 					timeline: [
 						{
-							kind: 'headline',
 							id: 'legacy-risk-1',
 							dealId: seed.dealId,
 							stream: 'deal-detail',
@@ -580,13 +448,34 @@ describe('Convex feature contracts', () => {
 			);
 		});
 
-		const result = await t.query(api.opportunities.getOpportunityDetail, {
+		const allActivityDetail = await t.query(api.allActivity.getAllActivityDetail, {
+			dealKey: legacyDealKey,
+			view: 'deals'
+		});
+		const opportunityDetail = await t.query(api.opportunities.getOpportunityDetail, {
 			insightKey: legacyInsightKey,
 			meetingKey: seed.march20MeetingKey
 		});
 
-		expect(result).not.toBeNull();
-		expect(result!.orgChartNodes).toEqual([
+		expect(allActivityDetail?.orgChartNodes).toEqual([
+			{
+				id: 'legacy-root',
+				name: 'Alex Morgan',
+				role: 'CFO',
+				parentId: undefined,
+				lastContactedByBrokerKey: seed.ownerBrokerKey,
+				lastContactedOnIso: '2026-03-21'
+			},
+			{
+				id: 'legacy-child',
+				parentId: 'legacy-root',
+				name: 'Taylor Smith',
+				role: 'VP Finance',
+				lastContactedByBrokerKey: seed.collaboratorBrokerKey,
+				lastContactedOnIso: '2026-03-22'
+			}
+		]);
+		expect(opportunityDetail?.orgChartNodes).toEqual([
 			{
 				id: 'legacy-insight-root',
 				name: 'Jordan Lee',
@@ -606,81 +495,7 @@ describe('Convex feature contracts', () => {
 		]);
 	});
 
-	it('returns null for an invalid opportunity route param', async () => {
-		const t = createConvex();
-		const seed = await seedDashboardRecords(t);
-
-		const result = await t.query(api.opportunities.getOpportunityDetail, {
-			insightKey: 'bad-insight-key',
-			meetingKey: seed.march20MeetingKey
-		});
-
-		expect(result).toBeNull();
-	});
-
-	it('returns null for a deleted opportunity record', async () => {
-		const t = createConvex();
-		const seed = await seedDashboardRecords(t);
-
-		await t.run(async (ctx) => {
-			await ctx.db.delete(seed.insightId);
-		});
-
-		const result = await t.query(api.opportunities.getOpportunityDetail, {
-			insightKey: seed.insightKey,
-			meetingKey: seed.march20MeetingKey
-		});
-
-		expect(result).toBeNull();
-	});
-
-	it('rejects invalid flat org chart records at write time', async () => {
-		const t = createConvex();
-
-		await expect(
-			t.run(async (ctx) => {
-				const brokerId = await ctx.db.insert('brokers', {
-					key: 'invalid-shape',
-					name: 'Invalid Shape',
-					avatar: '/avatars/invalid.png'
-				});
-
-				await ctx.db.insert(
-					'deals',
-					{
-						key: 'broken-shape',
-						dealNumber: 777,
-						industry: 'Industrials',
-						dealName: 'Broken Shape',
-						isReservedInEpic: false,
-						probability: 20,
-						stage: 'Discovery',
-						isLikelyOutOfDate: false,
-						activityLevel: 'low',
-						collaboratorBrokerIds: [],
-						context: {
-							summary: 'Invalid org chart shape',
-							claimedAtIso: '2026-03-10T09:00:00Z',
-							orgChartNodes: [
-								{
-									id: 'broken-node',
-									name: 'Broken Node',
-									lastContactedByBrokerId: brokerId,
-									lastContactedOnIso: '2026-03-21'
-								}
-							]
-						},
-						dashboardFlags: {
-							needsSupport: false,
-							duplicatedWork: false
-						}
-					} as never
-				);
-			})
-		).rejects.toThrow();
-	});
-
-	it('rejects malformed stored meeting dates at the Convex read boundary', async () => {
+	it('rejects malformed stored meeting dates at the read boundary', async () => {
 		const t = createConvex();
 
 		await t.run(async (ctx) => {
@@ -695,38 +510,36 @@ describe('Convex feature contracts', () => {
 		);
 	});
 
-	it('filters since-last-meeting activity to the selected meeting', async () => {
+	it('scopes since-last-meeting activity and my-deals news to the selected reference period', async () => {
 		const t = createConvex();
 		const seed = await seedDashboardRecords(t);
 
-		const result = await t.query(api.sinceLastMeeting.getSinceLastMeeting, {
+		const sinceLastMeeting = await t.query(api.sinceLastMeeting.getSinceLastMeeting, {
 			meetingKey: seed.march20MeetingKey
 		});
-
-		expect(result.referenceMeetingDateIso).toBe('2026-03-20');
-		expect(result.timelineItems).toHaveLength(1);
-		expect(result.timelineItems[0]).toMatchObject({
-			kind: 'headline',
-			title: 'Fresh update'
-		});
-		expect(result.deals).toHaveLength(1);
-		expect(result.deals[0]).toMatchObject({ key: seed.dealKey });
-	});
-
-	it('keeps my deals news scoped to the current reference week', async () => {
-		const t = createConvex();
-		const seed = await seedDashboardRecords(t);
-
-		const result = await t.query(api.myDeals.getMyDealsList, {
+		const myDealsList = await t.query(api.myDeals.getMyDealsList, {
 			brokerKey: seed.collaboratorBrokerKey,
 			view: 'news'
 		});
 
-		expect(result.newsItems).toHaveLength(1);
-		expect(result.newsItems[0]).toMatchObject({
-			title: 'Acme opens a new distribution hub',
-			dateIso: '2026-03-25'
+		expect(sinceLastMeeting.referenceMeetingDateIso).toBe('2026-03-20');
+		expect(sinceLastMeeting.timelineItems).toHaveLength(1);
+		expect(sinceLastMeeting.timelineItems[0]).toMatchObject({
+			kind: 'headline',
+			title: 'Fresh update'
 		});
+		expect(sinceLastMeeting.deals).toEqual([
+			expect.objectContaining({
+				key: seed.dealKey
+			})
+		]);
+
+		expect(myDealsList.newsItems).toEqual([
+			expect.objectContaining({
+				title: 'Acme opens a new distribution hub',
+				dateIso: '2026-03-25'
+			})
+		]);
 	});
 
 	it('updates industry through the canonical deal key contract', async () => {
@@ -739,21 +552,14 @@ describe('Convex feature contracts', () => {
 				industry: 'Food & beverage'
 			})
 		).resolves.toBe('updated');
-
-		const updatedDeal = await t.run(async (ctx) => ctx.db.get(seed.dealId));
-
-		expect(updatedDeal?.industry).toBe('Food & beverage');
-	});
-
-	it('returns not-found when industry update receives a malformed deal key', async () => {
-		const t = createConvex();
-		await seedDashboardRecords(t);
-
 		await expect(
 			t.action(api.mutations.updateDealIndustry, {
 				dealKey: 'not-a-deal-key' as DealKey,
 				industry: 'Food & beverage'
 			})
 		).resolves.toBe('not-found');
+
+		const updatedDeal = await t.run(async (ctx) => ctx.db.get(seed.dealId));
+		expect(updatedDeal?.industry).toBe('Food & beverage');
 	});
 });

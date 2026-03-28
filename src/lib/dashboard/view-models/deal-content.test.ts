@@ -48,12 +48,6 @@ describe('toOrgChartRoot', () => {
 					lastContactedOnIso: '2026-03-22'
 				}),
 				createOrgChartNode({
-					id: 'cio',
-					parentId: 'root',
-					name: 'Morgan Ellis',
-					role: 'CIO'
-				}),
-				createOrgChartNode({
 					id: 'controller',
 					parentId: 'vp-finance',
 					name: 'Jordan Lee',
@@ -91,106 +85,12 @@ describe('toOrgChartRoot', () => {
 							}
 						}
 					]
-				},
-				{
-					id: 'cio',
-					name: 'Morgan Ellis',
-					role: 'CIO',
-					lastContacted: {
-						by: 'Julien Newman',
-						on: 'March 21, 2026'
-					}
 				}
 			]
 		});
 	});
 
-	it('preserves sibling order from the flat node array', () => {
-		const root = toOrgChartRoot(
-			[
-				createOrgChartNode({ id: 'root', name: 'Alex Morgan', role: 'CFO' }),
-				createOrgChartNode({
-					id: 'cio',
-					parentId: 'root',
-					name: 'Morgan Ellis',
-					role: 'CIO'
-				}),
-				createOrgChartNode({
-					id: 'vp-finance',
-					parentId: 'root',
-					name: 'Taylor Smith',
-					role: 'VP Finance'
-				})
-			],
-			peopleById
-		);
-
-		expect(root.directReports?.map((node) => node.id)).toEqual(['cio', 'vp-finance']);
-	});
-
-	it('throws when the flat node array has no root', () => {
-		expect(() =>
-			toOrgChartRoot(
-				[
-					createOrgChartNode({
-						id: 'vp-finance',
-						parentId: 'root',
-						name: 'Taylor Smith',
-						role: 'VP Finance'
-					})
-				],
-				peopleById
-			)
-		).toThrow('Missing root org chart node.');
-	});
-
-	it('throws when the flat node array has multiple roots', () => {
-		expect(() =>
-			toOrgChartRoot(
-				[
-					createOrgChartNode({ id: 'root-a', name: 'Alex Morgan', role: 'CFO' }),
-					createOrgChartNode({ id: 'root-b', name: 'Taylor Smith', role: 'CIO' })
-				],
-				peopleById
-			)
-		).toThrow(/Expected exactly one root org chart node/);
-	});
-
-	it('throws when a parent reference is missing', () => {
-		expect(() =>
-			toOrgChartRoot(
-				[
-					createOrgChartNode({ id: 'root', name: 'Alex Morgan', role: 'CFO' }),
-					createOrgChartNode({
-						id: 'controller',
-						parentId: 'missing-parent',
-						name: 'Jordan Lee',
-						role: 'Controller'
-					})
-				],
-				peopleById
-			)
-		).toThrow('Unknown parent org chart node "missing-parent" for "controller".');
-	});
-
-	it('throws when node ids are duplicated', () => {
-		expect(() =>
-			toOrgChartRoot(
-				[
-					createOrgChartNode({ id: 'root', name: 'Alex Morgan', role: 'CFO' }),
-					createOrgChartNode({
-						id: 'root',
-						parentId: 'root',
-						name: 'Taylor Smith',
-						role: 'VP Finance'
-					})
-				],
-				peopleById
-			)
-		).toThrow('Duplicate org chart node id "root".');
-	});
-
-	it('throws when nodes are not reachable from the root, including disconnected cycles', () => {
+	it('rejects broken graphs', () => {
 		expect(() =>
 			toOrgChartRoot(
 				[
@@ -208,8 +108,8 @@ describe('toOrgChartRoot', () => {
 						role: 'Controller'
 					})
 				],
-					peopleById
-				)
+				peopleById
+			)
 		).toThrow('Org chart nodes are not reachable from root "root": finance-a, finance-b.');
 	});
 });

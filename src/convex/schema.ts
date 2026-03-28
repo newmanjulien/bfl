@@ -19,51 +19,39 @@ const activityMarkerValidator = v.union(
 	})
 );
 
+const activityBaseFields = {
+	dealId: v.id('deals'),
+	meetingId: v.optional(v.id('meetings')),
+	stream: dealActivityStreamValidator,
+	occurredOnIso: v.string(),
+	body: v.string(),
+	marker: activityMarkerValidator
+};
+
+const headlineActivityFields = {
+	...activityBaseFields,
+	title: v.string()
+};
+
+const actorActivityFields = {
+	...activityBaseFields,
+	actorBrokerId: v.id('brokers'),
+	action: v.string()
+};
+
 const activityDocumentValidator = v.union(
-	v.object({
-		kind: v.literal('headline'),
-		dealId: v.id('deals'),
-		meetingId: v.optional(v.id('meetings')),
-		stream: dealActivityStreamValidator,
-		occurredOnIso: v.string(),
-		body: v.string(),
-		marker: activityMarkerValidator,
-		title: v.string()
-	}),
-	v.object({
-		kind: v.literal('actor-action'),
-		dealId: v.id('deals'),
-		meetingId: v.optional(v.id('meetings')),
-		stream: dealActivityStreamValidator,
-		occurredOnIso: v.string(),
-		body: v.string(),
-		marker: activityMarkerValidator,
-		actorBrokerId: v.id('brokers'),
-		action: v.string()
-	})
+	v.object(headlineActivityFields),
+	v.object(actorActivityFields)
 );
 
 const embeddedActivityValidator = v.union(
 	v.object({
-		kind: v.literal('headline'),
 		id: v.string(),
-		dealId: v.id('deals'),
-		stream: dealActivityStreamValidator,
-		occurredOnIso: v.string(),
-		body: v.string(),
-		marker: activityMarkerValidator,
-		title: v.string()
+		...headlineActivityFields
 	}),
 	v.object({
-		kind: v.literal('actor-action'),
 		id: v.string(),
-		dealId: v.id('deals'),
-		stream: dealActivityStreamValidator,
-		occurredOnIso: v.string(),
-		body: v.string(),
-		marker: activityMarkerValidator,
-		actorBrokerId: v.id('brokers'),
-		action: v.string()
+		...actorActivityFields
 	})
 );
 

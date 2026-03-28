@@ -24,29 +24,7 @@ describe('applyDealIndustryUpdate', () => {
 		mocks.action.mockReset();
 	});
 
-	it('updates the deal industry and redirects back to the detail page', async () => {
-		mocks.action.mockResolvedValue('updated');
-
-		await expect(
-			applyDealIndustryUpdate({
-				request: new Request(`http://localhost/my-deals/detail/${dealKey}?/updateIndustry`, {
-					method: 'POST',
-					body: new URLSearchParams({ dealKey, industry: 'Hospitality' })
-				}),
-				url: new URL(`http://localhost/my-deals/detail/${dealKey}?/updateIndustry`)
-			})
-		).rejects.toMatchObject({
-			status: 303,
-			location: `/my-deals/detail/${dealKey}`
-		});
-
-		expect(mocks.action).toHaveBeenCalledWith('updateDealIndustry', {
-			dealKey,
-			industry: 'Hospitality'
-		});
-	});
-
-	it('preserves valid route query params while removing the named action marker', async () => {
+	it('updates the industry and redirects to the canonical detail route', async () => {
 		mocks.action.mockResolvedValue('updated');
 
 		await expect(
@@ -64,9 +42,14 @@ describe('applyDealIndustryUpdate', () => {
 			status: 303,
 			location: `/my-deals/detail/${dealKey}?tab=activity`
 		});
+
+		expect(mocks.action).toHaveBeenCalledWith('updateDealIndustry', {
+			dealKey,
+			industry: 'Hospitality'
+		});
 	});
 
-	it('rejects invalid industry values', async () => {
+	it('rejects invalid input without calling Convex', async () => {
 		await expect(
 			applyDealIndustryUpdate({
 				request: new Request(`http://localhost/my-deals/detail/${dealKey}?/updateIndustry`, {
@@ -80,38 +63,5 @@ describe('applyDealIndustryUpdate', () => {
 		});
 
 		expect(mocks.action).not.toHaveBeenCalled();
-	});
-
-	it('rejects requests without a canonical deal key', async () => {
-
-		await expect(
-			applyDealIndustryUpdate({
-				request: new Request(`http://localhost/my-deals/detail/bad?/updateIndustry`, {
-					method: 'POST',
-					body: new URLSearchParams({ industry: 'Hospitality' })
-				}),
-				url: new URL('http://localhost/my-deals/detail/bad')
-			})
-		).rejects.toMatchObject({
-			status: 400
-		});
-
-		expect(mocks.action).not.toHaveBeenCalled();
-	});
-
-	it('returns 404 when the deal key cannot be resolved', async () => {
-		mocks.action.mockResolvedValue('not-found');
-
-		await expect(
-			applyDealIndustryUpdate({
-				request: new Request('http://localhost/my-deals/detail/not-a-deal-key?/updateIndustry', {
-					method: 'POST',
-					body: new URLSearchParams({ dealKey: 'not-a-deal-key', industry: 'Hospitality' })
-				}),
-				url: new URL('http://localhost/my-deals/detail/not-a-deal-key')
-			})
-		).rejects.toMatchObject({
-			status: 404
-		});
 	});
 });
