@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { List } from 'lucide-svelte';
-	import type { AllActivityDetailPageData } from '$lib/dashboard/page-models/allActivity';
+	import type { DealDetailContentPageData } from '$lib/dashboard/page-models/allActivity';
 	import DashboardDetailTabbedLayout from '$lib/dashboard/layout/DashboardDetailTabbedLayout.svelte';
 	import FileUploadField from '$lib/dashboard/ui/detail/FileUploadField.svelte';
 	import OrgChartSection from '$lib/dashboard/ui/detail/OrgChartSection.svelte';
@@ -8,7 +8,7 @@
 	import SectionTabPanel from '$lib/dashboard/ui/tabs/SectionTabPanel.svelte';
 
 	type Props = {
-		data: AllActivityDetailPageData;
+		data: DealDetailContentPageData;
 	};
 
 	let { data }: Props = $props();

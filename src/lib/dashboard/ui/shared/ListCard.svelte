@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 	import {
-		resolveDashboardRoute,
 		type DashboardRouteRef,
 		type LinkTarget
 	} from '$lib/dashboard/routing';
+	import { resolveDashboardHref } from '$lib/dashboard/routing/href';
 	import { cn } from '$lib/support/cn';
 
 	type Props = {
@@ -45,7 +44,7 @@
 </script>
 
 {#if link.kind === 'internal'}
-	<a href={resolve(resolveDashboardRoute(link.route))} class={cardClass}>
+	<a href={resolveDashboardHref(link.route)} class={cardClass}>
 		{#if body}
 			{@render body()}
 		{/if}

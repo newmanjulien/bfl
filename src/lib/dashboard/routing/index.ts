@@ -32,7 +32,8 @@ const DASHBOARD_ROUTE_IDS = {
 		'/(dashboard)/all-activity/[view=allActivityView]/detail/[detailId]'
 	],
 	opportunities: ['/(dashboard)/opportunities', '/(dashboard)/opportunities/detail/[detailId]'],
-	sinceLastMeeting: ['/(dashboard)/since-last-meeting']
+	sinceLastMeetingList: ['/(dashboard)/since-last-meeting'],
+	sinceLastMeetingDetail: ['/(dashboard)/since-last-meeting/detail/[detailId]']
 } as const;
 
 export type DashboardDealRouteParam = string;
@@ -78,6 +79,12 @@ export type SinceLastMeetingRouteRef = {
 	meetingId: DashboardMeetingRouteParam | null;
 };
 
+export type SinceLastMeetingDetailRouteRef = {
+	kind: 'since-last-meeting-detail';
+	dealId: DashboardDealRouteParam;
+	meetingId: DashboardMeetingRouteParam | null;
+};
+
 export type DashboardNavRouteRef =
 	| MyDealsListRouteRef
 	| AllActivityListRouteRef
@@ -88,6 +95,7 @@ export type DashboardRouteRef =
 	| DashboardNavRouteRef
 	| MyDealsDetailRouteRef
 	| AllActivityDetailRouteRef
+	| SinceLastMeetingDetailRouteRef
 	| OpportunitiesDetailRouteRef;
 
 export type InternalLink<TRoute extends DashboardRouteRef = DashboardRouteRef> = {
@@ -133,7 +141,9 @@ type DashboardPathname =
 	| `/opportunities/detail/${DashboardInsightRouteParam}`
 	| `/opportunities/detail/${DashboardInsightRouteParam}?meetingId=${DashboardMeetingRouteParam}`
 	| '/since-last-meeting'
-	| `/since-last-meeting?meetingId=${DashboardMeetingRouteParam}`;
+	| `/since-last-meeting?meetingId=${DashboardMeetingRouteParam}`
+	| `/since-last-meeting/detail/${DashboardDealRouteParam}`
+	| `/since-last-meeting/detail/${DashboardDealRouteParam}?meetingId=${DashboardMeetingRouteParam}`;
 
 type DashboardLayoutRouteParams = {
 	view?: string;
@@ -386,7 +396,7 @@ const dashboardRouteDefinitions = {
 			withOptionalMeetingId(`${OPPORTUNITIES_BASE_PATH}/detail/${route.insightId}`, route.meetingId)
 	},
 	'since-last-meeting': {
-		routeIds: DASHBOARD_ROUTE_IDS.sinceLastMeeting,
+		routeIds: DASHBOARD_ROUTE_IDS.sinceLastMeetingList,
 		parse: ({ searchParams }) => {
 			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingId'])) {
 				return null;
@@ -398,6 +408,28 @@ const dashboardRouteDefinitions = {
 			};
 		},
 		href: (route) => withOptionalMeetingId(SINCE_LAST_MEETING_PATH, route.meetingId)
+	},
+	'since-last-meeting-detail': {
+		routeIds: DASHBOARD_ROUTE_IDS.sinceLastMeetingDetail,
+		parse: ({ params, searchParams }) => {
+			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingId'])) {
+				return null;
+			}
+
+			const detailId = resolveDetailIdParam(params.detailId);
+
+			if (!detailId) {
+				return null;
+			}
+
+			return {
+				kind: 'since-last-meeting-detail',
+				dealId: detailId,
+				meetingId: resolveOptionalMeetingId(searchParams)
+			};
+		},
+		href: (route) =>
+			withOptionalMeetingId(`${SINCE_LAST_MEETING_PATH}/detail/${route.dealId}`, route.meetingId)
 	}
 } satisfies DashboardRouteDefinitionMap;
 
@@ -452,6 +484,9 @@ export function isDashboardNavRouteActive(
 				currentRoute.kind === 'opportunities-detail'
 			);
 		case 'since-last-meeting':
-			return currentRoute.kind === 'since-last-meeting';
+			return (
+				currentRoute.kind === 'since-last-meeting' ||
+				currentRoute.kind === 'since-last-meeting-detail'
+			);
 	}
 }

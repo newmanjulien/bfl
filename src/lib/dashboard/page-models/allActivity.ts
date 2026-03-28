@@ -48,15 +48,18 @@ export type AllActivityListPageData = {
 	filterDrawerData: AllActivityListReadModel['filterDrawerData'];
 };
 
-export type AllActivityDetailPageData = {
-	route: AllActivityDetailRouteRef;
-	header: DashboardHeader;
+export type DealDetailContentPageData = {
 	hero: AllActivityDetailReadModel['hero'];
 	activityItems: AllActivityDetailReadModel['activityItems'];
 	orgChartRoot: OrgChartNode;
 	update: AllActivityDetailReadModel['update'];
 	rightRail: AllActivityDetailReadModel['rightRail'];
 };
+
+export type AllActivityDetailPageData = {
+	route: AllActivityDetailRouteRef;
+	header: DashboardHeader;
+} & DealDetailContentPageData;
 
 export function buildAllActivityListPageData(params: {
 	route: AllActivityListRouteRef;
@@ -75,21 +78,35 @@ export function buildAllActivityListPageData(params: {
 	};
 }
 
+export function buildDealDetailContentPageData(params: {
+	readModel: AllActivityDetailReadModel;
+	dashboardShell: DashboardShellReadModel;
+}): DealDetailContentPageData {
+	const { readModel, dashboardShell } = params;
+	const peopleById = createPersonSummaryMap(dashboardShell.people);
+
+	return {
+		hero: readModel.hero,
+		activityItems: readModel.activityItems,
+		orgChartRoot: toOrgChartRoot(readModel.orgChartNodes, peopleById),
+		update: readModel.update,
+		rightRail: readModel.rightRail
+	};
+}
+
 export function buildAllActivityDetailPageData(params: {
 	route: AllActivityDetailRouteRef;
 	readModel: AllActivityDetailReadModel;
 	dashboardShell: DashboardShellReadModel;
 }): AllActivityDetailPageData {
 	const { route, readModel, dashboardShell } = params;
-	const peopleById = createPersonSummaryMap(dashboardShell.people);
 
 	return {
 		route,
 		header: createAllActivityDetailHeader(readModel.title, route.view),
-		hero: readModel.hero,
-		activityItems: readModel.activityItems,
-		orgChartRoot: toOrgChartRoot(readModel.orgChartNodes, peopleById),
-		update: readModel.update,
-		rightRail: readModel.rightRail
+		...buildDealDetailContentPageData({
+			readModel,
+			dashboardShell
+		})
 	};
 }

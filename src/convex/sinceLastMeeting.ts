@@ -44,6 +44,11 @@ function toSinceLastMeetingDeals(
 		return [
 			{
 				id: deal.id,
+				detail: deal.context
+					? {
+							dealId: deal.id
+						}
+					: null,
 				deal: deal.dealName,
 				probability: deal.probability,
 				activityLevel: deal.activityLevel,

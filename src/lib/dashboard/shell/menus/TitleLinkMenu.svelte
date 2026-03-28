@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import { resolveDashboardRoute } from '$lib/dashboard/routing';
+	import { resolveDashboardHref } from '$lib/dashboard/routing/href';
 	import type { DashboardHeaderTitleMenu } from '$lib/dashboard/shell/header/types';
 	import { cn } from '$lib/support/cn';
 	import DashboardMenuPanel from './DashboardMenuPanel.svelte';
@@ -61,7 +60,7 @@
 					{#each menu.options as option (option.id)}
 						<li>
 							<a
-								href={resolve(resolveDashboardRoute(option.route))}
+								href={resolveDashboardHref(option.route)}
 								role="menuitemradio"
 								aria-checked={option.current}
 								aria-current={option.current ? 'page' : undefined}

@@ -1,4 +1,5 @@
 import type { IsoDate } from '$lib/types/dates';
+import type { DealId } from '$lib/types/ids';
 import type { ActivityLevel } from '$lib/types/vocab';
 
 export type ActivityLevelIconVariant = 'full-grid' | 'half-grid' | 'quarter-grid';
@@ -26,7 +27,12 @@ type NewsRecordLike = {
 };
 
 export type DealSummaryRow = {
-	id: string;
+	id: DealId;
+	detail:
+		| {
+				dealId: DealId;
+		  }
+		| null;
 	deal: string;
 	probability: number;
 	activityLevel: ActivityLevel;

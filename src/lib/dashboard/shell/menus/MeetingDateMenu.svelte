@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import { cn } from '$lib/support/cn';
 	import { formatIsoDateMonthDayLong } from '$lib/format/date-time';
 	import type { DashboardMeeting } from '$lib/dashboard/read-models';
 	import type { OpportunitiesListRouteRef, SinceLastMeetingRouteRef } from '$lib/dashboard/routing';
 	import { resolveDashboardRoute } from '$lib/dashboard/routing';
+	import { resolveDashboardHref } from '$lib/dashboard/routing/href';
 	import DashboardMenuPanel from './DashboardMenuPanel.svelte';
 	import {
 		type DashboardMenuPlacement,
@@ -81,7 +81,7 @@
 							<a
 								role="menuitemradio"
 								aria-checked={meeting.id === triggerMeeting?.id}
-								href={resolve(resolveDashboardRoute(toMeetingRoute(meeting.id)))}
+								href={resolveDashboardHref(toMeetingRoute(meeting.id))}
 								class={cn(
 									'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
 									meeting.id === triggerMeeting?.id ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'

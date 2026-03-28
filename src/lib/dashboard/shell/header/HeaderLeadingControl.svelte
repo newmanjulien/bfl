@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import type { DashboardMeeting } from '$lib/dashboard/read-models';
-	import { resolveDashboardRoute } from '$lib/dashboard/routing';
+	import { resolveDashboardHref } from '$lib/dashboard/routing/href';
 	import type { DashboardHeaderControl } from '$lib/dashboard/shell/header/types';
 	import MeetingDateMenu from '$lib/dashboard/shell/menus/MeetingDateMenu.svelte';
 
@@ -38,7 +37,7 @@
 		class={controlClass}
 	/>
 {:else}
-	<a href={resolve(resolveDashboardRoute(control.route))} class={controlClass}>
+	<a href={resolveDashboardHref(control.route)} class={controlClass}>
 		{control.label}
 	</a>
 {/if}

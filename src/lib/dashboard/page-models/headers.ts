@@ -58,6 +58,24 @@ export function createSinceLastMeetingHeader(route: SinceLastMeetingRouteRef): D
 	};
 }
 
+export function createSinceLastMeetingDetailHeader(
+	title: string,
+	backRoute: SinceLastMeetingRouteRef
+): DashboardHeader {
+	return {
+		leading: {
+			kind: 'control-title',
+			title,
+			control: {
+				kind: 'back-link',
+				route: backRoute,
+				label: 'Since last meeting'
+			}
+		},
+		actions: ['share', 'broker-switch']
+	};
+}
+
 export function createOpportunitiesListHeader(route: OpportunitiesListRouteRef): DashboardHeader {
 	return {
 		leading: {

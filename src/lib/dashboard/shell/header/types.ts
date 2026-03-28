@@ -8,7 +8,8 @@ import type {
 export type DashboardHeaderBackLinkRouteRef =
 	| MyDealsListRouteRef
 	| AllActivityListRouteRef
-	| OpportunitiesListRouteRef;
+	| OpportunitiesListRouteRef
+	| SinceLastMeetingRouteRef;
 
 export type DashboardHeaderTitleMenuRouteRef =
 	| MyDealsListRouteRef

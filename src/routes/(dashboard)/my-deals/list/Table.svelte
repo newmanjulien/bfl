@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import { resolveDashboardRoute } from '$lib/dashboard/routing';
 	import type { MyDealsListPageData } from '$lib/dashboard/page-models/myDeals';
+	import { resolveDashboardHref } from '$lib/dashboard/routing/href';
 	import type { BrokerId } from '$lib/types/ids';
 	import { Check } from 'lucide-svelte';
 	import NewsSourceInline from '$lib/dashboard/ui/detail/NewsSourceInline.svelte';
@@ -78,7 +77,7 @@
 				{#each rows as row (row.id)}
 					{#if row.navigation.kind === 'internal'}
 						<a
-							href={resolve(resolveDashboardRoute(row.navigation.route))}
+							href={resolveDashboardHref(row.navigation.route)}
 							data-table-row
 							class={cn(columnClass, 'group no-underline')}
 						>

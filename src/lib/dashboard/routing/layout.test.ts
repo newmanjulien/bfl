@@ -234,6 +234,25 @@ describe('resolveDashboardLayoutRoute', () => {
 			},
 			redirectTo: null
 		});
+
+		expect(
+			resolveDashboardLayoutRoute(
+				createInput({
+					pathname: `/since-last-meeting/detail/${dealId}?meetingId=meeting-doc-1`,
+					routeId: '/(dashboard)/since-last-meeting/detail/[detailId]',
+					params: {
+						detailId: dealId
+					}
+				})
+			)
+		).toEqual({
+			route: {
+				kind: 'since-last-meeting-detail',
+				dealId,
+				meetingId: 'meeting-doc-1'
+			},
+			redirectTo: null
+		});
 	});
 
 	it('canonicalizes default my deals tabs for both default and non-default views', () => {
@@ -375,6 +394,18 @@ describe('resolveDashboardLayoutRoute', () => {
 				createInput({
 					pathname: '/since-last-meeting?foo=bar',
 					routeId: '/(dashboard)/since-last-meeting'
+				})
+			)
+		).toBeNull();
+
+		expect(
+			resolveDashboardLayoutRoute(
+				createInput({
+					pathname: `/since-last-meeting/detail/${dealId}?tab=activity`,
+					routeId: '/(dashboard)/since-last-meeting/detail/[detailId]',
+					params: {
+						detailId: dealId
+					}
 				})
 			)
 		).toBeNull();

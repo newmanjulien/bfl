@@ -143,7 +143,8 @@ export const timelineItemValidator = v.union(
 export type TimelineItemData = TimelineItem;
 
 export const dealSummaryRowValidator = v.object({
-	id: v.string(),
+	id: v.id('deals'),
+	detail: v.union(allActivityDetailRefValidator, v.null()),
 	deal: v.string(),
 	probability: v.number(),
 	activityLevel: activityLevelValidator,

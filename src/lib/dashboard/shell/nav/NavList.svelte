@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import { fly } from 'svelte/transition';
 	import {
-		resolveDashboardRoute,
 		isDashboardNavRouteActive,
 		type DashboardRouteRef
 	} from '$lib/dashboard/routing';
+	import { resolveDashboardHref } from '$lib/dashboard/routing/href';
 	import { cn } from '$lib/support/cn';
 	import type { DashboardNavRouteRef, DashboardNavSection, DashboardNavSectionId } from './model';
 
@@ -127,7 +126,7 @@
 							</span>
 						{:else}
 							<a
-								href={resolve(resolveDashboardRoute(item.route))}
+								href={resolveDashboardHref(item.route)}
 								data-sidebar-indicator-key={renderMode === 'desktop' ? item.route.kind : undefined}
 								class={getItemClassName({
 									sectionId: section.id,

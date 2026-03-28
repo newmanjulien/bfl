@@ -77,6 +77,20 @@ describe('resolveDashboardRoute', () => {
 		expect(resolveDashboardRoute({ kind: 'since-last-meeting', meetingId: null })).toBe(
 			'/since-last-meeting'
 		);
+		expect(
+			resolveDashboardRoute({
+				kind: 'since-last-meeting-detail',
+				dealId,
+				meetingId: null
+			})
+		).toBe(`/since-last-meeting/detail/${dealId}`);
+		expect(
+			resolveDashboardRoute({
+				kind: 'since-last-meeting-detail',
+				dealId,
+				meetingId: 'meeting-doc-1'
+			})
+		).toBe(`/since-last-meeting/detail/${dealId}?meetingId=meeting-doc-1`);
 	});
 });
 
@@ -126,7 +140,21 @@ describe('isDashboardNavRouteActive', () => {
 		).toBe(true);
 	});
 
-	it('requires an exact match for since-last-meeting', () => {
+	it('treats since-last-meeting detail routes as active under the same nav section', () => {
+		expect(
+			isDashboardNavRouteActive(
+				{
+					kind: 'since-last-meeting',
+					meetingId: null
+				},
+				{
+					kind: 'since-last-meeting-detail',
+					dealId,
+					meetingId: 'meeting-doc-1'
+				}
+			)
+		).toBe(true);
+
 		expect(
 			isDashboardNavRouteActive(
 				{

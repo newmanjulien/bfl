@@ -117,6 +117,23 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 				duplicatedWork: false
 			}
 		});
+		const secondaryDealId = await ctx.db.insert('deals', {
+			dealNumber: 43,
+			industry: 'Industrials',
+			dealName: 'Beacon Renewal',
+			isReservedInEpic: false,
+			probability: 40,
+			stage: 'Proposal',
+			isLikelyOutOfDate: false,
+			activityLevel: 'medium',
+			lastActivityAtIso: '2026-03-23T10:00:00Z',
+			ownerBrokerId,
+			collaboratorBrokerIds: [],
+			dashboardFlags: {
+				needsSupport: false,
+				duplicatedWork: false
+			}
+		});
 
 		await ctx.db.insert('news', {
 			dealId,
@@ -160,6 +177,16 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 			marker: { kind: 'dot' },
 			title: 'Fresh update'
 		});
+		await ctx.db.insert('activities', {
+			kind: 'headline',
+			dealId: secondaryDealId,
+			meetingId: march20MeetingId,
+			stream: 'meeting-update',
+			occurredOnIso: '2026-03-23',
+			body: 'This deal has no detail context.',
+			marker: { kind: 'dot' },
+			title: 'Secondary update'
+		});
 
 		const insightId = await ctx.db.insert('insights', {
 			dealId,
@@ -187,6 +214,7 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 			ownerBrokerId,
 			collaboratorBrokerId,
 			dealId,
+			secondaryDealId,
 			insightId,
 			march20MeetingId,
 			march27MeetingId,
@@ -650,12 +678,32 @@ describe('Convex feature contracts', () => {
 		});
 
 		expect(result.referenceMeetingDateIso).toBe('2026-03-20');
-		expect(result.timelineItems).toHaveLength(1);
-		expect(result.timelineItems[0]).toMatchObject({
-			kind: 'headline',
-			title: 'Fresh update'
-		});
-		expect(result.deals).toHaveLength(1);
+		expect(result.timelineItems).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					kind: 'headline',
+					title: 'Fresh update'
+				}),
+				expect.objectContaining({
+					kind: 'headline',
+					title: 'Secondary update'
+				})
+			])
+		);
+		expect(result.deals).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					id: seed.dealId,
+					detail: {
+						dealId: seed.dealId
+					}
+				}),
+				expect.objectContaining({
+					id: seed.secondaryDealId,
+					detail: null
+				})
+			])
+		);
 	});
 
 	it('keeps my deals news scoped to the current reference week', async () => {

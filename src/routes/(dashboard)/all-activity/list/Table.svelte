@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import { formatIsoDateTimeRelative } from '$lib/format/date-time';
-	import { resolveDashboardRoute } from '$lib/dashboard/routing';
 	import type { AllActivityListPageData } from '$lib/dashboard/page-models/allActivity';
+	import { resolveDashboardHref } from '$lib/dashboard/routing/href';
 	import ActivityLevelLabel from '$lib/dashboard/ui/activity-level/ActivityLevelLabel.svelte';
 	import PersonInline from '$lib/dashboard/ui/people/PersonInline.svelte';
 	import DashboardTableShell from '$lib/dashboard/ui/shared/DashboardTableShell.svelte';
@@ -107,7 +106,7 @@
 			{#each rows as row (row.id)}
 				{#if !selection && row.navigation.kind === 'internal'}
 					<a
-						href={resolve(resolveDashboardRoute(row.navigation.route))}
+						href={resolveDashboardHref(row.navigation.route)}
 						data-table-row
 						class={cn(columnClass, 'group no-underline')}
 					>

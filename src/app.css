@@ -200,7 +200,8 @@ button {
 	justify-content: center;
 }
 
-.dashboard-table-shell[data-interactive-rows='true'] [data-table-row]:hover {
+.dashboard-table-shell[data-interactive-rows='true'] [data-table-row][data-table-row-interactive='true']:hover,
+.dashboard-table-shell[data-interactive-rows='true'] [data-table-row]:not([data-table-row-interactive]):hover {
 	background-color: var(--dashboard-table-hover-bg);
 }
 
