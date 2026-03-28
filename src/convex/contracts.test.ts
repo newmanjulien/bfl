@@ -20,10 +20,11 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 			avatar: '/avatars/mina.png'
 		});
 
-		await ctx.db.insert('meetingSchedule', {
-			key: 'default',
-			meetingDateIsos: ['2026-03-20', '2026-03-27'],
-			activeMeetingDateIso: '2026-03-20'
+		const march20MeetingId = await ctx.db.insert('meetings', {
+			dateIso: '2026-03-20'
+		});
+		const march27MeetingId = await ctx.db.insert('meetings', {
+			dateIso: '2026-03-27'
 		});
 
 		const dealOrgChartNodes: OrgChartNodeRecord[] = [
@@ -142,15 +143,17 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 		await ctx.db.insert('activities', {
 			kind: 'headline',
 			dealId,
+			meetingId: march27MeetingId,
 			stream: 'meeting-update',
 			occurredOnIso: '2026-03-18',
-			body: 'This should be filtered out by the meeting date.',
+			body: 'This belongs to a different meeting.',
 			marker: { kind: 'dot' },
 			title: 'Old update'
 		});
 		await ctx.db.insert('activities', {
 			kind: 'headline',
 			dealId,
+			meetingId: march20MeetingId,
 			stream: 'meeting-update',
 			occurredOnIso: '2026-03-22',
 			body: 'This should appear in since-last-meeting.',
@@ -160,6 +163,7 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 
 		const insightId = await ctx.db.insert('insights', {
 			dealId,
+			meetingId: march20MeetingId,
 			kind: 'opportunity',
 			title: 'Expand into adjacent services',
 			ownerBrokerId,
@@ -184,6 +188,8 @@ async function seedDashboardRecords(t: ReturnType<typeof createConvex>) {
 			collaboratorBrokerId,
 			dealId,
 			insightId,
+			march20MeetingId,
+			march27MeetingId,
 			dealOrgChartNodes,
 			insightOrgChartNodes
 		};
@@ -251,9 +257,12 @@ describe('Convex feature contracts', () => {
 			detailId: seed.dealId,
 			view: 'deals'
 		});
-		const opportunitiesList = await t.query(api.opportunities.getOpportunitiesList);
+		const opportunitiesList = await t.query(api.opportunities.getOpportunitiesList, {
+			meetingId: seed.march20MeetingId
+		});
 		const opportunityDetail = await t.query(api.opportunities.getOpportunityDetail, {
-			detailId: seed.insightId
+			detailId: seed.insightId,
+			meetingId: seed.march20MeetingId
 		});
 
 		expect(myDealsList).not.toHaveProperty('header');
@@ -466,7 +475,8 @@ describe('Convex feature contracts', () => {
 		const seed = await seedDashboardRecords(t);
 
 		const result = await t.query(api.opportunities.getOpportunityDetail, {
-			detailId: seed.insightId
+			detailId: seed.insightId,
+			meetingId: seed.march20MeetingId
 		});
 
 		expect(result).not.toBeNull();
@@ -483,6 +493,7 @@ describe('Convex feature contracts', () => {
 				'insights',
 				{
 					dealId: seed.dealId,
+					meetingId: seed.march20MeetingId,
 					kind: 'risk',
 					title: 'Legacy Risk Insight',
 					ownerBrokerId: seed.ownerBrokerId,
@@ -520,7 +531,8 @@ describe('Convex feature contracts', () => {
 		);
 
 		const result = await t.query(api.opportunities.getOpportunityDetail, {
-			detailId: legacyInsightId
+			detailId: legacyInsightId,
+			meetingId: seed.march20MeetingId
 		});
 
 		expect(result).not.toBeNull();
@@ -545,10 +557,11 @@ describe('Convex feature contracts', () => {
 
 	it('returns null for an invalid opportunity route param', async () => {
 		const t = createConvex();
-		await seedDashboardRecords(t);
+		const seed = await seedDashboardRecords(t);
 
 		const result = await t.query(api.opportunities.getOpportunityDetail, {
-			detailId: 'bad-insight-id'
+			detailId: 'bad-insight-id',
+			meetingId: seed.march20MeetingId
 		});
 
 		expect(result).toBeNull();
@@ -563,7 +576,8 @@ describe('Convex feature contracts', () => {
 		});
 
 		const result = await t.query(api.opportunities.getOpportunityDetail, {
-			detailId: seed.insightId
+			detailId: seed.insightId,
+			meetingId: seed.march20MeetingId
 		});
 
 		expect(result).toBeNull();
@@ -617,23 +631,23 @@ describe('Convex feature contracts', () => {
 		const t = createConvex();
 
 		await t.run(async (ctx) => {
-			await ctx.db.insert('meetingSchedule', {
-				key: 'default',
-				meetingDateIsos: ['2026-3-20'],
-				activeMeetingDateIso: '2026-03-20'
+			await ctx.db.insert('meetings', {
+				dateIso: '2026-3-20'
 			});
 		});
 
 		await expect(t.query(api.shell.getDashboardShell)).rejects.toThrow(
-			'Invalid ISO date at "meetingSchedule.meetingDateIsos[0]": "2026-3-20".'
+			'Invalid ISO date at "meetings'
 		);
 	});
 
-	it('filters since-last-meeting activity to the active meeting date', async () => {
+	it('filters since-last-meeting activity to the selected meeting', async () => {
 		const t = createConvex();
-		await seedDashboardRecords(t);
+		const seed = await seedDashboardRecords(t);
 
-		const result = await t.query(api.sinceLastMeeting.getSinceLastMeeting);
+		const result = await t.query(api.sinceLastMeeting.getSinceLastMeeting, {
+			meetingId: seed.march20MeetingId
+		});
 
 		expect(result.referenceMeetingDateIso).toBe('2026-03-20');
 		expect(result.timelineItems).toHaveLength(1);

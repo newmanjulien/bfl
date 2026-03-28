@@ -87,12 +87,17 @@ function toRightRailData(
 }
 
 export const getOpportunitiesList = query({
-	args: {},
+	args: {
+		meetingId: v.id('meetings')
+	},
 	returns: opportunitiesListReadModelValidator,
-	handler: async (ctx): Promise<OpportunitiesListReadModel> => {
+	handler: async (ctx, args): Promise<OpportunitiesListReadModel> => {
 		const [brokers, insights, deals] = await Promise.all([
 			ctx.db.query('brokers').collect(),
-			ctx.db.query('insights').collect(),
+			ctx.db
+				.query('insights')
+				.withIndex('by_meeting_id', (query) => query.eq('meetingId', args.meetingId))
+				.collect(),
 			ctx.db.query('deals').collect()
 		]);
 		const peopleById = createPersonSummaryMap(await toDashboardPeople(ctx, brokers));
@@ -135,7 +140,8 @@ export const getOpportunitiesList = query({
 
 export const getOpportunityDetail = query({
 	args: {
-		detailId: v.string()
+		detailId: v.string(),
+		meetingId: v.id('meetings')
 	},
 	returns: v.union(opportunityDetailReadModelValidator, v.null()),
 	handler: async (ctx, args): Promise<OpportunityDetailReadModel | null> => {
@@ -151,6 +157,10 @@ export const getOpportunityDetail = query({
 		]);
 
 		if (!insight) {
+			return null;
+		}
+
+		if (insight.meetingId !== args.meetingId) {
 			return null;
 		}
 

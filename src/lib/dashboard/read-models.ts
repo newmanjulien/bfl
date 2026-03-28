@@ -2,6 +2,8 @@ export type {
 	AllActivityDetailReadModel,
 	AllActivityDetailRef,
 	AllActivityListReadModel,
+	DashboardMeeting,
+	DashboardPerson,
 	DashboardShellReadModel,
 	MyDealsDetailReadModel,
 	MyDealsDetailRef,

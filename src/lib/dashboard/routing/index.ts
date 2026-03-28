@@ -37,6 +37,7 @@ const DASHBOARD_ROUTE_IDS = {
 
 export type DashboardDealRouteParam = string;
 export type DashboardInsightRouteParam = string;
+export type DashboardMeetingRouteParam = string;
 
 export type MyDealsListRouteRef = {
 	kind: 'my-deals-list';
@@ -63,15 +64,18 @@ export type AllActivityDetailRouteRef = {
 
 export type OpportunitiesListRouteRef = {
 	kind: 'opportunities-list';
+	meetingId: DashboardMeetingRouteParam | null;
 };
 
 export type OpportunitiesDetailRouteRef = {
 	kind: 'opportunities-detail';
 	insightId: DashboardInsightRouteParam;
+	meetingId: DashboardMeetingRouteParam | null;
 };
 
 export type SinceLastMeetingRouteRef = {
 	kind: 'since-last-meeting';
+	meetingId: DashboardMeetingRouteParam | null;
 };
 
 export type DashboardNavRouteRef =
@@ -125,8 +129,11 @@ type DashboardPathname =
 	| `/all-activity/detail/${DashboardDealRouteParam}`
 	| `/all-activity/${NonDefaultAllActivityView}/detail/${DashboardDealRouteParam}`
 	| '/opportunities'
+	| `/opportunities?meetingId=${DashboardMeetingRouteParam}`
 	| `/opportunities/detail/${DashboardInsightRouteParam}`
-	| '/since-last-meeting';
+	| `/opportunities/detail/${DashboardInsightRouteParam}?meetingId=${DashboardMeetingRouteParam}`
+	| '/since-last-meeting'
+	| `/since-last-meeting?meetingId=${DashboardMeetingRouteParam}`;
 
 type DashboardLayoutRouteParams = {
 	view?: string;
@@ -195,6 +202,16 @@ function resolveAllActivityListPath(view: AllActivityView) {
 
 function resolveDetailIdParam(value: string | undefined) {
 	return value && value.length > 0 ? value : null;
+}
+
+function resolveOptionalMeetingId(searchParams: URLSearchParams) {
+	const meetingId = searchParams.get('meetingId');
+
+	return meetingId && meetingId.length > 0 ? meetingId : null;
+}
+
+function withOptionalMeetingId(path: string, meetingId: DashboardMeetingRouteParam | null) {
+	return meetingId ? `${path}?meetingId=${meetingId}` : path;
 }
 
 const dashboardRouteDefinitions = {
@@ -335,20 +352,21 @@ const dashboardRouteDefinitions = {
 	'opportunities-list': {
 		routeIds: [DASHBOARD_ROUTE_IDS.opportunities[0]],
 		parse: ({ searchParams }) => {
-			if (searchParams.size > 0) {
+			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingId'])) {
 				return null;
 			}
 
 			return {
-				kind: 'opportunities-list'
+				kind: 'opportunities-list',
+				meetingId: resolveOptionalMeetingId(searchParams)
 			};
 		},
-		href: () => OPPORTUNITIES_BASE_PATH
+		href: (route) => withOptionalMeetingId(OPPORTUNITIES_BASE_PATH, route.meetingId)
 	},
 	'opportunities-detail': {
 		routeIds: [DASHBOARD_ROUTE_IDS.opportunities[1]],
 		parse: ({ params, searchParams }) => {
-			if (searchParams.size > 0) {
+			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingId'])) {
 				return null;
 			}
 
@@ -360,23 +378,26 @@ const dashboardRouteDefinitions = {
 
 			return {
 				kind: 'opportunities-detail',
-				insightId: detailId
+				insightId: detailId,
+				meetingId: resolveOptionalMeetingId(searchParams)
 			};
 		},
-		href: (route) => `${OPPORTUNITIES_BASE_PATH}/detail/${route.insightId}`
+		href: (route) =>
+			withOptionalMeetingId(`${OPPORTUNITIES_BASE_PATH}/detail/${route.insightId}`, route.meetingId)
 	},
 	'since-last-meeting': {
 		routeIds: DASHBOARD_ROUTE_IDS.sinceLastMeeting,
 		parse: ({ searchParams }) => {
-			if (searchParams.size > 0) {
+			if (!hasOnlyAllowedSearchParams(searchParams, ['meetingId'])) {
 				return null;
 			}
 
 			return {
-				kind: 'since-last-meeting'
+				kind: 'since-last-meeting',
+				meetingId: resolveOptionalMeetingId(searchParams)
 			};
 		},
-		href: () => SINCE_LAST_MEETING_PATH
+		href: (route) => withOptionalMeetingId(SINCE_LAST_MEETING_PATH, route.meetingId)
 	}
 } satisfies DashboardRouteDefinitionMap;
 

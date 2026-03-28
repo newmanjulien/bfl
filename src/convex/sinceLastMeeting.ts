@@ -1,3 +1,4 @@
+import { v } from 'convex/values';
 import { query } from './_generated/server';
 import { sortDealActivitiesAscending } from '../lib/dashboard/view-models/deal';
 import {
@@ -5,7 +6,7 @@ import {
 	toTimelineItem
 } from '../lib/dashboard/view-models/deal-content';
 import {
-	requireMeetingScheduleDocument,
+	requireMeetingRecord,
 	toActivityRecord,
 	toDashboardPeople,
 	toDealRecord
@@ -53,29 +54,31 @@ function toSinceLastMeetingDeals(
 }
 
 export const getSinceLastMeeting = query({
-	args: {},
+	args: {
+		meetingId: v.id('meetings')
+	},
 	returns: sinceLastMeetingReadModelValidator,
-	handler: async (ctx): Promise<SinceLastMeetingReadModel> => {
-		const meetingSchedule = await requireMeetingScheduleDocument(ctx);
-		const [brokers, activities, deals] = await Promise.all([
+	handler: async (ctx, args): Promise<SinceLastMeetingReadModel> => {
+		const [meeting, brokers, activities, deals] = await Promise.all([
+			requireMeetingRecord(ctx, args.meetingId),
 			ctx.db.query('brokers').collect(),
 			ctx.db
 				.query('activities')
-				.withIndex('by_stream_occurred_on_iso', (query) => query.eq('stream', 'meeting-update'))
+				.withIndex('by_meeting_id_stream_occurred_on_iso', (query) =>
+					query.eq('meetingId', args.meetingId).eq('stream', 'meeting-update')
+				)
 				.collect(),
 			ctx.db.query('deals').collect()
 		]);
 		const people = await toDashboardPeople(ctx, brokers);
 		const peopleById = createPersonSummaryMap(people);
 		const meetingUpdateActivities = sortDealActivitiesAscending(
-			activities
-				.map((activity) => toActivityRecord(activity))
-				.filter((activity) => activity.occurredOnIso >= meetingSchedule.activeMeetingDateIso)
+			activities.map((activity) => toActivityRecord(activity))
 		);
 		const dealRecords = deals.map((deal) => toDealRecord(deal));
 
 		return {
-			referenceMeetingDateIso: meetingSchedule.activeMeetingDateIso,
+			referenceMeetingDateIso: meeting.dateIso,
 			timelineItems: meetingUpdateActivities.map((activity) => toTimelineItem(activity, peopleById)),
 			deals: toSinceLastMeetingDeals(meetingUpdateActivities, createDealByIdMap(dealRecords)),
 			update: {

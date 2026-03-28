@@ -6,15 +6,23 @@ type BrokerOption = {
 
 export function resolveMyDealsActiveBrokerId(
 	people: readonly BrokerOption[],
-	defaultBrokerId: BrokerId
+	defaultBrokerId: BrokerId | null
 ): BrokerId {
-	const activeBroker = people.find((person) => person.id === defaultBrokerId);
+	const activeBroker = defaultBrokerId
+		? people.find((person) => person.id === defaultBrokerId)
+		: null;
 
-	if (!activeBroker) {
-		throw new Error(`Missing default my-deals broker "${defaultBrokerId}".`);
+	if (activeBroker) {
+		return activeBroker.id;
 	}
 
-	return activeBroker.id;
+	const fallbackBroker = people[0];
+
+	if (!fallbackBroker) {
+		throw new Error('No brokers available for my deals.');
+	}
+
+	return fallbackBroker.id;
 }
 
 export async function resolveMyDealsActiveBrokerIdFromParent(

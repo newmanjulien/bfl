@@ -180,7 +180,23 @@ describe('resolveDashboardLayoutRoute', () => {
 			)
 		).toEqual({
 			route: {
-				kind: 'opportunities-list'
+				kind: 'opportunities-list',
+				meetingId: null
+			},
+			redirectTo: null
+		});
+
+		expect(
+			resolveDashboardLayoutRoute(
+				createInput({
+					pathname: '/opportunities?meetingId=meeting-doc-1',
+					routeId: '/(dashboard)/opportunities'
+				})
+			)
+		).toEqual({
+			route: {
+				kind: 'opportunities-list',
+				meetingId: 'meeting-doc-1'
 			},
 			redirectTo: null
 		});
@@ -198,7 +214,8 @@ describe('resolveDashboardLayoutRoute', () => {
 		).toEqual({
 			route: {
 				kind: 'opportunities-detail',
-				insightId
+				insightId,
+				meetingId: null
 			},
 			redirectTo: null
 		});
@@ -212,7 +229,8 @@ describe('resolveDashboardLayoutRoute', () => {
 			)
 		).toEqual({
 			route: {
-				kind: 'since-last-meeting'
+				kind: 'since-last-meeting',
+				meetingId: null
 			},
 			redirectTo: null
 		});

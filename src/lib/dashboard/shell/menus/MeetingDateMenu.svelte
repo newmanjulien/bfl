@@ -1,7 +1,10 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { cn } from '$lib/support/cn';
 	import { formatIsoDateMonthDayLong } from '$lib/format/date-time';
-	import type { IsoDate } from '$lib/types/dates';
+	import type { DashboardMeeting } from '$lib/dashboard/read-models';
+	import type { OpportunitiesListRouteRef, SinceLastMeetingRouteRef } from '$lib/dashboard/routing';
+	import { resolveDashboardRoute } from '$lib/dashboard/routing';
 	import DashboardMenuPanel from './DashboardMenuPanel.svelte';
 	import {
 		type DashboardMenuPlacement,
@@ -11,16 +14,16 @@
 
 	type Props = {
 		menuId: string;
-		meetingDateIsos: readonly IsoDate[];
-		activeMeetingDateIso?: IsoDate | null;
+		route: OpportunitiesListRouteRef | SinceLastMeetingRouteRef;
+		meetings: readonly DashboardMeeting[];
 		placement?: DashboardMenuPlacement;
 		class?: string;
 	};
 
 	let {
 		menuId,
-		meetingDateIsos: unsortedMeetingDateIsos,
-		activeMeetingDateIso = null,
+		route,
+		meetings: unsortedMeetings,
 		placement = 'bottom-start',
 		class: classProp = ''
 	}: Props = $props();
@@ -29,14 +32,28 @@
 		() => placement
 	);
 
-	const meetingDateIsos = $derived(
-		[...unsortedMeetingDateIsos].sort((left, right) => right.localeCompare(left))
+	const meetings = $derived(
+		[...unsortedMeetings].sort((left, right) => right.dateIso.localeCompare(left.dateIso))
 	);
-	const meetingDateLabels = $derived(meetingDateIsos.map(formatIsoDateMonthDayLong));
-	const triggerDateIso = $derived(activeMeetingDateIso ?? meetingDateIsos[0] ?? null);
+	const meetingDateLabels = $derived(meetings.map((meeting) => formatIsoDateMonthDayLong(meeting.dateIso)));
+	const triggerMeeting = $derived(
+		meetings.find((meeting) => meeting.id === route.meetingId) ?? meetings[0] ?? null
+	);
 	const triggerDateLabel = $derived(
-		triggerDateIso ? formatIsoDateMonthDayLong(triggerDateIso) : 'Select meeting date'
+		triggerMeeting ? formatIsoDateMonthDayLong(triggerMeeting.dateIso) : 'Select meeting date'
 	);
+
+	function toMeetingRoute(meetingId: DashboardMeeting['id']) {
+		return route.kind === 'opportunities-list'
+			? {
+					kind: 'opportunities-list' as const,
+					meetingId
+				}
+			: {
+					kind: 'since-last-meeting' as const,
+					meetingId
+				};
+	}
 </script>
 
 <div
@@ -52,27 +69,27 @@
 		class={classProp}
 		onclick={menu.toggle}
 	>
-		<span>{triggerDateIso ? `${triggerDateLabel} meeting` : triggerDateLabel}</span>
+		<span>{triggerMeeting ? `${triggerDateLabel} meeting` : triggerDateLabel}</span>
 	</button>
 
 	{#if menu.isOpen}
 		<DashboardMenuPanel panelId={menu.panelId} class={menu.menuPanelClass} title="Select meeting date">
 			{#snippet body()}
 				<ul class="mt-1 space-y-1">
-					{#each meetingDateIsos as isoDate, index (isoDate)}
+					{#each meetings as meeting, index (meeting.id)}
 						<li>
-							<button
-								type="button"
+							<a
 								role="menuitemradio"
-								aria-checked={isoDate === triggerDateIso}
+								aria-checked={meeting.id === triggerMeeting?.id}
+								href={resolve(resolveDashboardRoute(toMeetingRoute(meeting.id)))}
 								class={cn(
 									'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-100',
-									isoDate === triggerDateIso ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
+									meeting.id === triggerMeeting?.id ? 'bg-zinc-50 text-zinc-900' : 'text-zinc-700'
 								)}
 								onclick={menu.close}
 							>
-								<span class="font-medium">{meetingDateLabels[index] ?? isoDate}</span>
-							</button>
+								<span class="font-medium">{meetingDateLabels[index] ?? meeting.dateIso}</span>
+							</a>
 						</li>
 					{/each}
 				</ul>

@@ -1,18 +1,17 @@
 <script lang="ts">
 	import { Menu } from 'lucide-svelte';
+	import type { DashboardMeeting } from '$lib/dashboard/read-models';
 	import type { DashboardHeader } from '$lib/dashboard/shell/header/types';
 	import { useDashboardShellState } from '$lib/dashboard/shell/state.svelte';
-	import type { IsoDate } from '$lib/types/dates';
 	import HeaderLeadingControl from './header/HeaderLeadingControl.svelte';
 	import HomeLink from './HomeLink.svelte';
 
 	type Props = {
 		header: DashboardHeader | null | undefined;
-		meetingDateIsos: readonly IsoDate[];
-		activeMeetingDateIso?: IsoDate | null;
+		meetings: readonly DashboardMeeting[];
 	};
 
-	let { header, meetingDateIsos, activeMeetingDateIso = null }: Props = $props();
+	let { header, meetings }: Props = $props();
 	const shellState = useDashboardShellState();
 	const leadingControlClass =
 		'!mr-0 !ml-0 h-8 min-w-0 max-w-full justify-center rounded-sm px-2 text-center hover:bg-zinc-100 hover:text-zinc-900';
@@ -29,8 +28,7 @@
 					<HeaderLeadingControl
 						control={header.leading.control}
 						menuId="mobile-header-leading-control"
-						{meetingDateIsos}
-						{activeMeetingDateIso}
+						{meetings}
 						placement="bottom"
 						class={leadingControlClass}
 					/>

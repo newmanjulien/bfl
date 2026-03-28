@@ -5,26 +5,19 @@
 		type DashboardHeaderButtonId
 	} from '$lib/dashboard/shell/header/ui-controller';
 	import { useDashboardShellState } from '$lib/dashboard/shell/state.svelte';
+	import type { DashboardMeeting, DashboardPerson } from '$lib/dashboard/read-models';
 	import type { DashboardHeader } from '$lib/dashboard/shell/header/types';
-	import type { IsoDate } from '$lib/types/dates';
 	import BrokerSwitchMenu from '$lib/dashboard/shell/menus/BrokerSwitchMenu.svelte';
 	import ShareMenu from '$lib/dashboard/shell/menus/ShareMenu.svelte';
 	import DesktopHeaderLeading from './header/DesktopHeaderLeading.svelte';
 
-	type HeaderPerson = {
-		id: string;
-		name: string;
-		avatar: string;
-	};
-
 	type Props = {
 		header: DashboardHeader | null | undefined;
-		people: readonly HeaderPerson[];
-		meetingDateIsos: readonly IsoDate[];
-		activeMeetingDateIso?: IsoDate | null;
+		people: readonly DashboardPerson[];
+		meetings: readonly DashboardMeeting[];
 	};
 
-	let { header, people, meetingDateIsos, activeMeetingDateIso = null }: Props = $props();
+	let { header, people, meetings }: Props = $props();
 	const shellState = useDashboardShellState();
 	const headerUiController = useDashboardHeaderUiController();
 	const overlayState = $derived(headerUiController.getState());
@@ -52,8 +45,7 @@
 
 				<DesktopHeaderLeading
 					leading={header.leading}
-					{meetingDateIsos}
-					{activeMeetingDateIso}
+					{meetings}
 				/>
 			</div>
 

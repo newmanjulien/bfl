@@ -12,15 +12,24 @@ describe('resolveMyDealsActiveBrokerId', () => {
 			{ id: 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId }
 		];
 
-		expect(resolveMyDealsActiveBrokerId(people, julienId)).toBe(julienId);
+	expect(resolveMyDealsActiveBrokerId(people, julienId)).toBe(julienId);
 	});
 
-	it('throws when the fixed broker is unavailable', () => {
-		const julienId = 'j57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId;
-		const people = [{ id: 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId }];
+	it('falls back to the first broker when no default broker id is configured', () => {
+		const firstBrokerId = 'j57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId;
+		const people = [
+			{ id: firstBrokerId },
+			{ id: 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId }
+		];
 
-		expect(() => resolveMyDealsActiveBrokerId(people, julienId)).toThrow(
-			`Missing default my-deals broker "${julienId}".`
-		);
+		expect(resolveMyDealsActiveBrokerId(people, null)).toBe(firstBrokerId);
+	});
+
+	it('falls back to the first broker when the fixed broker is unavailable', () => {
+		const julienId = 'j57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId;
+		const fallbackBrokerId = 'a57f8k0n9m2t3w4x5y6z7a8b9c0d1e2f' as BrokerId;
+		const people = [{ id: fallbackBrokerId }];
+
+		expect(resolveMyDealsActiveBrokerId(people, julienId)).toBe(fallbackBrokerId);
 	});
 });

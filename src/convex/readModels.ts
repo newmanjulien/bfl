@@ -3,13 +3,12 @@ import type { Doc, Id } from './_generated/dataModel';
 import type { OrgChartNodeRecord } from '../lib/domain/org-chart';
 import {
 	parseIsoDate,
-	parseIsoDateArray,
 	parseIsoDateTime,
 	parseOptionalIsoDateTime,
 	type IsoDate,
 	type IsoDateTime
 } from '../lib/types/dates';
-import type { BrokerId, DealId, InsightId } from '../lib/types/ids';
+import type { BrokerId, DealId, InsightId, MeetingId } from '../lib/types/ids';
 import type {
 	ActivityLevel,
 	DealActivityStream,
@@ -18,7 +17,7 @@ import type {
 	DealNewsSource,
 	DealStage
 } from '../lib/types/vocab';
-import type { DashboardPerson } from './validators';
+import type { DashboardMeeting, DashboardPerson } from './validators';
 
 export type DealContextRecordData = {
 	summary: string;
@@ -96,6 +95,7 @@ export type NewsRecordData = {
 export type InsightRecordData = {
 	id: InsightId;
 	dealId: DealId;
+	meetingId: MeetingId;
 	kind: DealInsightKind;
 	title: string;
 	ownerBrokerId: BrokerId;
@@ -105,45 +105,52 @@ export type InsightRecordData = {
 };
 
 type DashboardActivityValue = Doc<'activities'> | Doc<'insights'>['timeline'][number];
-
-export type MeetingScheduleRecordData = {
-	meetingDateIsos: IsoDate[];
-	activeMeetingDateIso: IsoDate;
-};
+export type MeetingRecordData = DashboardMeeting;
 
 type DealContextDocument = NonNullable<Doc<'deals'>['context']>;
 type FlatDealContextDocument = Extract<DealContextDocument, { orgChartNodes: unknown[] }>;
 type InsightDocument = Doc<'insights'>;
 type FlatInsightDocument = Extract<InsightDocument, { orgChartNodes: unknown[] }>;
 
-export async function requireMeetingScheduleDocument(
-	ctx: QueryCtx
-): Promise<MeetingScheduleRecordData> {
-	const meetingSchedule = await ctx.db
-		.query('meetingSchedule')
-		.withIndex('by_key', (query) => query.eq('key', 'default'))
-		.first();
+export function toMeetingRecord(meeting: Doc<'meetings'>): MeetingRecordData {
+	return {
+		id: meeting._id,
+		dateIso: parseIsoDate(meeting.dateIso, `meetings["${meeting._id}"].dateIso`)
+	};
+}
 
-	if (!meetingSchedule) {
-		throw new Error('Missing meeting schedule document "default".');
+export async function listMeetingRecords(ctx: QueryCtx): Promise<MeetingRecordData[]> {
+	const meetings = await ctx.db.query('meetings').collect();
+
+	return meetings
+		.map((meeting) => toMeetingRecord(meeting))
+		.sort((left, right) => right.dateIso.localeCompare(left.dateIso));
+}
+
+export async function requireMeetingRecord(
+	ctx: QueryCtx,
+	meetingId: MeetingId
+): Promise<MeetingRecordData> {
+	const meeting = await ctx.db.get(meetingId);
+
+	if (!meeting) {
+		throw new Error(`Unknown meeting "${meetingId}".`);
 	}
 
-	return {
-		meetingDateIsos: parseIsoDateArray(meetingSchedule.meetingDateIsos, 'meetingSchedule.meetingDateIsos'),
-		activeMeetingDateIso: parseIsoDate(
-			meetingSchedule.activeMeetingDateIso,
-			'meetingSchedule.activeMeetingDateIso'
-		)
-	};
+	return toMeetingRecord(meeting);
 }
 
 async function resolveBrokerAvatar(
 	ctx: QueryCtx,
 	broker: Doc<'brokers'>
 ): Promise<DashboardPerson['avatar']> {
-	const avatarUrl = await ctx.storage.getUrl(broker.avatar as Id<'_storage'>);
+	try {
+		const avatarUrl = await ctx.storage.getUrl(broker.avatar as Id<'_storage'>);
 
-	return avatarUrl ?? broker.avatar;
+		return avatarUrl ?? broker.avatar;
+	} catch {
+		return broker.avatar;
+	}
 }
 
 export async function toDashboardPerson(
@@ -324,6 +331,7 @@ export function toInsightRecord(insight: InsightDocument): InsightRecordData {
 	return {
 		id: insight._id,
 		dealId: insight.dealId,
+		meetingId: insight.meetingId,
 		kind: insight.kind as DealInsightKind,
 		title: insight.title,
 		ownerBrokerId: insight.ownerBrokerId,

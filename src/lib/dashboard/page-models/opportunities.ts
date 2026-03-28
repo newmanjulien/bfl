@@ -24,7 +24,8 @@ const OPPORTUNITIES_HERO = {
 function toDetailRoute(detail: OpportunityDetailRef): OpportunitiesDetailRouteRef {
 	return {
 		kind: 'opportunities-detail',
-		insightId: detail.insightId
+		insightId: detail.insightId,
+		meetingId: null
 	};
 }
 
@@ -60,15 +61,21 @@ export function buildOpportunitiesListPageData(params: {
 
 	return {
 		route,
-		header: createOpportunitiesListHeader(),
+		header: createOpportunitiesListHeader(route),
 		hero: OPPORTUNITIES_HERO,
 		opportunityTiles: readModel.opportunityTiles.map((tile) => ({
 			...tile,
-			route: toDetailRoute(tile.detail)
+			route: {
+				...toDetailRoute(tile.detail),
+				meetingId: route.meetingId
+			}
 		})),
 		riskTiles: readModel.riskTiles.map((tile) => ({
 			...tile,
-			route: toDetailRoute(tile.detail)
+			route: {
+				...toDetailRoute(tile.detail),
+				meetingId: route.meetingId
+			}
 		})),
 		update: readModel.update
 	};
@@ -84,7 +91,10 @@ export function buildOpportunityDetailPageData(params: {
 
 	return {
 		route,
-		header: createOpportunitiesDetailHeader(readModel.title),
+		header: createOpportunitiesDetailHeader(readModel.title, {
+			kind: 'opportunities-list',
+			meetingId: route.meetingId
+		}),
 		hero: readModel.hero,
 		kind: readModel.kind,
 		activityItems: readModel.activityItems,

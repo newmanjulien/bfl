@@ -1,17 +1,16 @@
 <script lang="ts">
 	import { ChevronRight } from 'lucide-svelte';
+	import type { DashboardMeeting } from '$lib/dashboard/read-models';
 	import type { DashboardHeaderLeading } from '$lib/dashboard/shell/header/types';
 	import TitleLinkMenu from '$lib/dashboard/shell/menus/TitleLinkMenu.svelte';
-	import type { IsoDate } from '$lib/types/dates';
 	import HeaderLeadingControl from './HeaderLeadingControl.svelte';
 
 	type Props = {
 		leading: DashboardHeaderLeading;
-		meetingDateIsos: readonly IsoDate[];
-		activeMeetingDateIso?: IsoDate | null;
+		meetings: readonly DashboardMeeting[];
 	};
 
-	let { leading, meetingDateIsos, activeMeetingDateIso = null }: Props = $props();
+	let { leading, meetings }: Props = $props();
 
 	const BASE_TITLE_CLASS = 'min-w-0 truncate text-xs font-medium tracking-wide';
 	const mutedTitleClass = `${BASE_TITLE_CLASS} mr-2 ml-1 text-zinc-500`;
@@ -26,8 +25,7 @@
 		menuId="desktop-header-leading-control"
 		placement="bottom-start"
 		class={leadingControlClass}
-		{meetingDateIsos}
-		{activeMeetingDateIso}
+		{meetings}
 	/>
 	<ChevronRight class="mr-2 h-3 w-3 text-zinc-200" />
 	<p class={strongTitleClass}>

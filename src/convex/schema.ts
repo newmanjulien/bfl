@@ -24,6 +24,7 @@ const activityDocumentValidator = v.union(
 	v.object({
 		kind: v.literal('headline'),
 		dealId: v.id('deals'),
+		meetingId: v.optional(v.id('meetings')),
 		stream: dealActivityStreamValidator,
 		occurredOnIso: v.string(),
 		body: v.string(),
@@ -33,6 +34,7 @@ const activityDocumentValidator = v.union(
 	v.object({
 		kind: v.literal('actor-action'),
 		dealId: v.id('deals'),
+		meetingId: v.optional(v.id('meetings')),
 		stream: dealActivityStreamValidator,
 		occurredOnIso: v.string(),
 		body: v.string(),
@@ -93,6 +95,7 @@ const dealContextValidator = v.union(flatDealContextValidator, legacyDealContext
 
 const flatInsightValidator = v.object({
 	dealId: v.id('deals'),
+	meetingId: v.id('meetings'),
 	kind: dealInsightKindValidator,
 	title: v.string(),
 	ownerBrokerId: v.id('brokers'),
@@ -103,6 +106,7 @@ const flatInsightValidator = v.object({
 
 const legacyInsightValidator = v.object({
 	dealId: v.id('deals'),
+	meetingId: v.id('meetings'),
 	kind: dealInsightKindValidator,
 	title: v.string(),
 	ownerBrokerId: v.id('brokers'),
@@ -114,11 +118,9 @@ const legacyInsightValidator = v.object({
 const insightDocumentValidator = v.union(flatInsightValidator, legacyInsightValidator);
 
 export default defineSchema({
-	meetingSchedule: defineTable({
-		key: v.string(),
-		meetingDateIsos: v.array(v.string()),
-		activeMeetingDateIso: v.string()
-	}).index('by_key', ['key']),
+	meetings: defineTable({
+		dateIso: v.string()
+	}).index('by_date_iso', ['dateIso']),
 
 	brokers: defineTable({
 		name: v.string(),
@@ -146,6 +148,7 @@ export default defineSchema({
 
 	activities: defineTable(activityDocumentValidator)
 		.index('by_stream_occurred_on_iso', ['stream', 'occurredOnIso'])
+		.index('by_meeting_id_stream_occurred_on_iso', ['meetingId', 'stream', 'occurredOnIso'])
 		.index('by_deal_id_stream_occurred_on_iso', ['dealId', 'stream', 'occurredOnIso']),
 
 	news: defineTable({
@@ -160,5 +163,7 @@ export default defineSchema({
 	insights: defineTable(insightDocumentValidator)
 		.index('by_deal_id', ['dealId'])
 		.index('by_kind', ['kind'])
+		.index('by_meeting_id', ['meetingId'])
+		.index('by_meeting_id_kind', ['meetingId', 'kind'])
 		.index('by_deal_id_kind', ['dealId', 'kind'])
 });

@@ -1,7 +1,8 @@
 import type {
 	AllActivityListRouteRef,
 	MyDealsListRouteRef,
-	OpportunitiesListRouteRef
+	OpportunitiesListRouteRef,
+	SinceLastMeetingRouteRef
 } from '$lib/dashboard/routing';
 
 export type DashboardHeaderBackLinkRouteRef =
@@ -16,6 +17,7 @@ export type DashboardHeaderTitleMenuRouteRef =
 export type DashboardHeaderControl =
 	| {
 			kind: 'meeting-date';
+			route: OpportunitiesListRouteRef | SinceLastMeetingRouteRef;
 	  }
 	| {
 			kind: 'back-link';

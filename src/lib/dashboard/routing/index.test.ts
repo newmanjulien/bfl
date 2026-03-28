@@ -58,14 +58,25 @@ describe('resolveDashboardRoute', () => {
 	});
 
 	it('resolves opportunities and since-last-meeting routes', () => {
-		expect(resolveDashboardRoute({ kind: 'opportunities-list' })).toBe('/opportunities');
+		expect(resolveDashboardRoute({ kind: 'opportunities-list', meetingId: null })).toBe(
+			'/opportunities'
+		);
+		expect(
+			resolveDashboardRoute({
+				kind: 'opportunities-list',
+				meetingId: 'meeting-doc-1'
+			})
+		).toBe('/opportunities?meetingId=meeting-doc-1');
 		expect(
 			resolveDashboardRoute({
 				kind: 'opportunities-detail',
-				insightId
+				insightId,
+				meetingId: 'meeting-doc-1'
 			})
-		).toBe(`/opportunities/detail/${insightId}`);
-		expect(resolveDashboardRoute({ kind: 'since-last-meeting' })).toBe('/since-last-meeting');
+		).toBe(`/opportunities/detail/${insightId}?meetingId=meeting-doc-1`);
+		expect(resolveDashboardRoute({ kind: 'since-last-meeting', meetingId: null })).toBe(
+			'/since-last-meeting'
+		);
 	});
 });
 
@@ -103,11 +114,13 @@ describe('isDashboardNavRouteActive', () => {
 		expect(
 			isDashboardNavRouteActive(
 				{
-					kind: 'opportunities-list'
+					kind: 'opportunities-list',
+					meetingId: null
 				},
 				{
 					kind: 'opportunities-detail',
-					insightId
+					insightId,
+					meetingId: 'meeting-doc-1'
 				}
 			)
 		).toBe(true);
@@ -117,10 +130,12 @@ describe('isDashboardNavRouteActive', () => {
 		expect(
 			isDashboardNavRouteActive(
 				{
-					kind: 'since-last-meeting'
+					kind: 'since-last-meeting',
+					meetingId: null
 				},
 				{
-					kind: 'since-last-meeting'
+					kind: 'since-last-meeting',
+					meetingId: 'meeting-doc-1'
 				}
 			)
 		).toBe(true);
@@ -128,10 +143,12 @@ describe('isDashboardNavRouteActive', () => {
 		expect(
 			isDashboardNavRouteActive(
 				{
-					kind: 'since-last-meeting'
+					kind: 'since-last-meeting',
+					meetingId: null
 				},
 				{
-					kind: 'opportunities-list'
+					kind: 'opportunities-list',
+					meetingId: null
 				}
 			)
 		).toBe(false);

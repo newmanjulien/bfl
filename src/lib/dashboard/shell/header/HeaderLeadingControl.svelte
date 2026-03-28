@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import type { DashboardMeeting } from '$lib/dashboard/read-models';
 	import { resolveDashboardRoute } from '$lib/dashboard/routing';
 	import type { DashboardHeaderControl } from '$lib/dashboard/shell/header/types';
-	import type { IsoDate } from '$lib/types/dates';
 	import MeetingDateMenu from '$lib/dashboard/shell/menus/MeetingDateMenu.svelte';
 
 	const BASE_LEADING_CONTROL_CLASS =
@@ -11,8 +11,7 @@
 	type Props = {
 		control: DashboardHeaderControl;
 		menuId: string;
-		meetingDateIsos: readonly IsoDate[];
-		activeMeetingDateIso?: IsoDate | null;
+		meetings: readonly DashboardMeeting[];
 		placement?: 'bottom-start' | 'bottom-end' | 'bottom';
 		class?: string;
 	};
@@ -20,8 +19,7 @@
 	let {
 		control,
 		menuId,
-		meetingDateIsos,
-		activeMeetingDateIso = null,
+		meetings,
 		placement = 'bottom-start',
 		class: classProp = ''
 	}: Props = $props();
@@ -34,8 +32,8 @@
 {#if control.kind === 'meeting-date'}
 	<MeetingDateMenu
 		{menuId}
-		{meetingDateIsos}
-		{activeMeetingDateIso}
+		route={control.route}
+		{meetings}
 		{placement}
 		class={controlClass}
 	/>

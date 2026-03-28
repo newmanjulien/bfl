@@ -18,7 +18,7 @@ import type { FileUploadFieldData } from '../lib/dashboard/ui/detail/FileUploadF
 import type { DealSummaryRow } from '../lib/dashboard/view-models/deal';
 import type { TimelineItem } from '../lib/dashboard/view-models/deal-content';
 import type { IsoDate, IsoDateTime } from '../lib/types/dates';
-import type { BrokerId, DealId, InsightId } from '../lib/types/ids';
+import type { BrokerId, DealId, InsightId, MeetingId } from '../lib/types/ids';
 import {
 	ACTIVITY_LEVELS,
 	DEAL_ACTIVITY_STREAMS,
@@ -67,10 +67,20 @@ export const dashboardPersonValidator = v.object({
 	avatar: v.string()
 });
 
+export const dashboardMeetingValidator = v.object({
+	id: v.id('meetings'),
+	dateIso: v.string()
+});
+
 export type DashboardPerson = {
 	id: BrokerId;
 	name: string;
 	avatar: string;
+};
+
+export type DashboardMeeting = {
+	id: MeetingId;
+	dateIso: IsoDate;
 };
 
 export const myDealsDetailRefValidator = v.object({
@@ -295,8 +305,8 @@ export const opportunityTileReadModelValidator = v.object({
 
 export const dashboardShellResultValidator = v.object({
 	people: v.array(dashboardPersonValidator),
-	meetingDateIsos: v.array(v.string()),
-	activeMeetingDateIso: v.string()
+	meetings: v.array(dashboardMeetingValidator),
+	defaultMeetingId: v.union(v.id('meetings'), v.null())
 });
 
 export const myDealsListReadModelValidator = v.object({
@@ -439,8 +449,8 @@ export type OpportunityTileReadModel = {
 
 export type DashboardShellReadModel = {
 	people: DashboardPerson[];
-	meetingDateIsos: IsoDate[];
-	activeMeetingDateIso: IsoDate;
+	meetings: DashboardMeeting[];
+	defaultMeetingId: MeetingId | null;
 };
 
 export type MyDealsListReadModel = {

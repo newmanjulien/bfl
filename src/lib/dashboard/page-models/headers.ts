@@ -1,7 +1,8 @@
 import type {
 	AllActivityListRouteRef,
 	MyDealsListRouteRef,
-	OpportunitiesListRouteRef
+	OpportunitiesListRouteRef,
+	SinceLastMeetingRouteRef
 } from '$lib/dashboard/routing';
 import type { DashboardHeader } from '$lib/dashboard/shell/header/types';
 import {
@@ -46,23 +47,23 @@ function buildHeaderTitleMenu<TId extends string>(params: {
 	};
 }
 
-export function createSinceLastMeetingHeader(): DashboardHeader {
+export function createSinceLastMeetingHeader(route: SinceLastMeetingRouteRef): DashboardHeader {
 	return {
 		leading: {
 			kind: 'control-title',
 			title: 'Since last meeting',
-			control: { kind: 'meeting-date' }
+			control: { kind: 'meeting-date', route }
 		},
 		actions: ['share', 'broker-switch']
 	};
 }
 
-export function createOpportunitiesListHeader(): DashboardHeader {
+export function createOpportunitiesListHeader(route: OpportunitiesListRouteRef): DashboardHeader {
 	return {
 		leading: {
 			kind: 'control-title',
 			title: 'Opportunities & risks',
-			control: { kind: 'meeting-date' }
+			control: { kind: 'meeting-date', route }
 		},
 		actions: ['share', 'broker-switch']
 	};
@@ -70,7 +71,7 @@ export function createOpportunitiesListHeader(): DashboardHeader {
 
 export function createOpportunitiesDetailHeader(
 	title: string,
-	backRoute: OpportunitiesListRouteRef = { kind: 'opportunities-list' }
+	backRoute: OpportunitiesListRouteRef
 ): DashboardHeader {
 	return {
 		leading: {

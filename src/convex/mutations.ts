@@ -1,7 +1,6 @@
 import { action, mutation } from './_generated/server';
 import { v } from 'convex/values';
 import { makeFunctionReference, type FunctionReference } from 'convex/server';
-import type { Id } from './_generated/dataModel';
 import type { DealId } from '../lib/types/ids';
 import type { DealIndustry } from '../lib/types/vocab';
 import { dealIndustryValidator } from './validators';

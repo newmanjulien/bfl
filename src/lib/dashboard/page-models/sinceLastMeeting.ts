@@ -25,7 +25,7 @@ export function buildSinceLastMeetingPageData(params: {
 
 	return {
 		route,
-		header: createSinceLastMeetingHeader(),
+		header: createSinceLastMeetingHeader(route),
 		hero: {
 			title: 'Since your last meeting with Julien',
 			description:
