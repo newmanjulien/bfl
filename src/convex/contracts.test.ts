@@ -398,76 +398,54 @@ describe('Convex feature contracts', () => {
 		expect(result!.orgChartNodes).toEqual(seed.dealOrgChartNodes);
 	});
 
-	it('normalizes legacy deal org charts stored as nested roots', async () => {
+	it('rejects legacy deal org charts at write time', async () => {
 		const t = createConvex();
 		const seed = await seedDashboardRecords(t);
 
-		const legacyDealId = await t.run(async (ctx) =>
-			ctx.db.insert(
-				'deals',
-				{
-					dealNumber: 404,
-					industry: 'Industrials',
-					dealName: 'Legacy Org Chart',
-					isReservedInEpic: false,
-					probability: 55,
-					stage: 'Proposal',
-					isLikelyOutOfDate: false,
-					activityLevel: 'medium',
-					lastActivityAtIso: '2026-03-24T10:00:00Z',
-					ownerBrokerId: seed.ownerBrokerId,
-					collaboratorBrokerIds: [seed.collaboratorBrokerId],
-					context: {
-						summary: 'Stored before org chart flattening.',
-						claimedAtIso: '2026-03-10T09:00:00Z',
-						orgChartRoot: {
-							id: 'legacy-root',
-							name: 'Alex Morgan',
-							role: 'CFO',
-							lastContactedByBrokerId: seed.ownerBrokerId,
-							lastContactedOnIso: '2026-03-21',
-							directReports: [
-								{
-									id: 'legacy-child',
-									name: 'Taylor Smith',
-									role: 'VP Finance',
-									lastContactedByBrokerId: seed.collaboratorBrokerId,
-									lastContactedOnIso: '2026-03-22'
-								}
-							]
+		await expect(
+			t.run(async (ctx) =>
+				ctx.db.insert(
+					'deals',
+					{
+						dealNumber: 404,
+						industry: 'Industrials',
+						dealName: 'Legacy Org Chart',
+						isReservedInEpic: false,
+						probability: 55,
+						stage: 'Proposal',
+						isLikelyOutOfDate: false,
+						activityLevel: 'medium',
+						lastActivityAtIso: '2026-03-24T10:00:00Z',
+						ownerBrokerId: seed.ownerBrokerId,
+						collaboratorBrokerIds: [seed.collaboratorBrokerId],
+						context: {
+							summary: 'Stored before org chart flattening.',
+							claimedAtIso: '2026-03-10T09:00:00Z',
+							orgChartRoot: {
+								id: 'legacy-root',
+								name: 'Alex Morgan',
+								role: 'CFO',
+								lastContactedByBrokerId: seed.ownerBrokerId,
+								lastContactedOnIso: '2026-03-21',
+								directReports: [
+									{
+										id: 'legacy-child',
+										name: 'Taylor Smith',
+										role: 'VP Finance',
+										lastContactedByBrokerId: seed.collaboratorBrokerId,
+										lastContactedOnIso: '2026-03-22'
+									}
+								]
+							}
+						},
+						dashboardFlags: {
+							needsSupport: false,
+							duplicatedWork: false
 						}
-					},
-					dashboardFlags: {
-						needsSupport: false,
-						duplicatedWork: false
-					}
-				} as never
+					} as never
+				)
 			)
-		);
-
-		const result = await t.query(api.allActivity.getAllActivityDetail, {
-			detailId: legacyDealId,
-			view: 'deals'
-		});
-
-		expect(result).not.toBeNull();
-		expect(result!.orgChartNodes).toEqual([
-			{
-				id: 'legacy-root',
-				name: 'Alex Morgan',
-				role: 'CFO',
-				lastContactedByBrokerId: seed.ownerBrokerId,
-				lastContactedOnIso: '2026-03-21'
-			},
-			{
-				id: 'legacy-child',
-				parentId: 'legacy-root',
-				name: 'Taylor Smith',
-				role: 'VP Finance',
-				lastContactedByBrokerId: seed.collaboratorBrokerId,
-				lastContactedOnIso: '2026-03-22'
-			}
-		]);
+		).rejects.toThrow();
 	});
 
 	it('returns null for an invalid all activity route param', async () => {
@@ -512,75 +490,53 @@ describe('Convex feature contracts', () => {
 		expect(result!.orgChartNodes).toEqual(seed.insightOrgChartNodes);
 	});
 
-	it('normalizes legacy insight org charts stored as nested roots', async () => {
+	it('rejects legacy insight org charts at write time', async () => {
 		const t = createConvex();
 		const seed = await seedDashboardRecords(t);
 
-		const legacyInsightId = await t.run(async (ctx) =>
-			ctx.db.insert(
-				'insights',
-				{
-					dealId: seed.dealId,
-					meetingId: seed.march20MeetingId,
-					kind: 'risk',
-					title: 'Legacy Risk Insight',
-					ownerBrokerId: seed.ownerBrokerId,
-					collaboratorBrokerIds: [seed.collaboratorBrokerId],
-					timeline: [
-						{
-							kind: 'headline',
-							id: 'legacy-risk-1',
-							dealId: seed.dealId,
-							stream: 'deal-detail',
-							occurredOnIso: '2026-03-23',
-							body: 'Legacy insight still needs flattening.',
-							marker: { kind: 'dot' },
-							title: 'Legacy note'
-						}
-					],
-					orgChartRoot: {
-						id: 'legacy-insight-root',
-						name: 'Jordan Lee',
-						role: 'Chief Procurement Officer',
-						lastContactedByBrokerId: seed.ownerBrokerId,
-						lastContactedOnIso: '2026-03-23',
-						directReports: [
+		await expect(
+			t.run(async (ctx) =>
+				ctx.db.insert(
+					'insights',
+					{
+						dealId: seed.dealId,
+						meetingId: seed.march20MeetingId,
+						kind: 'risk',
+						title: 'Legacy Risk Insight',
+						ownerBrokerId: seed.ownerBrokerId,
+						collaboratorBrokerIds: [seed.collaboratorBrokerId],
+						timeline: [
 							{
-								id: 'legacy-insight-child',
-								name: 'Sam Rivera',
-								role: 'Security Lead',
-								lastContactedByBrokerId: seed.collaboratorBrokerId,
-								lastContactedOnIso: '2026-03-24'
+								kind: 'headline',
+								id: 'legacy-risk-1',
+								dealId: seed.dealId,
+								stream: 'deal-detail',
+								occurredOnIso: '2026-03-23',
+								body: 'Legacy insight still needs flattening.',
+								marker: { kind: 'dot' },
+								title: 'Legacy note'
 							}
-						]
-					}
-				} as never
+						],
+						orgChartRoot: {
+							id: 'legacy-insight-root',
+							name: 'Jordan Lee',
+							role: 'Chief Procurement Officer',
+							lastContactedByBrokerId: seed.ownerBrokerId,
+							lastContactedOnIso: '2026-03-23',
+							directReports: [
+								{
+									id: 'legacy-insight-child',
+									name: 'Sam Rivera',
+									role: 'Security Lead',
+									lastContactedByBrokerId: seed.collaboratorBrokerId,
+									lastContactedOnIso: '2026-03-24'
+								}
+							]
+						}
+					} as never
+				)
 			)
-		);
-
-		const result = await t.query(api.opportunities.getOpportunityDetail, {
-			detailId: legacyInsightId,
-			meetingId: seed.march20MeetingId
-		});
-
-		expect(result).not.toBeNull();
-		expect(result!.orgChartNodes).toEqual([
-			{
-				id: 'legacy-insight-root',
-				name: 'Jordan Lee',
-				role: 'Chief Procurement Officer',
-				lastContactedByBrokerId: seed.ownerBrokerId,
-				lastContactedOnIso: '2026-03-23'
-			},
-			{
-				id: 'legacy-insight-child',
-				parentId: 'legacy-insight-root',
-				name: 'Sam Rivera',
-				role: 'Security Lead',
-				lastContactedByBrokerId: seed.collaboratorBrokerId,
-				lastContactedOnIso: '2026-03-24'
-			}
-		]);
+		).rejects.toThrow();
 	});
 
 	it('returns null for an invalid opportunity route param', async () => {

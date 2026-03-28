@@ -83,16 +83,6 @@ const flatDealContextValidator = v.object({
 	helpfulContacts: v.optional(v.array(helpfulContactValidator))
 });
 
-// Accept legacy nested org charts so existing deployments can still boot after the shape change.
-const legacyDealContextValidator = v.object({
-	summary: v.string(),
-	claimedAtIso: v.string(),
-	orgChartRoot: v.any(),
-	helpfulContacts: v.optional(v.array(helpfulContactValidator))
-});
-
-const dealContextValidator = v.union(flatDealContextValidator, legacyDealContextValidator);
-
 const flatInsightValidator = v.object({
 	dealId: v.id('deals'),
 	meetingId: v.id('meetings'),
@@ -103,19 +93,6 @@ const flatInsightValidator = v.object({
 	timeline: v.array(embeddedActivityValidator),
 	orgChartNodes: v.array(orgChartNodeRecordValidator)
 });
-
-const legacyInsightValidator = v.object({
-	dealId: v.id('deals'),
-	meetingId: v.id('meetings'),
-	kind: dealInsightKindValidator,
-	title: v.string(),
-	ownerBrokerId: v.id('brokers'),
-	collaboratorBrokerIds: v.array(v.id('brokers')),
-	timeline: v.array(embeddedActivityValidator),
-	orgChartRoot: v.any()
-});
-
-const insightDocumentValidator = v.union(flatInsightValidator, legacyInsightValidator);
 
 export default defineSchema({
 	meetings: defineTable({
@@ -139,7 +116,7 @@ export default defineSchema({
 		lastActivityAtIso: v.optional(v.string()),
 		ownerBrokerId: v.optional(v.id('brokers')),
 		collaboratorBrokerIds: v.array(v.id('brokers')),
-		context: v.optional(dealContextValidator),
+		context: v.optional(flatDealContextValidator),
 		dashboardFlags: v.object({
 			needsSupport: v.boolean(),
 			duplicatedWork: v.boolean()
@@ -160,7 +137,7 @@ export default defineSchema({
 		.index('by_published_on_iso', ['publishedOnIso'])
 		.index('by_deal_id_published_on_iso', ['dealId', 'publishedOnIso']),
 
-	insights: defineTable(insightDocumentValidator)
+	insights: defineTable(flatInsightValidator)
 		.index('by_deal_id', ['dealId'])
 		.index('by_kind', ['kind'])
 		.index('by_meeting_id', ['meetingId'])

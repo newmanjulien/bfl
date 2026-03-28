@@ -108,9 +108,7 @@ type DashboardActivityValue = Doc<'activities'> | Doc<'insights'>['timeline'][nu
 export type MeetingRecordData = DashboardMeeting;
 
 type DealContextDocument = NonNullable<Doc<'deals'>['context']>;
-type FlatDealContextDocument = Extract<DealContextDocument, { orgChartNodes: unknown[] }>;
 type InsightDocument = Doc<'insights'>;
-type FlatInsightDocument = Extract<InsightDocument, { orgChartNodes: unknown[] }>;
 
 export function toMeetingRecord(meeting: Doc<'meetings'>): MeetingRecordData {
 	return {
@@ -171,18 +169,8 @@ export function toDashboardPeople(
 	return Promise.all(brokers.map((broker) => toDashboardPerson(ctx, broker)));
 }
 
-function requireString(value: unknown, path: string) {
-	if (typeof value !== 'string') {
-		throw new Error(`Expected string at "${path}".`);
-	}
-
-	return value;
-}
-
 function toOrgChartNodeRecord(
-	node:
-		| FlatDealContextDocument['orgChartNodes'][number]
-		| FlatInsightDocument['orgChartNodes'][number]
+	node: DealContextDocument['orgChartNodes'][number] | InsightDocument['orgChartNodes'][number]
 ): OrgChartNodeRecord {
 	return {
 		id: node.id,
@@ -194,61 +182,11 @@ function toOrgChartNodeRecord(
 	};
 }
 
-function toLegacyOrgChartNodeRecords(
-	node: unknown,
-	path: string,
-	parentId?: string
-): OrgChartNodeRecord[] {
-	if (!node || typeof node !== 'object' || Array.isArray(node)) {
-		throw new Error(`Invalid legacy org chart node at "${path}".`);
-	}
-
-	const rawNode = node as Record<string, unknown>;
-	const id = requireString(rawNode.id, `${path}.id`);
-	const directReports = rawNode.directReports;
-
-	if (directReports !== undefined && !Array.isArray(directReports)) {
-		throw new Error(`Invalid legacy org chart directReports at "${path}.directReports".`);
-	}
-
-	const currentNode: OrgChartNodeRecord = {
-		id,
-		name: requireString(rawNode.name, `${path}.name`),
-		role: requireString(rawNode.role, `${path}.role`),
-		lastContactedByBrokerId: requireString(
-			rawNode.lastContactedByBrokerId,
-			`${path}.lastContactedByBrokerId`
-		) as BrokerId,
-		lastContactedOnIso: parseIsoDate(
-			requireString(rawNode.lastContactedOnIso, `${path}.lastContactedOnIso`),
-			`${path}.lastContactedOnIso`
-		),
-		parentId
-	};
-
-	return [
-		currentNode,
-		...(directReports ?? []).flatMap((childNode, index) =>
-			toLegacyOrgChartNodeRecords(childNode, `${path}.directReports[${index}]`, id)
-		)
-	];
-}
-
-function hasFlatOrgChartNodes(context: DealContextDocument): context is FlatDealContextDocument {
-	return 'orgChartNodes' in context;
-}
-
-function hasFlatInsightOrgChartNodes(insight: InsightDocument): insight is FlatInsightDocument {
-	return 'orgChartNodes' in insight;
-}
-
 export function toDealContextRecord(context: DealContextDocument): DealContextRecordData {
 	return {
 		summary: context.summary,
 		claimedAtIso: parseIsoDateTime(context.claimedAtIso, 'deal.context.claimedAtIso'),
-		orgChartNodes: hasFlatOrgChartNodes(context)
-			? context.orgChartNodes.map((node) => toOrgChartNodeRecord(node))
-			: toLegacyOrgChartNodeRecords(context.orgChartRoot, 'deal.context.orgChartRoot'),
+		orgChartNodes: context.orgChartNodes.map((node) => toOrgChartNodeRecord(node)),
 		helpfulContacts: context.helpfulContacts?.map((contact) => ({
 			id: contact.id,
 			name: contact.name,
@@ -337,8 +275,6 @@ export function toInsightRecord(insight: InsightDocument): InsightRecordData {
 		ownerBrokerId: insight.ownerBrokerId,
 		collaboratorBrokerIds: insight.collaboratorBrokerIds,
 		timeline: insight.timeline.map((activity) => toActivityRecord(activity)),
-		orgChartNodes: hasFlatInsightOrgChartNodes(insight)
-			? insight.orgChartNodes.map((node) => toOrgChartNodeRecord(node))
-			: toLegacyOrgChartNodeRecords(insight.orgChartRoot, `insights["${insight._id}"].orgChartRoot`)
+		orgChartNodes: insight.orgChartNodes.map((node) => toOrgChartNodeRecord(node))
 	};
 }
